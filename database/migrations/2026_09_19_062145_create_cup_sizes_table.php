@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('cup_sizes', function (Blueprint $table) {
             $table->id();
             $table->string('size_name');
-            $table->foreignId('inventory_item_id')->constrained('inventory_items')->cascadeOnDelete();
+            $table->foreignId('inventory_item_id')->nullable()->constrained('inventory_items')->nullOnDelete();
             $table->decimal('price', 8, 2);
             $table->timestamps();
         });

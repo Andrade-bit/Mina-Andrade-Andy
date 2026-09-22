@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('sales_transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->nullable()->constrained('products')->nullOnDelete();
-            $table->integer('quantity');
-            $table->foreignId('cup_size_id')->nullable()->constrained('cup_sizes')->nullOnDelete();
-            $table->decimal('price_at_order', 8, 2);
+            $table->dateTime('transaction_date');
+            $table->string('payment_method');
+            $table->decimal('total_amount', 10, 2);
             $table->foreignId('credential_id')->nullable()->constrained('credentials')->nullOnDelete();
+            $table->string('status')->default('completed');
             $table->timestamps();
         });
     }
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('orders');
+        Schema::dropIfExists('sales_transactions');
     }
 };
