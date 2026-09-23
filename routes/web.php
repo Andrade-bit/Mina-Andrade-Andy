@@ -3,12 +3,12 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('admin.login');
 });
 
-Route::get('/admin/login', function () {
-    return view('admin.login');
-})->name('admin.login');
+// Route::get('/admin/login', function () {
+//     return view('admin.login');
+// })->name('admin.login');
 
 Route::get('/admin/users', function () {
     return view('admin.user-management');
