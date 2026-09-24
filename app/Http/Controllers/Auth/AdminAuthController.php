@@ -23,15 +23,20 @@ class AdminAuthController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
+        $validated = $request->validate([
+            'username' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
+        $credentials = [
+            'name' => $validated['username'],
+            'password' => $validated['password'],
+        ];
+
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()
-                ->withErrors(['email' => 'Those credentials do not match our records.'])
-                ->onlyInput('email');
+                ->withErrors(['username' => 'Those credentials do not match our records.'])
+                ->onlyInput('username');
         }
 
         $request->session()->regenerate();

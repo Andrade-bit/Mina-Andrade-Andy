@@ -29,9 +29,29 @@ class TerminalController extends Controller
 
         $credential = Credential::findOrFail($credentialId);
 
+        $imagesByKeyword = [
+            'blue lemonade' => 'blue-lemonade.jpg',
+            'lemonade' => 'lemonade.jpg',
+            'americano' => 'americano.jpg',
+            'cafe latte' => 'cafe-latte.jpg',
+            'cappuccino' => 'cappuccino.jpg',
+            'spanish latte' => 'spanish-latte.jpg',
+            'caramel macchiato' => 'caramel-macchiato.jpg',
+            'matcha' => 'matcha-latte.jpg',
+            'chocolate' => 'chocolate.jpg',
+            'strawberry' => 'strawberry-milk.jpg',
+            'mango' => 'mango-juice.jpg',
+        ];
+
+        $products = Product::with('productCategory')->orderBy('product_name')->get()->each(function (Product $product) use ($imagesByKeyword) {
+            $name = strtolower($product->product_name);
+            $match = collect($imagesByKeyword)->first(fn ($file, $keyword) => str_contains($name, $keyword));
+            $product->image = $match ?? 'placeholder.jpg';
+        });
+
         return view('pos.terminal', [
             'credential' => $credential,
-            'products' => Product::with('productCategory')->orderBy('product_name')->get(),
+            'products' => $products,
             'cupSizes' => CupSize::orderBy('price')->get(),
         ]);
     }

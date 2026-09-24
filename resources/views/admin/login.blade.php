@@ -63,14 +63,21 @@
       <p class="font-body text-xs tracking-[0.25em] uppercase text-stamp-500 font-bold mt-1">Admin Login</p>
     </div>
 
-    <form class="space-y-5">
+    @if ($errors->any())
+      <div class="mb-5 bg-coral-500/10 border border-coral-500/30 text-coral-600 text-xs font-bold rounded-2xl px-4 py-3">
+        {{ $errors->first() }}
+      </div>
+    @endif
+
+    <form method="POST" action="{{ route('admin.login.store') }}" class="space-y-5">
+      @csrf
       <div>
         <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-2 ml-1">Username</label>
         <div class="flex items-center gap-3 bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3.5">
           <svg class="w-5 h-5 text-stamp-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
           </svg>
-          <input type="text" placeholder="admin.catbrews" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+          <input type="text" name="username" value="{{ old('username') }}" placeholder="admin" required autofocus class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
         </div>
       </div>
 
@@ -80,23 +87,24 @@
           <svg class="w-5 h-5 text-stamp-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
-          <input type="password" value="••••••••" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+          <input type="password" name="password" placeholder="••••••••" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
         </div>
       </div>
 
       <div class="flex items-center justify-between px-1 pt-1">
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-6 bg-stamp-100 rounded-full shadow-soft-inset relative">
-            <span class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-soft-sm translate-x-5"></span>
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input type="checkbox" name="remember" class="sr-only peer">
+          <div class="w-11 h-6 bg-stamp-100 rounded-full shadow-soft-inset relative peer-checked:bg-stamp-500 transition-colors">
+            <span class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-soft-sm peer-checked:translate-x-5 transition-transform"></span>
           </div>
           <span class="text-sm font-bold text-stamp-600">Remember me</span>
-        </div>
+        </label>
         <a href="#" class="text-xs font-extrabold text-stamp-500 hover:text-stamp-700">Forgot?</a>
       </div>
 
-      <a href="{{ route('admin.users') }}" class="block text-center bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold tracking-wide text-sm py-4 rounded-2xl shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">
+      <button type="submit" class="block w-full text-center bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold tracking-wide text-sm py-4 rounded-2xl shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">
         Log In
-      </a>
+      </button>
     </form>
 
     <p class="text-center text-[11px] font-bold text-stamp-300 mt-7">

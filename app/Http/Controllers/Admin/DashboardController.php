@@ -18,9 +18,10 @@ class DashboardController extends Controller
     {
         $todaysSales = SalesTransaction::whereDate('transaction_date', today())->sum('total_amount');
         $todaysTransactionCount = SalesTransaction::whereDate('transaction_date', today())->count();
-        $lowStockItems = InventoryItem::whereColumn('current_quantity', '<=', 'reorder_level')->get();
+        $lowStockItems = InventoryItem::whereColumn('current_quantity', '<=', 'reorder_level')->limit(5)->get();
         $totalProducts = Product::count();
         $totalStaff = Credential::count();
+        $recentTransactions = SalesTransaction::with('credential')->latest('transaction_date')->limit(5)->get();
 
         return view('admin.dashboard', [
             'todaysSales' => $todaysSales,
@@ -28,6 +29,7 @@ class DashboardController extends Controller
             'lowStockItems' => $lowStockItems,
             'totalProducts' => $totalProducts,
             'totalStaff' => $totalStaff,
+            'recentTransactions' => $recentTransactions,
         ]);
     }
 }

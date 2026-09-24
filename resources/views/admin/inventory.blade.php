@@ -72,7 +72,7 @@
     </div>
 
     <nav class="flex-1 space-y-1.5">
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
+      <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         Dashboard
       </a>
@@ -84,7 +84,7 @@
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-9 4h16a1 1 0 001-1V6a1 1 0 00-1-1H4a1 1 0 00-1 1v12a1 1 0 001 1z"/></svg>
         POS Terminal
       </a>
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
+      <a href="{{ route('admin.products.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
         Products
       </a>
@@ -96,7 +96,7 @@
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5-1a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm11 6.5a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
         Orders
       </a>
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
+      <a href="{{ route('pos.transactions') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Reports
       </a>
@@ -107,14 +107,17 @@
     </nav>
 
     <div class="pt-4 mt-auto border-t border-cream-200 flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-sm">A</div>
+      <div class="w-10 h-10 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-sm">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
       <div class="text-sm flex-1">
-        <p class="font-bold text-stamp-700 leading-tight">Admin</p>
+        <p class="font-bold text-stamp-700 leading-tight">{{ auth()->user()->name }}</p>
         <p class="text-stamp-300 text-xs font-bold">Owner</p>
       </div>
-      <a href="{{ route('admin.login') }}" title="Log out" class="text-stamp-300 hover:text-stamp-600">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-      </a>
+      <form method="POST" action="{{ route('admin.logout') }}">
+        @csrf
+        <button type="submit" title="Log out" class="text-stamp-300 hover:text-stamp-600">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </form>
     </div>
   </aside>
 
@@ -126,7 +129,18 @@
         <h2 class="font-display font-bold text-2xl md:text-3xl text-stamp-700">Inventory</h2>
         <p class="text-stamp-500 text-sm font-semibold mt-1">Procurement stock and supplier orders for cups &amp; straws</p>
       </div>
+      <button onclick="openAddItem()" class="bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold px-5 py-3 rounded-2xl shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center gap-2 text-sm">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Add Item
+      </button>
     </div>
+
+    @if (session('status'))
+      <div class="mb-5 bg-mint-50 text-mint-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('status') }}</div>
+    @endif
+    @if ($errors->any())
+      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ $errors->first() }}</div>
+    @endif
 
     <!-- Stat cards -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -134,25 +148,25 @@
         <div class="w-12 h-12 rounded-2xl bg-cream-100 flex items-center justify-center text-stamp-500 shrink-0">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 01-2-2V4a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
         </div>
-        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Total SKUs</p><p id="statTotalSkus" class="font-display font-bold text-2xl text-stamp-700">0</p></div>
+        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Total SKUs</p><p class="font-display font-bold text-2xl text-stamp-700">{{ $procurement->count() + $supplier->count() }}</p></div>
       </div>
       <div class="bg-white rounded-3xl shadow-soft p-5 flex items-center gap-4">
         <div class="w-12 h-12 rounded-2xl bg-coral-50 flex items-center justify-center text-coral-500 shrink-0">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
         </div>
-        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Low Stock</p><p id="statLowStock" class="font-display font-bold text-2xl text-stamp-700">0</p></div>
+        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Low Stock</p><p class="font-display font-bold text-2xl text-stamp-700">{{ $lowStockCount }}</p></div>
       </div>
       <div class="bg-white rounded-3xl shadow-soft p-5 flex items-center gap-4">
         <div class="w-12 h-12 rounded-2xl bg-mint-50 flex items-center justify-center text-mint-600 shrink-0">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6"/></svg>
         </div>
-        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Stock In Logged</p><p id="statStockIn" class="font-display font-bold text-2xl text-stamp-700">0</p></div>
+        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Stock In Logged</p><p class="font-display font-bold text-2xl text-stamp-700">{{ $stockInCount }}</p></div>
       </div>
       <div class="bg-white rounded-3xl shadow-soft p-5 flex items-center gap-4">
         <div class="w-12 h-12 rounded-2xl bg-coral-50 flex items-center justify-center text-coral-500 shrink-0">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-6-6m6 6l6-6"/></svg>
         </div>
-        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Stock Out Logged</p><p id="statStockOut" class="font-display font-bold text-2xl text-stamp-700">0</p></div>
+        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Stock Out Logged</p><p class="font-display font-bold text-2xl text-stamp-700">{{ $stockOutCount }}</p></div>
       </div>
     </div>
 
@@ -163,8 +177,21 @@
     </div>
     <p id="categoryHint" class="text-[11px] text-stamp-300 font-semibold mb-4">Ingredients and general supplies the admin buys directly for the shop.</p>
 
-    <!-- Item grid -->
-    <div id="itemGrid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8"></div>
+    <!-- Item grids -->
+    <div id="grid-procurement" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+      @forelse ($procurement as $item)
+        @include('admin.partials.inventory-item-card', ['item' => $item])
+      @empty
+        <p class="text-sm font-semibold text-stamp-300 py-6 col-span-full">No procurement items yet. Click "Add Item" to create one.</p>
+      @endforelse
+    </div>
+    <div id="grid-supplier" class="hidden grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+      @forelse ($supplier as $item)
+        @include('admin.partials.inventory-item-card', ['item' => $item])
+      @empty
+        <p class="text-sm font-semibold text-stamp-300 py-6 col-span-full">No supplier items yet. Click "Add Item" to create one.</p>
+      @endforelse
+    </div>
 
     <!-- Activity log -->
     <div class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6 overflow-x-auto">
@@ -174,24 +201,94 @@
           <tr class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">
             <th class="py-2 px-3">Date</th>
             <th class="py-2 px-3">Item</th>
-            <th class="py-2 px-3">Category</th>
             <th class="py-2 px-3">Type</th>
             <th class="py-2 px-3">Qty</th>
-            <th class="py-2 px-3">Supplier / Reason</th>
-            <th class="py-2 px-3">Note</th>
+            <th class="py-2 px-3">Reason / Note</th>
           </tr>
         </thead>
-        <tbody id="logBody">
-          <tr><td colspan="7" class="py-8 text-center text-stamp-300 text-sm">No stock movements yet.</td></tr>
+        <tbody>
+          @forelse ($recentTransactions as $transaction)
+            <tr class="border-b border-cream-200 last:border-0">
+              <td class="py-3 px-3 text-stamp-500 text-sm whitespace-nowrap">{{ $transaction->inventory_transaction_date->format('M j, Y') }}</td>
+              <td class="py-3 px-3 font-bold text-stamp-700 text-sm">{{ $transaction->inventoryItem->name ?? 'Deleted item' }}</td>
+              <td class="py-3 px-3">
+                <span class="text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full {{ $transaction->transaction_type === 'Restock' ? 'bg-mint-50 text-mint-600' : 'bg-coral-50 text-coral-600' }}">{{ $transaction->transaction_type }}</span>
+              </td>
+              <td class="py-3 px-3 font-display font-bold text-stamp-700 text-sm">{{ $transaction->transaction_type === 'Restock' ? '+' : '−' }}{{ rtrim(rtrim(number_format($transaction->quantity, 2), '0'), '.') }} {{ $transaction->inventoryItem->unit ?? '' }}</td>
+              <td class="py-3 px-3 text-stamp-400 text-xs">{{ $transaction->reason ?? '—' }}</td>
+            </tr>
+          @empty
+            <tr><td colspan="5" class="py-8 text-center text-stamp-300 text-sm">No stock movements yet.</td></tr>
+          @endforelse
         </tbody>
       </table>
     </div>
   </main>
 
+  <!-- Add Item Modal -->
+  <div id="addItemModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-md p-7 relative max-h-[90vh] overflow-y-auto">
+      <button type="button" onclick="closeModal('addItemModal')" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 rounded-2xl bg-stamp-100 shadow-soft-inset mx-auto flex items-center justify-center text-stamp-600 mb-3">
+          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-xl text-stamp-700">Add Inventory Item</h3>
+        <p class="text-xs text-stamp-400 font-semibold mt-1">Create a new SKU to track stock for</p>
+      </div>
+      <form method="POST" action="{{ route('admin.inventory-items.store') }}" class="space-y-4">
+        @csrf
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Item Name</label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+            <input type="text" name="name" value="{{ old('name') }}" placeholder="e.g. Vanilla Syrup" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Category</label>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+              <select id="addItemType" name="type" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+                <option value="ingredient" @selected(old('type', 'ingredient') === 'ingredient')>Procurement</option>
+                <option value="supply" @selected(old('type') === 'supply')>Supplier (Cups/Straws)</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Unit</label>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+              <input type="text" name="unit" value="{{ old('unit') }}" placeholder="e.g. kg, liters, pcs" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Starting Quantity</label>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+              <input type="number" min="0" step="0.01" name="current_quantity" value="{{ old('current_quantity', 0) }}" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Reorder Level</label>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+              <input type="number" min="0" step="0.01" name="reorder_level" value="{{ old('reorder_level', 0) }}" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          Create Item
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Stock In Modal -->
   <div id="stockInModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-md p-7 relative max-h-[90vh] overflow-y-auto">
-      <button onclick="closeModal('stockInModal')" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
+      <button type="button" onclick="closeModal('stockInModal')" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
       <div class="text-center mb-6">
@@ -201,37 +298,44 @@
         <h3 class="font-display font-bold text-xl text-stamp-700">Stock In</h3>
         <p id="stockInItemLabel" class="text-xs text-stamp-400 font-semibold mt-1">Receiving stock for —</p>
       </div>
-      <form class="space-y-4" onsubmit="event.preventDefault(); submitStockIn();">
+      <form method="POST" action="{{ route('admin.supply-purchases.store') }}" class="space-y-4">
+        @csrf
+        <input type="hidden" id="stockInItemId" name="items[0][inventory_item_id]" value="{{ old('items.0.inventory_item_id') }}">
         <div>
           <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Quantity Received</label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input id="stockInQty" type="number" min="1" step="1" placeholder="e.g. 20" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            <input id="stockInQty" type="number" min="0.01" step="0.01" name="items[0][quantity]" value="{{ old('items.0.quantity') }}" placeholder="e.g. 20" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
           </div>
         </div>
         <div>
-          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Supplier / Vendor</label>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Where did you buy this?</label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input id="stockInParty" type="text" placeholder="e.g. Davao Coffee Traders" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            <input type="text" name="purchase_source" value="{{ old('purchase_source', 'NCCC Mall') }}" placeholder="e.g. NCCC Mall" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
           </div>
+          <p class="text-[11px] text-stamp-300 font-semibold mt-1.5 ml-1">Used when you personally buy stock because the supplier can't deliver.</p>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Unit Cost (₱)</label>
             <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-              <input id="stockInCost" type="number" min="0" step="0.01" placeholder="0.00" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+              <input type="number" min="0" step="0.01" name="items[0][unit_cost]" value="{{ old('items.0.unit_cost') }}" placeholder="0.00" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
             </div>
           </div>
           <div>
             <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Date</label>
             <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-              <input id="stockInDate" type="date" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+              <input type="date" name="purchase_date" value="{{ old('purchase_date', now()->toDateString()) }}" required class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
             </div>
           </div>
         </div>
         <div>
-          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Note (optional)</label>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Paid Via</label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input id="stockInNote" type="text" placeholder="e.g. Weekly delivery" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            <select name="payment_method" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+              <option value="Cash" @selected(old('payment_method', 'Cash') === 'Cash')>Cash</option>
+              <option value="Gcash" @selected(old('payment_method') === 'Gcash')>GCash</option>
+              <option value="Card" @selected(old('payment_method') === 'Card')>Card</option>
+            </select>
           </div>
         </div>
         <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-b from-mint-500 to-mint-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn-mint active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center justify-center gap-2">
@@ -245,7 +349,7 @@
   <!-- Stock Out Modal -->
   <div id="stockOutModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-md p-7 relative max-h-[90vh] overflow-y-auto">
-      <button onclick="closeModal('stockOutModal')" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
+      <button type="button" onclick="closeModal('stockOutModal')" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
       <div class="text-center mb-6">
@@ -255,40 +359,37 @@
         <h3 class="font-display font-bold text-xl text-stamp-700">Stock Out</h3>
         <p id="stockOutItemLabel" class="text-xs text-stamp-400 font-semibold mt-1">Removing stock for —</p>
       </div>
-      <form class="space-y-4" onsubmit="event.preventDefault(); submitStockOut();">
+      <form method="POST" action="{{ route('admin.inventory-transactions.stock-out') }}" class="space-y-4">
+        @csrf
+        <input type="hidden" id="stockOutItemId" name="inventory_item_id" value="{{ old('inventory_item_id') }}">
         <div>
           <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Quantity Removed</label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input id="stockOutQty" type="number" min="1" step="1" placeholder="e.g. 5" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            <input id="stockOutQty" type="number" min="0.01" step="0.01" name="quantity" value="{{ old('quantity') }}" placeholder="e.g. 5" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
           </div>
           <p id="stockOutAvailable" class="text-[11px] text-stamp-300 font-semibold mt-1 ml-1">Available: 0</p>
         </div>
         <div>
-          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Reason</label>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Type</label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <select id="stockOutReason" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
-              <option>Used in Production</option>
-              <option>Used in Store</option>
-              <option>Damaged / Defective</option>
-              <option>Spoiled / Expired</option>
-              <option>Wastage</option>
-              <option>Other</option>
+            <select name="transaction_type" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+              <option value="Waste" @selected(old('transaction_type', 'Waste') === 'Waste')>Waste / Spoiled / Damaged</option>
+              <option value="Adjustment" @selected(old('transaction_type') === 'Adjustment')>Adjustment / Correction</option>
             </select>
           </div>
         </div>
         <div>
           <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Date</label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input id="stockOutDate" type="date" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+            <input type="date" name="inventory_transaction_date" value="{{ old('inventory_transaction_date', now()->toDateString()) }}" required class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
           </div>
         </div>
         <div>
-          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Note (optional)</label>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Reason (optional)</label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input id="stockOutNote" type="text" placeholder="e.g. Broken during delivery" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            <input type="text" name="reason" value="{{ old('reason') }}" placeholder="e.g. Broken during delivery" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
           </div>
         </div>
-        <p id="stockOutError" class="hidden text-xs font-bold text-coral-500 bg-coral-50 rounded-lg px-3 py-2">Quantity exceeds available stock.</p>
         <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-b from-coral-500 to-coral-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn-coral active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center justify-center gap-2">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
           Confirm Stock Out
@@ -298,48 +399,12 @@
   </div>
 
   <script>
-    const DEFAULT_INVENTORY = {
-      procurement: [
-        { id: 'coffee-beans', name: 'Coffee Beans', unit: 'kg', stock: 25, reorder: 10 },
-        { id: 'fresh-milk', name: 'Fresh Milk', unit: 'liters', stock: 40, reorder: 15 },
-        { id: 'condensed-milk', name: 'Condensed Milk', unit: 'cans', stock: 30, reorder: 12 },
-        { id: 'caramel-syrup', name: 'Caramel Syrup', unit: 'bottles', stock: 8, reorder: 5 },
-        { id: 'matcha-powder', name: 'Matcha Powder', unit: 'kg', stock: 4, reorder: 3 },
-        { id: 'chocolate-powder', name: 'Chocolate Powder', unit: 'kg', stock: 12, reorder: 5 },
-        { id: 'mango-puree', name: 'Mango Puree', unit: 'liters', stock: 10, reorder: 6 },
-        { id: 'lemon-concentrate', name: 'Lemon Juice Concentrate', unit: 'liters', stock: 6, reorder: 4 },
-        { id: 'white-sugar', name: 'White Sugar', unit: 'kg', stock: 20, reorder: 8 },
-        { id: 'strawberry-syrup', name: 'Strawberry Syrup', unit: 'bottles', stock: 7, reorder: 5 },
-      ],
-      supplier: [
-        { id: 'cup-small', name: 'Small Cups (12oz)', unit: 'pcs', stock: 250, reorder: 100 },
-        { id: 'cup-medium', name: 'Medium Cups (16oz)', unit: 'pcs', stock: 180, reorder: 100 },
-        { id: 'cup-large', name: 'Large Cups (22oz)', unit: 'pcs', stock: 90, reorder: 100 },
-        { id: 'straws', name: 'Plastic Straws', unit: 'pcs', stock: 400, reorder: 150 },
-      ],
-    };
-
     const CATEGORY_HINTS = {
       procurement: 'Ingredients and general supplies the admin buys directly for the shop.',
       supplier: 'Only cups and straws are ordered through the packaging supplier.',
     };
 
-    let inventory = JSON.parse(localStorage.getItem('cb_inventory') || 'null') || JSON.parse(JSON.stringify(DEFAULT_INVENTORY));
-    let logs = JSON.parse(localStorage.getItem('cb_inventory_log') || '[]');
-    let activeCategory = 'procurement';
-    let pendingItem = null;
-
-    function saveInventory(){
-      localStorage.setItem('cb_inventory', JSON.stringify(inventory));
-      localStorage.setItem('cb_inventory_log', JSON.stringify(logs));
-    }
-
-    function findItem(category, id){
-      return inventory[category].find(i => i.id === id);
-    }
-
     function showCategory(cat){
-      activeCategory = cat;
       ['procurement', 'supplier'].forEach(c => {
         const tab = document.getElementById('tab-' + c);
         tab.classList.toggle('bg-stamp-500', c === cat);
@@ -347,152 +412,37 @@
         tab.classList.toggle('shadow-soft-btn', c === cat);
         tab.classList.toggle('bg-cream-100', c !== cat);
         tab.classList.toggle('text-stamp-600', c !== cat);
+        document.getElementById('grid-' + c).classList.toggle('hidden', c !== cat);
       });
       document.getElementById('categoryHint').textContent = CATEGORY_HINTS[cat];
-      renderItems();
+      document.getElementById('addItemType').value = cat === 'supplier' ? 'supply' : 'ingredient';
     }
-
-    function renderItems(){
-      const grid = document.getElementById('itemGrid');
-      grid.innerHTML = inventory[activeCategory].map(item => {
-        const low = item.stock <= item.reorder;
-        return `
-          <div class="bg-white rounded-3xl shadow-soft p-5">
-            <div class="flex items-start justify-between mb-3">
-              <div>
-                <p class="font-extrabold text-stamp-700">${item.name}</p>
-                <p class="text-[11px] text-stamp-300 font-bold uppercase tracking-wide">Reorder at ${item.reorder} ${item.unit}</p>
-              </div>
-              ${low ? '<span class="bg-coral-50 text-coral-600 text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full">Low Stock</span>' : ''}
-            </div>
-            <p class="font-display font-bold text-3xl text-stamp-700 mb-4">${item.stock} <span class="text-sm font-body font-bold text-stamp-300">${item.unit}</span></p>
-            <div class="flex gap-2">
-              <button onclick="openStockIn('${activeCategory}','${item.id}')" class="flex-1 py-2.5 rounded-xl bg-mint-50 hover:bg-mint-500 hover:text-cream-50 text-mint-600 font-extrabold text-xs transition-colors flex items-center justify-center gap-1.5">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6"/></svg>
-                Stock In
-              </button>
-              <button onclick="openStockOut('${activeCategory}','${item.id}')" class="flex-1 py-2.5 rounded-xl bg-coral-50 hover:bg-coral-500 hover:text-cream-50 text-coral-600 font-extrabold text-xs transition-colors flex items-center justify-center gap-1.5">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-6-6m6 6l6-6"/></svg>
-                Stock Out
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('');
-      updateStats();
-    }
-
-    function updateStats(){
-      const all = [...inventory.procurement, ...inventory.supplier];
-      document.getElementById('statTotalSkus').textContent = all.length;
-      document.getElementById('statLowStock').textContent = all.filter(i => i.stock <= i.reorder).length;
-      document.getElementById('statStockIn').textContent = logs.filter(l => l.type === 'in').length;
-      document.getElementById('statStockOut').textContent = logs.filter(l => l.type === 'out').length;
-    }
-
-    function todayStr(){ return new Date().toISOString().slice(0, 10); }
 
     function openModal(id){ document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
 
-    function openStockIn(category, id){
-      pendingItem = { category, id };
-      const item = findItem(category, id);
-      document.getElementById('stockInItemLabel').textContent = 'Receiving stock for ' + item.name;
-      document.getElementById('stockInQty').value = '';
-      document.getElementById('stockInParty').value = '';
-      document.getElementById('stockInCost').value = '';
-      document.getElementById('stockInNote').value = '';
-      document.getElementById('stockInDate').value = todayStr();
+    function openAddItem(){ openModal('addItemModal'); }
+
+    function openStockIn(id, name){
+      document.getElementById('stockInItemId').value = id;
+      document.getElementById('stockInItemLabel').textContent = 'Receiving stock for ' + name;
       openModal('stockInModal');
     }
 
-    function openStockOut(category, id){
-      pendingItem = { category, id };
-      const item = findItem(category, id);
-      document.getElementById('stockOutItemLabel').textContent = 'Removing stock for ' + item.name;
-      document.getElementById('stockOutAvailable').textContent = 'Available: ' + item.stock + ' ' + item.unit;
-      document.getElementById('stockOutQty').value = '';
-      document.getElementById('stockOutNote').value = '';
-      document.getElementById('stockOutDate').value = todayStr();
-      document.getElementById('stockOutError').classList.add('hidden');
+    function openStockOut(id, name, quantity, unit){
+      document.getElementById('stockOutItemId').value = id;
+      document.getElementById('stockOutItemLabel').textContent = 'Removing stock for ' + name;
+      document.getElementById('stockOutAvailable').textContent = 'Available: ' + quantity + ' ' + unit;
       openModal('stockOutModal');
     }
 
-    function submitStockIn(){
-      if (!pendingItem) return;
-      const item = findItem(pendingItem.category, pendingItem.id);
-      const qty = parseInt(document.getElementById('stockInQty').value, 10);
-      if (!qty || qty <= 0) return;
-      item.stock += qty;
-      logs.unshift({
-        date: document.getElementById('stockInDate').value || todayStr(),
-        category: pendingItem.category,
-        itemName: item.name,
-        type: 'in',
-        qty,
-        unit: item.unit,
-        party: document.getElementById('stockInParty').value || '—',
-        cost: parseFloat(document.getElementById('stockInCost').value) || 0,
-        note: document.getElementById('stockInNote').value || '',
-      });
-      saveInventory();
-      renderItems();
-      renderLog();
-      closeModal('stockInModal');
-    }
-
-    function submitStockOut(){
-      if (!pendingItem) return;
-      const item = findItem(pendingItem.category, pendingItem.id);
-      const qty = parseInt(document.getElementById('stockOutQty').value, 10);
-      if (!qty || qty <= 0) return;
-      if (qty > item.stock) {
-        document.getElementById('stockOutError').classList.remove('hidden');
-        return;
-      }
-      item.stock -= qty;
-      logs.unshift({
-        date: document.getElementById('stockOutDate').value || todayStr(),
-        category: pendingItem.category,
-        itemName: item.name,
-        type: 'out',
-        qty,
-        unit: item.unit,
-        party: document.getElementById('stockOutReason').value,
-        note: document.getElementById('stockOutNote').value || '',
-      });
-      saveInventory();
-      renderItems();
-      renderLog();
-      closeModal('stockOutModal');
-    }
-
-    function renderLog(){
-      const body = document.getElementById('logBody');
-      if (logs.length === 0) {
-        body.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-stamp-300 text-sm">No stock movements yet.</td></tr>';
-        return;
-      }
-      body.innerHTML = logs.slice(0, 30).map(l => `
-        <tr class="border-b border-cream-200 last:border-0">
-          <td class="py-3 px-3 text-stamp-500 text-sm whitespace-nowrap">${l.date}</td>
-          <td class="py-3 px-3 font-bold text-stamp-700 text-sm">${l.itemName}</td>
-          <td class="py-3 px-3">
-            <span class="text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full ${l.category === 'supplier' ? 'bg-stamp-100 text-stamp-600' : 'bg-cream-100 text-stamp-600'}">${l.category === 'supplier' ? 'Supplier' : 'Procurement'}</span>
-          </td>
-          <td class="py-3 px-3">
-            <span class="text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full ${l.type === 'in' ? 'bg-mint-50 text-mint-600' : 'bg-coral-50 text-coral-600'}">${l.type === 'in' ? 'Stock In' : 'Stock Out'}</span>
-          </td>
-          <td class="py-3 px-3 font-display font-bold text-stamp-700 text-sm">${l.type === 'in' ? '+' : '−'}${l.qty} ${l.unit}</td>
-          <td class="py-3 px-3 text-stamp-500 text-sm">${l.party}</td>
-          <td class="py-3 px-3 text-stamp-400 text-xs">${l.note || '—'}</td>
-        </tr>
-      `).join('');
-    }
-
-    showCategory('procurement');
-    renderLog();
+    @if ($errors->has('current_quantity') || $errors->has('reorder_level'))
+      openModal('addItemModal');
+    @elseif ($errors->has('purchase_source') || $errors->has('items.0.unit_cost'))
+      openModal('stockInModal');
+    @elseif ($errors->has('transaction_type') || $errors->has('quantity'))
+      openModal('stockOutModal');
+    @endif
   </script>
 
   <script>

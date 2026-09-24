@@ -70,7 +70,7 @@
     </div>
 
     <nav class="flex-1 space-y-1.5">
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
+      <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         Dashboard
       </a>
@@ -82,7 +82,7 @@
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-9 4h16a1 1 0 001-1V6a1 1 0 00-1-1H4a1 1 0 00-1 1v12a1 1 0 001 1z"/></svg>
         POS Terminal
       </a>
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
+      <a href="{{ route('admin.products.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
         Products
       </a>
@@ -105,14 +105,17 @@
     </nav>
 
     <div class="pt-4 mt-auto border-t border-cream-200 flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-sm">A</div>
+      <div class="w-10 h-10 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-sm">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
       <div class="text-sm flex-1">
-        <p class="font-bold text-stamp-700 leading-tight">Admin</p>
+        <p class="font-bold text-stamp-700 leading-tight">{{ auth()->user()->name }}</p>
         <p class="text-stamp-300 text-xs font-bold">Owner</p>
       </div>
-      <a href="{{ route('admin.login') }}" title="Log out" class="text-stamp-300 hover:text-stamp-600">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-      </a>
+      <form method="POST" action="{{ route('admin.logout') }}">
+        @csrf
+        <button type="submit" title="Log out" class="text-stamp-300 hover:text-stamp-600">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </form>
     </div>
   </aside>
 
@@ -130,31 +133,32 @@
       </button>
     </div>
 
+    @if (session('status'))
+      <div class="mb-5 bg-mint-50 text-mint-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('status') }}</div>
+    @endif
+    @if ($errors->any())
+      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ $errors->first() }}</div>
+    @endif
+
     <!-- Stat cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       <div class="bg-white rounded-3xl shadow-soft p-5 flex items-center gap-4">
         <div class="w-12 h-12 rounded-2xl bg-cream-100 flex items-center justify-center text-stamp-500 shrink-0">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>
         </div>
-        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Total Staff</p><p class="font-display font-bold text-2xl text-stamp-700">12</p></div>
-      </div>
-      <div class="bg-white rounded-3xl shadow-soft p-5 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-mint-50 flex items-center justify-center text-mint-600 shrink-0">
-          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-        </div>
-        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Active</p><p class="font-display font-bold text-2xl text-stamp-700">9</p></div>
-      </div>
-      <div class="bg-white rounded-3xl shadow-soft p-5 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-cream-100 flex items-center justify-center text-stamp-500 shrink-0">
-          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </div>
-        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">On Shift</p><p class="font-display font-bold text-2xl text-stamp-700">4</p></div>
+        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Total Staff</p><p class="font-display font-bold text-2xl text-stamp-700">{{ $staff->count() }}</p></div>
       </div>
       <div class="bg-white rounded-3xl shadow-soft p-5 flex items-center gap-4">
         <div class="w-12 h-12 rounded-2xl bg-cream-100 flex items-center justify-center text-stamp-500 shrink-0">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
         </div>
-        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Admins</p><p class="font-display font-bold text-2xl text-stamp-700">2</p></div>
+        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Admins</p><p class="font-display font-bold text-2xl text-stamp-700">{{ $staff->where('role', 'admin')->count() }}</p></div>
+      </div>
+      <div class="bg-white rounded-3xl shadow-soft p-5 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-mint-50 flex items-center justify-center text-mint-600 shrink-0">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Assistants</p><p class="font-display font-bold text-2xl text-stamp-700">{{ $staff->where('role', 'assistant')->count() }}</p></div>
       </div>
     </div>
 
@@ -164,58 +168,31 @@
         <h3 class="font-display font-bold text-stamp-700 text-lg">Staff Directory</h3>
         <div class="flex items-center gap-2 bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2.5 w-full sm:w-64">
           <svg class="w-4 h-4 text-stamp-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input type="text" placeholder="Search staff..." class="w-full bg-transparent outline-none text-sm text-stamp-700 placeholder-stamp-300 font-semibold">
+          <input id="staffSearch" type="text" placeholder="Search staff..." class="w-full bg-transparent outline-none text-sm text-stamp-700 placeholder-stamp-300 font-semibold">
         </div>
       </div>
 
-      <div class="grid gap-3">
-        <div class="bg-cream-50 rounded-2xl shadow-soft-sm p-4 flex items-center gap-4 flex-wrap">
-          <div class="w-12 h-12 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-lg shrink-0">JD</div>
-          <div class="flex-1 min-w-[140px]">
-            <p class="font-extrabold text-stamp-700">Juan Dela Cruz</p>
-            <p class="text-xs text-stamp-400 font-semibold">juan.delacruz@catbrews.ph</p>
+      <div id="staffList" class="grid gap-3">
+        @forelse ($staff as $member)
+          <div class="staff-row bg-cream-50 rounded-2xl shadow-soft-sm p-4 flex items-center gap-4 flex-wrap" data-name="{{ strtolower($member->first_name.' '.$member->last_name) }}">
+            <div class="w-12 h-12 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-lg shrink-0">{{ strtoupper(substr($member->first_name, 0, 1).substr($member->last_name, 0, 1)) }}</div>
+            <div class="flex-1 min-w-[140px]">
+              <p class="font-extrabold text-stamp-700">{{ $member->first_name }} {{ $member->middle_name ? substr($member->middle_name, 0, 1).'. ' : '' }}{{ $member->last_name }}</p>
+              <p class="text-xs text-stamp-400 font-semibold">POS PIN &bull;&bull;&bull;&bull;</p>
+            </div>
+            <span class="bg-cream-100 text-stamp-600 text-xs font-extrabold px-3 py-1.5 rounded-full">{{ ucfirst($member->role) }}</span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick='openEditModal(@json($member))' class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+              <form method="POST" action="{{ route('admin.users.destroy', $member) }}" onsubmit="return confirm('Remove {{ $member->first_name }} {{ $member->last_name }}? This cannot be undone.');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-coral-50 flex items-center justify-center text-coral-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+              </form>
+            </div>
           </div>
-          <span class="bg-cream-100 text-stamp-600 text-xs font-extrabold px-3 py-1.5 rounded-full">Barista</span>
-          <div class="w-11 h-6 bg-mint-500 rounded-full shadow-soft-inset relative">
-            <span class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-soft-sm translate-x-5"></span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
-            <button class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-coral-50 flex items-center justify-center text-coral-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-          </div>
-        </div>
-
-        <div class="bg-cream-50 rounded-2xl shadow-soft-sm p-4 flex items-center gap-4 flex-wrap">
-          <div class="w-12 h-12 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-lg shrink-0">MS</div>
-          <div class="flex-1 min-w-[140px]">
-            <p class="font-extrabold text-stamp-700">Maria Santos</p>
-            <p class="text-xs text-stamp-400 font-semibold">maria.santos@catbrews.ph</p>
-          </div>
-          <span class="bg-cream-100 text-stamp-600 text-xs font-extrabold px-3 py-1.5 rounded-full">Cashier</span>
-          <div class="w-11 h-6 bg-mint-500 rounded-full shadow-soft-inset relative">
-            <span class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-soft-sm translate-x-5"></span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
-            <button class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-coral-50 flex items-center justify-center text-coral-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-          </div>
-        </div>
-
-        <div class="bg-cream-50 rounded-2xl shadow-soft-sm p-4 flex items-center gap-4 flex-wrap opacity-60">
-          <div class="w-12 h-12 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-lg shrink-0">RT</div>
-          <div class="flex-1 min-w-[140px]">
-            <p class="font-extrabold text-stamp-700">Ramil Torres</p>
-            <p class="text-xs text-stamp-400 font-semibold">ramil.torres@catbrews.ph</p>
-          </div>
-          <span class="bg-cream-100 text-stamp-600 text-xs font-extrabold px-3 py-1.5 rounded-full">Manager</span>
-          <div class="w-11 h-6 bg-cream-200 rounded-full shadow-soft-inset relative">
-            <span class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-soft-sm"></span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
-            <button class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-coral-50 flex items-center justify-center text-coral-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-          </div>
-        </div>
+        @empty
+          <p class="text-center text-sm font-semibold text-stamp-300 py-10">No staff accounts yet. Create one to get started.</p>
+        @endforelse
       </div>
     </div>
   </main>
@@ -224,7 +201,7 @@
   <div id="createModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-lg p-7 relative max-h-[90vh] overflow-y-auto">
 
-      <button onclick="document.getElementById('createModal').classList.add('hidden')" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
+      <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
 
@@ -236,70 +213,31 @@
         <p class="text-xs text-stamp-400 font-semibold mt-1">Fill in the details to onboard a new team member</p>
       </div>
 
-      <form class="space-y-4">
+      <form method="POST" action="{{ route('admin.users.store') }}" class="space-y-4">
+        @csrf
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">First Name</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="text" placeholder="Juan" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="text" name="first_name" value="{{ old('first_name') }}" placeholder="Juan" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
           </div>
           <div>
             <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Last Name</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="text" placeholder="Dela Cruz" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Dela Cruz" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Email Address</label>
-          <div class="flex items-center gap-2 bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <svg class="w-4 h-4 text-stamp-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            <input type="email" placeholder="staff@catbrews.ph" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
-          </div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Middle Name <span class="normal-case font-semibold text-stamp-300">(optional)</span></label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="text" name="middle_name" value="{{ old('middle_name') }}" placeholder="Santos" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Username</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="text" placeholder="juan.dc" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
-          </div>
-          <div>
-            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Contact No.</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="text" placeholder="09xx-xxx-xxxx" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Role</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-              <select class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
-                <option>Barista</option>
-                <option>Cashier</option>
-                <option>Manager</option>
-                <option>Kitchen Staff</option>
-                <option>Admin</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Branch</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-              <select class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
-                <option>Main Branch</option>
-                <option>Downtown Stall</option>
-                <option>Mall Kiosk</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Password</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="password" placeholder="••••••••" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
-          </div>
-          <div>
-            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Confirm Password</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="password" placeholder="••••••••" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Role</label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+            <select name="role" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+              <option value="assistant" @selected(old('role') === 'assistant')>Assistant</option>
+              <option value="admin" @selected(old('role') === 'admin')>Admin</option>
+            </select>
           </div>
         </div>
 
@@ -307,23 +245,81 @@
           <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">POS PIN (4-digit)</label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset flex items-center gap-2 px-3.5 py-2.5">
             <svg class="w-4 h-4 text-stamp-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            <input type="password" inputmode="numeric" maxlength="4" placeholder="••••" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            <input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" name="passcode" value="{{ old('passcode') }}" placeholder="1234" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
           </div>
-          <p class="text-[11px] text-stamp-300 font-semibold mt-1.5 ml-1">Used to identify this account at the POS terminal — separate from the dashboard password.</p>
-        </div>
-
-        <div class="flex items-center justify-between px-1 pt-1">
-          <span class="text-sm font-bold text-stamp-600">Account active immediately</span>
-          <div class="w-11 h-6 bg-mint-500 rounded-full shadow-soft-inset relative">
-            <span class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-soft-sm translate-x-5"></span>
-          </div>
+          <p class="text-[11px] text-stamp-300 font-semibold mt-1.5 ml-1">This is the only credential this account uses &mdash; it unlocks the POS terminal.</p>
         </div>
 
         <div class="flex gap-3 pt-3">
           <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="flex-1 py-3.5 rounded-2xl bg-cream-100 text-stamp-600 font-display font-bold text-sm hover:bg-cream-200 transition-colors">Cancel</button>
-          <button type="button" class="flex-1 py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center justify-center gap-2">
+          <button type="submit" class="flex-1 py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center justify-center gap-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
             Create Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Staff Modal -->
+  <div id="editModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-lg p-7 relative max-h-[90vh] overflow-y-auto">
+
+      <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 rounded-2xl bg-cream-100 shadow-soft-inset mx-auto flex items-center justify-center text-stamp-600 mb-3">
+          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-xl text-stamp-700">Edit Staff Account</h3>
+        <p class="text-xs text-stamp-400 font-semibold mt-1">Update this team member's details</p>
+      </div>
+
+      <form id="editForm" method="POST" action="" class="space-y-4">
+        @csrf
+        @method('PUT')
+        <input type="hidden" name="_editing_id" id="edit_editing_id" value="{{ old('_editing_id') }}">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">First Name</label>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="text" name="first_name" id="edit_first_name" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
+          </div>
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Last Name</label>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="text" name="last_name" id="edit_last_name" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Middle Name <span class="normal-case font-semibold text-stamp-300">(optional)</span></label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="text" name="middle_name" id="edit_middle_name" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Role</label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+            <select name="role" id="edit_role" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+              <option value="assistant">Assistant</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">POS PIN (4-digit)</label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset flex items-center gap-2 px-3.5 py-2.5">
+            <svg class="w-4 h-4 text-stamp-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" name="passcode" id="edit_passcode" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-3">
+          <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="flex-1 py-3.5 rounded-2xl bg-cream-100 text-stamp-600 font-display font-bold text-sm hover:bg-cream-200 transition-colors">Cancel</button>
+          <button type="submit" class="flex-1 py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Save Changes
           </button>
         </div>
       </form>
@@ -339,6 +335,37 @@
       document.getElementById('sidebar').classList.add('-translate-x-full');
       document.getElementById('sidebarBackdrop').classList.add('hidden');
     }
+
+    function openEditModal(credential){
+      document.getElementById('editForm').action = "{{ url('/admin/users') }}/" + credential.id;
+      document.getElementById('edit_editing_id').value = credential.id;
+      document.getElementById('edit_first_name').value = credential.first_name || '';
+      document.getElementById('edit_middle_name').value = credential.middle_name || '';
+      document.getElementById('edit_last_name').value = credential.last_name || '';
+      document.getElementById('edit_role').value = credential.role || 'assistant';
+      document.getElementById('edit_passcode').value = credential.passcode || '';
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    document.getElementById('staffSearch').addEventListener('input', function (e) {
+      const query = e.target.value.trim().toLowerCase();
+      document.querySelectorAll('.staff-row').forEach(function (row) {
+        row.style.display = row.dataset.name.includes(query) ? '' : 'none';
+      });
+    });
+
+    @if ($errors->any() && old('_editing_id'))
+      openEditModal({
+        id: {{ (int) old('_editing_id') }},
+        first_name: @json(old('first_name')),
+        middle_name: @json(old('middle_name')),
+        last_name: @json(old('last_name')),
+        role: @json(old('role')),
+        passcode: @json(old('passcode')),
+      });
+    @elseif ($errors->any())
+      document.getElementById('createModal').classList.remove('hidden');
+    @endif
   </script>
 
 </body>

@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class InventoryTransactionController extends Controller
 {
@@ -73,7 +74,7 @@ class InventoryTransactionController extends Controller
             $item = InventoryItem::lockForUpdate()->findOrFail($validated['inventory_item_id']);
 
             if ($validated['quantity'] > $item->current_quantity) {
-                abort(422, 'Quantity exceeds available stock.');
+                throw ValidationException::withMessages(['quantity' => 'Quantity exceeds available stock.']);
             }
 
             $item->decrement('current_quantity', $validated['quantity']);

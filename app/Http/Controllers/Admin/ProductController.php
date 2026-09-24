@@ -12,14 +12,25 @@ use Illuminate\Http\Request;
 class ProductController extends Controller
 {
     /**
-     * List every menu item with its category.
+     * List every menu item with its category, filterable by name and category.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $products = Product::with('productCategory')->orderBy('product_name')->get();
+        $query = Product::with('productCategory');
+
+        if ($request->filled('search')) {
+            $query->where('product_name', 'like', '%'.$request->string('search').'%');
+        }
+
+        if ($request->filled('category')) {
+            $query->where('product_category_id', $request->integer('category'));
+        }
+
+        $products = $query->orderBy('product_name')->paginate(12)->withQueryString();
 
         return view('admin.products.index', [
             'products' => $products,
+            'categories' => ProductCategory::orderBy('category_name')->get(),
         ]);
     }
 

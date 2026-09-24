@@ -98,6 +98,6 @@ class SupplyPurchaseController extends Controller
             }
         });
 
-        return redirect()->route('admin.supply-purchases.index')->with('status', 'Purchase recorded and stock received.');
+        return redirect()->route('admin.inventory-items.index')->with('status', 'Purchase recorded and stock received.');
     }
 }

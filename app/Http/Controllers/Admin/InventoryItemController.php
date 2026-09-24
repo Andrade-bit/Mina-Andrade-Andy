@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\InventoryItem;
+use App\Models\InventoryTransaction;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,10 +21,19 @@ class InventoryItemController extends Controller
         $procurement = InventoryItem::where('type', 'ingredient')->orderBy('name')->get();
         $supplier = InventoryItem::where('type', 'supply')->orderBy('name')->get();
 
+        $recentTransactions = InventoryTransaction::with('inventoryItem')
+            ->latest('inventory_transaction_date')
+            ->latest('id')
+            ->limit(20)
+            ->get();
+
         return view('admin.inventory', [
             'procurement' => $procurement,
             'supplier' => $supplier,
             'lowStockCount' => InventoryItem::whereColumn('current_quantity', '<=', 'reorder_level')->count(),
+            'recentTransactions' => $recentTransactions,
+            'stockInCount' => InventoryTransaction::where('transaction_type', 'Restock')->count(),
+            'stockOutCount' => InventoryTransaction::whereIn('transaction_type', ['Waste', 'Adjustment', 'Sales'])->count(),
         ]);
     }
 

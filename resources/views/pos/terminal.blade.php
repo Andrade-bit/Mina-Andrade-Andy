@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Catbrews POS Terminal</title>
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -69,32 +70,30 @@
     </div>
 
     <div class="flex items-center gap-3">
-      <a href="{{ route('pos.transactions') }}" class="admin-only w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Transactions &amp; reports">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-      </a>
-      <a href="{{ route('admin.users') }}" class="admin-only w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Admin dashboard">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      </a>
-
-      <div class="hidden sm:flex items-center gap-1 bg-cream-100 rounded-full p-1 shadow-soft-inset" title="Design preview only — switches which role's view you're seeing">
-        <button id="roleOwnerBtn" onclick="applyRole('owner')" class="px-3 py-1.5 rounded-full text-[11px] font-extrabold transition-all">Owner</button>
-        <button id="roleStaffBtn" onclick="applyRole('staff')" class="px-3 py-1.5 rounded-full text-[11px] font-extrabold transition-all">Staff</button>
-      </div>
+      @if ($credential->role === 'admin')
+        <a href="{{ route('pos.transactions') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Transactions &amp; reports">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </a>
+        <a href="{{ route('admin.users') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Admin dashboard">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </a>
+      @endif
 
       <div class="flex items-center gap-2 pl-2 border-l border-cream-200">
-        <div id="userAvatar" class="w-9 h-9 rounded-full bg-stamp-500 text-cream-50 flex items-center justify-center font-display font-bold text-xs">A</div>
+        <div class="w-9 h-9 rounded-full {{ $credential->role === 'admin' ? 'bg-stamp-500' : 'bg-mint-500' }} text-cream-50 flex items-center justify-center font-display font-bold text-xs">{{ strtoupper(substr($credential->first_name, 0, 1).substr($credential->last_name, 0, 1)) }}</div>
         <div class="hidden md:block">
-          <p id="currentUserName" class="text-sm font-extrabold text-stamp-700 leading-tight">Admin</p>
-          <p id="currentUserRole" class="text-[10px] font-bold text-stamp-300 uppercase tracking-wide">Owner</p>
+          <p class="text-sm font-extrabold text-stamp-700 leading-tight">{{ $credential->first_name }} {{ $credential->last_name }}</p>
+          <p class="text-[10px] font-bold text-stamp-300 uppercase tracking-wide">{{ ucfirst($credential->role) }}</p>
         </div>
       </div>
-      <a href="{{ route('pos.login') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-coral-50 flex items-center justify-center text-coral-500 transition-colors" title="Switch user">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-      </a>
+      <form method="POST" action="{{ route('pos.logout') }}">
+        @csrf
+        <button type="submit" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-coral-50 flex items-center justify-center text-coral-500 transition-colors" title="Switch user">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </form>
     </div>
   </header>
-
-  <p class="admin-only text-center text-[11px] font-bold text-stamp-300 bg-cream-100 py-1.5">Owner/Staff toggle above is a design preview — it shows how the POS looks for each role, it isn't a real login switch.</p>
 
   <div class="flex flex-col lg:flex-row gap-5 p-5 max-w-7xl mx-auto">
 
@@ -108,145 +107,37 @@
       </div>
       <p class="text-[11px] text-stamp-300 font-semibold mb-3">🧊 Iced &amp; other drinks come in Small (₱35) / Medium (₱40) / Large (₱50) — 🔥 Hot Coffee is one size, ₱35.</p>
 
-      <div id="cat-hot" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <button onclick="addToCart('hot-americano','Hot Americano',35)" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/americano.jpg') }}" alt="Hot Americano" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Hot Americano</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35.00</p>
-        </button>
-        <button onclick="addToCart('hot-cafe-latte','Hot Cafe Latte',35)" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/cafe-latte.jpg') }}" alt="Hot Cafe Latte" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Hot Cafe Latte</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35.00</p>
-        </button>
-        <button onclick="addToCart('hot-cappuccino','Hot Cappuccino',35)" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/cappuccino.jpg') }}" alt="Hot Cappuccino" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Hot Cappuccino</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35.00</p>
-        </button>
-        <button onclick="addToCart('hot-spanish-latte','Hot Spanish Latte',35)" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/spanish-latte.jpg') }}" alt="Hot Spanish Latte" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Hot Spanish Latte</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35.00</p>
-        </button>
-        <button onclick="addToCart('hot-caramel-macchiato','Hot Caramel Macchiato',35)" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/caramel-macchiato.jpg') }}" alt="Hot Caramel Macchiato" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Hot Caramel Macchiato</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35.00</p>
-        </button>
-      </div>
+      @php
+        $oneSizeCup = $cupSizes->firstWhere('size_name', 'One Size');
+        $sizedCups = $cupSizes->where('size_name', '!=', 'One Size')->sortBy('price')->values();
+        $categoryTabs = ['Hot Coffee' => 'hot', 'Iced Coffee' => 'coffee', 'Non-Coffee' => 'noncoffee', 'Fruit Juice' => 'juice'];
+      @endphp
 
-      <div id="cat-coffee" class="hidden grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <button onclick="openSizePicker('iced-americano','Iced Americano','{{ asset('images/products/americano.jpg') }}')" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/americano.jpg') }}" alt="Iced Americano" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Iced Americano</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35–50</p>
-        </button>
-        <button onclick="openSizePicker('iced-cafe-latte','Iced Cafe Latte','{{ asset('images/products/cafe-latte.jpg') }}')" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/cafe-latte.jpg') }}" alt="Iced Cafe Latte" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Iced Cafe Latte</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35–50</p>
-        </button>
-        <button onclick="openSizePicker('iced-cappuccino','Iced Cappuccino','{{ asset('images/products/cappuccino.jpg') }}')" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/cappuccino.jpg') }}" alt="Iced Cappuccino" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Iced Cappuccino</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35–50</p>
-        </button>
-        <button onclick="openSizePicker('iced-spanish-latte','Iced Spanish Latte','{{ asset('images/products/spanish-latte.jpg') }}')" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/spanish-latte.jpg') }}" alt="Iced Spanish Latte" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Iced Spanish Latte</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35–50</p>
-        </button>
-        <button onclick="openSizePicker('iced-caramel-macchiato','Iced Caramel Macchiato','{{ asset('images/products/caramel-macchiato.jpg') }}')" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/caramel-macchiato.jpg') }}" alt="Iced Caramel Macchiato" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Iced Caramel Macchiato</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35–50</p>
-        </button>
-      </div>
-
-      <div id="cat-noncoffee" class="hidden grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <button onclick="openSizePicker('matcha-latte','Matcha Latte','{{ asset('images/products/matcha-latte.jpg') }}')" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/matcha-latte.jpg') }}" alt="Matcha Latte" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Matcha Latte</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35–50</p>
-        </button>
-        <button onclick="openSizePicker('choco','Chocolate','{{ asset('images/products/chocolate.jpg') }}')" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/chocolate.jpg') }}" alt="Chocolate" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Chocolate</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35–50</p>
-        </button>
-        <button onclick="openSizePicker('strawberry-milk','Strawberry Milk','{{ asset('images/products/strawberry-milk.jpg') }}')" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/strawberry-milk.jpg') }}" alt="Strawberry Milk" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Strawberry Milk</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35–50</p>
-        </button>
-      </div>
-
-      <div id="cat-juice" class="hidden grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <button onclick="openSizePicker('mango-juice','Mango Juice','{{ asset('images/products/mango-juice.jpg') }}')" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/mango-juice.jpg') }}" alt="Mango Juice" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Mango Juice</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35–50</p>
-        </button>
-        <button onclick="openSizePicker('lemonade','Lemonade','{{ asset('images/products/lemonade.jpg') }}')" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/lemonade.jpg') }}" alt="Lemonade" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Lemonade</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35–50</p>
-        </button>
-        <button onclick="openSizePicker('blue-lemonade','Blue Lemonade','{{ asset('images/products/blue-lemonade.jpg') }}')" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
-          <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-            <img src="{{ asset('images/products/blue-lemonade.jpg') }}" alt="Blue Lemonade" class="w-full h-full object-cover">
-            <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
-          </div>
-          <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">Blue Lemonade</p>
-          <p class="font-display font-bold text-stamp-500 text-sm">₱35–50</p>
-        </button>
-      </div>
+      @foreach ($categoryTabs as $categoryName => $tabId)
+        <div id="cat-{{ $tabId }}" class="{{ $loop->first ? '' : 'hidden' }} grid grid-cols-2 sm:grid-cols-3 gap-4">
+          @foreach ($products->where('productCategory.category_name', $categoryName) as $product)
+            @if ($categoryName === 'Hot Coffee')
+              <button onclick="addOneSizeToCart({{ $product->id }}, {{ $oneSizeCup->id }}, {{ Illuminate\Support\Js::from($product->product_name) }}, {{ $oneSizeCup->price }})" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
+                <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
+                  <img src="{{ asset('images/products/'.$product->image) }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover">
+                  <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
+                </div>
+                <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">{{ $product->product_name }}</p>
+                <p class="font-display font-bold text-stamp-500 text-sm">₱{{ number_format($oneSizeCup->price, 2) }}</p>
+              </button>
+            @else
+              <button onclick="openSizePicker({{ $product->id }}, {{ Illuminate\Support\Js::from($product->product_name) }}, {{ Illuminate\Support\Js::from(asset('images/products/'.$product->image)) }})" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
+                <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
+                  <img src="{{ asset('images/products/'.$product->image) }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover">
+                  <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
+                </div>
+                <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">{{ $product->product_name }}</p>
+                <p class="font-display font-bold text-stamp-500 text-sm">₱{{ number_format($sizedCups->first()->price, 0) }}&ndash;{{ number_format($sizedCups->last()->price, 0) }}</p>
+              </button>
+            @endif
+          @endforeach
+        </div>
+      @endforeach
     </div>
 
     <!-- Cart -->
@@ -321,10 +212,12 @@
         </div>
 
         <div class="flex gap-2">
-          <button onclick="voidOrder()" class="admin-only px-4 py-3.5 rounded-2xl bg-coral-50 text-coral-600 font-display font-bold text-sm hover:bg-coral-100 transition-colors flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            Void
-          </button>
+          @if ($credential->role === 'admin')
+            <button onclick="voidOrder()" class="px-4 py-3.5 rounded-2xl bg-coral-50 text-coral-600 font-display font-bold text-sm hover:bg-coral-100 transition-colors flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              Void
+            </button>
+          @endif
           <button id="chargeBtn" onclick="charge()" disabled class="flex-1 py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 disabled:opacity-40 disabled:pointer-events-none">
             Charge <span id="chargeAmount">₱0.00</span>
           </button>
@@ -375,32 +268,23 @@
       <p id="sizeModalName" class="text-center font-display font-bold text-stamp-700 text-lg mb-1">Product</p>
       <p class="text-center text-[11px] text-stamp-300 font-bold uppercase tracking-wide mb-4">Choose a cup size</p>
       <div class="grid grid-cols-3 gap-2.5">
-        <button onclick="chooseSize('S', this)" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all text-center">
-          <span class="block text-2xl mb-1">🥤</span>
-          <span class="block font-display font-bold text-stamp-700 text-sm">Small</span>
-          <span class="block font-bold text-stamp-500 text-xs">₱35</span>
-        </button>
-        <button onclick="chooseSize('M', this)" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all text-center">
-          <span class="block text-3xl mb-1">🥤</span>
-          <span class="block font-display font-bold text-stamp-700 text-sm">Medium</span>
-          <span class="block font-bold text-stamp-500 text-xs">₱40</span>
-        </button>
-        <button onclick="chooseSize('L', this)" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all text-center">
-          <span class="block text-4xl mb-1">🥤</span>
-          <span class="block font-display font-bold text-stamp-700 text-sm">Large</span>
-          <span class="block font-bold text-stamp-500 text-xs">₱50</span>
-        </button>
+        @foreach ($sizedCups as $size)
+          <button onclick="chooseSize({{ $size->id }}, {{ Illuminate\Support\Js::from($size->size_name) }}, {{ $size->price }}, this)" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all text-center">
+            <span class="block mb-1" style="font-size: {{ 20 + $loop->index * 8 }}px">🥤</span>
+            <span class="block font-display font-bold text-stamp-700 text-sm">{{ $size->size_name }}</span>
+            <span class="block font-bold text-stamp-500 text-xs">₱{{ number_format($size->price, 0) }}</span>
+          </button>
+        @endforeach
       </div>
     </div>
   </div>
 
   <script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     let cart = [];
     let promoDiscount = 0;
     let selectedPayment = 'Cash';
     let currentOrderType = 'Dine In';
-    let currentRole = 'owner';
-    let currentUser = { name: 'Admin', role: 'Owner' };
 
     function showCategory(cat){
       ['hot','coffee','noncoffee','juice'].forEach(c => {
@@ -424,12 +308,10 @@
       });
     }
 
-    const SIZE_LABELS = { S: 'Small', M: 'Medium', L: 'Large' };
-    const SIZE_PRICES = { S: 35, M: 40, L: 50 };
     let pendingProduct = null;
 
-    function openSizePicker(id, name, img){
-      pendingProduct = { id, name, img };
+    function openSizePicker(productId, name, img){
+      pendingProduct = { productId, name, img };
       document.getElementById('sizeModalImg').src = img;
       document.getElementById('sizeModalImg').alt = name;
       document.getElementById('sizeModalName').textContent = name;
@@ -448,15 +330,17 @@
       card.classList.add('opacity-0', 'scale-90');
       setTimeout(() => modal.classList.add('hidden'), 150);
     }
-    function chooseSize(size, el){
+    function chooseSize(cupSizeId, sizeName, price, el){
       if (!pendingProduct) return;
       el.classList.add('animate-bounce-in');
-      const label = SIZE_LABELS[size];
-      const price = SIZE_PRICES[size];
       setTimeout(() => {
-        addToCart(pendingProduct.id + '-' + size, pendingProduct.name + ' (' + label + ')', price);
+        addToCart(pendingProduct.productId, cupSizeId, pendingProduct.name + ' (' + sizeName + ')', price);
         closeSizePicker();
       }, 120);
+    }
+
+    function addOneSizeToCart(productId, cupSizeId, name, price){
+      addToCart(productId, cupSizeId, name, price);
     }
 
     function setOrderType(type){
@@ -469,11 +353,12 @@
       document.getElementById('typeTakeOut').classList.toggle('text-stamp-500', type !== 'Take Out');
     }
 
-    function format(n){ return '₱' + n.toFixed(2); }
+    function format(n){ return '₱' + Number(n).toFixed(2); }
 
-    function addToCart(id, name, price){
-      const existing = cart.find(i => i.id === id);
-      if (existing) { existing.qty++; } else { cart.push({ id, name, price, qty: 1 }); }
+    function addToCart(productId, cupSizeId, name, price){
+      const lineId = productId + '-' + cupSizeId;
+      const existing = cart.find(i => i.lineId === lineId);
+      if (existing) { existing.qty++; } else { cart.push({ lineId, productId, cupSizeId, name, price, qty: 1 }); }
       renderCart();
       pulseCart();
     }
@@ -484,11 +369,11 @@
       panel.classList.add('ring-2', 'ring-mint-500', 'shadow-soft');
       setTimeout(() => panel.classList.remove('ring-2', 'ring-mint-500'), 350);
     }
-    function changeQty(id, delta){
-      const item = cart.find(i => i.id === id);
+    function changeQty(lineId, delta){
+      const item = cart.find(i => i.lineId === lineId);
       if (!item) return;
       item.qty += delta;
-      if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
+      if (item.qty <= 0) cart = cart.filter(i => i.lineId !== lineId);
       renderCart();
     }
     function renderCart(){
@@ -503,9 +388,9 @@
               <p class="text-xs text-stamp-300 font-semibold">${format(i.price)} each</p>
             </div>
             <div class="flex items-center gap-2 bg-cream-100 rounded-full px-1 py-1">
-              <button onclick="changeQty('${i.id}', -1)" class="w-6 h-6 rounded-full bg-white shadow-soft-sm text-stamp-600 font-bold text-sm flex items-center justify-center active:scale-90 transition-transform">−</button>
+              <button onclick="changeQty('${i.lineId}', -1)" class="w-6 h-6 rounded-full bg-white shadow-soft-sm text-stamp-600 font-bold text-sm flex items-center justify-center active:scale-90 transition-transform">−</button>
               <span class="w-5 text-center text-sm font-extrabold text-stamp-700">${i.qty}</span>
-              <button onclick="changeQty('${i.id}', 1)" class="w-6 h-6 rounded-full bg-white shadow-soft-sm text-stamp-600 font-bold text-sm flex items-center justify-center active:scale-90 transition-transform">+</button>
+              <button onclick="changeQty('${i.lineId}', 1)" class="w-6 h-6 rounded-full bg-white shadow-soft-sm text-stamp-600 font-bold text-sm flex items-center justify-center active:scale-90 transition-transform">+</button>
             </div>
             <p class="font-display font-bold text-stamp-700 text-sm w-16 text-right">${format(i.price * i.qty)}</p>
           </div>
@@ -656,7 +541,7 @@
 
     function charge(){
       if (cart.length === 0) return;
-      const { subtotal, discount, total } = computeTotals();
+      const { total } = computeTotals();
 
       let cashReceived = null, change = null;
       if (selectedPayment === 'Cash') {
@@ -665,66 +550,81 @@
         change = cashReceived - total;
       }
 
-      let counter = parseInt(localStorage.getItem('cb_txn_counter') || '481', 10) + 1;
-      localStorage.setItem('cb_txn_counter', String(counter));
+      const chargeBtn = document.getElementById('chargeBtn');
+      chargeBtn.disabled = true;
 
-      const now = new Date();
-      const stamp = now.toISOString().slice(0, 10).replace(/-/g, '');
+      fetch('{{ route('pos.terminal.store') }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': csrfToken,
+        },
+        body: JSON.stringify({
+          payment_method: selectedPayment,
+          items: cart.map(i => ({
+            product_id: i.productId,
+            cup_size_id: i.cupSizeId,
+            quantity: i.qty,
+            price_at_order: Math.round(i.price * (1 - promoDiscount) * 100) / 100,
+          })),
+        }),
+      })
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok) {
+            if (res.status === 401) {
+              alert(data.message || 'Your session expired. Please log in again.');
+              window.location.href = '{{ route('pos.login') }}';
+              return;
+            }
+            alert(data.message || 'Could not process this sale. Please try again.');
+            return;
+          }
 
-      const txn = {
-        id: 'CB-' + stamp + '-' + String(counter).padStart(4, '0'),
-        datetime: now.toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }),
-        items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
-        subtotal, discount, total,
-        payment: selectedPayment,
-        cashReceived, change,
-        orderType: currentOrderType,
-        processedBy: currentUser.name,
-        processedByRole: currentUser.role,
-      };
-
-      const txns = JSON.parse(localStorage.getItem('cb_transactions') || '[]');
-      txns.unshift(txn);
-      localStorage.setItem('cb_transactions', JSON.stringify(txns));
-
-      showReceipt(txn);
-      cart = [];
-      promoDiscount = 0;
-      document.getElementById('promoInput').value = '';
-      document.getElementById('promoBanner').classList.add('hidden');
-      document.getElementById('cashInput').value = '';
-      renderCart();
+          showReceipt(data.transaction, { cashReceived, change, orderType: currentOrderType });
+          cart = [];
+          promoDiscount = 0;
+          document.getElementById('promoInput').value = '';
+          document.getElementById('promoBanner').classList.add('hidden');
+          document.getElementById('cashInput').value = '';
+          renderCart();
+        })
+        .catch(() => alert('Network error — the sale was not recorded. Please try again.'))
+        .finally(() => { chargeBtn.disabled = false; updateChargeState(); });
     }
 
-    function showReceipt(txn){
+    function showReceipt(transaction, extra){
       const check = document.getElementById('receiptCheck');
       check.classList.remove('animate-bounce-in');
       void check.offsetWidth;
       check.classList.add('animate-bounce-in');
+
+      const items = transaction.items || [];
+      const dateStr = new Date(transaction.transaction_date).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
+
       document.getElementById('receiptBody').innerHTML = `
         <div class="border-t border-b border-dashed border-cream-200 py-3 mb-3 space-y-1">
-          ${txn.items.map(i => `
+          ${items.map(i => `
             <div class="flex justify-between text-stamp-600 font-semibold">
-              <span>${i.qty}x ${i.name}</span>
-              <span>${format(i.price * i.qty)}</span>
+              <span>${i.quantity}x ${i.product.product_name} (${i.cup_size.size_name})</span>
+              <span>${format(i.subtotal)}</span>
             </div>
           `).join('')}
         </div>
         <div class="space-y-1 font-semibold text-stamp-500 mb-3">
-          <div class="flex justify-between"><span>Subtotal</span><span>${format(txn.subtotal)}</span></div>
-          ${txn.discount > 0 ? `<div class="flex justify-between text-mint-600"><span>Discount</span><span>-${format(txn.discount)}</span></div>` : ''}
-          <div class="flex justify-between font-display font-bold text-stamp-700 text-base pt-1 border-t border-cream-200"><span>Total</span><span>${format(txn.total)}</span></div>
+          <div class="flex justify-between font-display font-bold text-stamp-700 text-base pt-1 border-t border-cream-200"><span>Total</span><span>${format(transaction.total_amount)}</span></div>
         </div>
         <div class="space-y-1 text-xs text-stamp-400 font-semibold">
-          <div class="flex justify-between"><span>Transaction ID</span><span class="font-bold text-stamp-600">${txn.id}</span></div>
-          <div class="flex justify-between"><span>Date/Time</span><span>${txn.datetime}</span></div>
-          <div class="flex justify-between"><span>Order Type</span><span>${txn.orderType}</span></div>
-          <div class="flex justify-between"><span>Payment Method</span><span>${txn.payment}</span></div>
-          ${txn.payment === 'Cash' ? `
-            <div class="flex justify-between"><span>Cash Received</span><span>${format(txn.cashReceived)}</span></div>
-            <div class="flex justify-between font-bold text-mint-600"><span>Change</span><span>${format(txn.change)}</span></div>
+          <div class="flex justify-between"><span>Transaction ID</span><span class="font-bold text-stamp-600">CB-${String(transaction.id).padStart(5, '0')}</span></div>
+          <div class="flex justify-between"><span>Date/Time</span><span>${dateStr}</span></div>
+          <div class="flex justify-between"><span>Order Type</span><span>${extra.orderType}</span></div>
+          <div class="flex justify-between"><span>Payment Method</span><span>${transaction.payment_method}</span></div>
+          ${transaction.payment_method === 'Cash' ? `
+            <div class="flex justify-between"><span>Cash Received</span><span>${format(extra.cashReceived)}</span></div>
+            <div class="flex justify-between font-bold text-mint-600"><span>Change</span><span>${format(extra.change)}</span></div>
           ` : ''}
-          <div class="flex justify-between"><span>Processed By</span><span>${txn.processedBy} · ${txn.processedByRole}</span></div>
+          <div class="flex justify-between"><span>Processed By</span><span>{{ $credential->first_name }} {{ $credential->last_name }} &middot; {{ ucfirst($credential->role) }}</span></div>
         </div>
         <p class="text-center text-[11px] text-stamp-300 font-bold mt-4">Thank you, meow~! 🐾</p>
       `;
@@ -732,27 +632,6 @@
     }
     function closeReceipt(){ document.getElementById('receiptModal').classList.add('hidden'); }
 
-    function applyRole(role){
-      currentRole = role;
-      currentUser = role === 'owner' ? { name: 'Admin', role: 'Owner' } : { name: 'Juan Dela Cruz', role: 'Staff' };
-      document.getElementById('currentUserName').textContent = currentUser.name;
-      document.getElementById('currentUserRole').textContent = currentUser.role;
-      document.getElementById('userAvatar').textContent = role === 'owner' ? 'A' : 'JD';
-      document.getElementById('userAvatar').classList.toggle('bg-stamp-500', role === 'owner');
-      document.getElementById('userAvatar').classList.toggle('bg-mint-500', role !== 'owner');
-
-      document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', role !== 'owner'));
-
-      document.getElementById('roleOwnerBtn').classList.toggle('bg-stamp-500', role === 'owner');
-      document.getElementById('roleOwnerBtn').classList.toggle('text-cream-50', role === 'owner');
-      document.getElementById('roleOwnerBtn').classList.toggle('text-stamp-500', role !== 'owner');
-      document.getElementById('roleStaffBtn').classList.toggle('bg-mint-500', role === 'staff');
-      document.getElementById('roleStaffBtn').classList.toggle('text-cream-50', role === 'staff');
-      document.getElementById('roleStaffBtn').classList.toggle('text-stamp-500', role !== 'staff');
-    }
-
-    const params = new URLSearchParams(location.search);
-    applyRole(params.get('role') === 'staff' ? 'staff' : 'owner');
     renderCart();
     animateCategory('hot');
     syncCashInputMode();

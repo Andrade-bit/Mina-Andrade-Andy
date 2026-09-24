@@ -37,6 +37,10 @@
   <div class="absolute -top-28 -left-24 w-80 h-80 bg-stamp-100 rounded-full blur-3xl opacity-70"></div>
   <div class="absolute -bottom-28 -right-20 w-96 h-96 bg-mint-500/10 rounded-full blur-3xl"></div>
 
+  <button type="button" onclick="history.back()" class="absolute top-6 left-6 z-10 w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 shadow-soft-sm flex items-center justify-center text-stamp-500 transition-colors" title="Back">
+    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+  </button>
+
   <div class="relative w-full max-w-md bg-cream-50 rounded-[2rem] shadow-soft p-10">
 
     <div class="flex flex-col items-center mb-7">
@@ -55,27 +59,17 @@
         </svg>
       </div>
       <h1 class="font-display font-bold text-2xl text-stamp-700">Catbrews POS</h1>
-      <p class="font-body text-xs tracking-[0.2em] uppercase text-stamp-500 font-bold mt-1">Select your profile</p>
+      <p class="font-body text-xs tracking-[0.2em] uppercase text-stamp-500 font-bold mt-1">Enter your PIN</p>
     </div>
 
-    <div class="grid grid-cols-2 gap-4 mb-7">
-      <button type="button" onclick="selectProfile('owner', this)" class="profile-card bg-cream-100 rounded-2xl shadow-soft-sm p-5 flex flex-col items-center gap-2 transition-all">
-        <div class="w-14 h-14 rounded-full bg-stamp-500 text-cream-50 flex items-center justify-center font-display font-bold text-lg">
-          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-        </div>
-        <p class="font-extrabold text-stamp-700 text-sm text-center leading-tight">Admin</p>
-        <span class="text-[10px] font-extrabold uppercase tracking-wide text-stamp-500 bg-stamp-50 px-2 py-0.5 rounded-full">Owner</span>
-      </button>
+    @if ($errors->any())
+      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3 text-center">{{ $errors->first() }}</div>
+    @endif
 
-      <button type="button" onclick="selectProfile('staff', this)" class="profile-card bg-cream-100 rounded-2xl shadow-soft-sm p-5 flex flex-col items-center gap-2 transition-all">
-        <div class="w-14 h-14 rounded-full bg-mint-500 text-cream-50 flex items-center justify-center font-display font-bold text-lg">JD</div>
-        <p class="font-extrabold text-stamp-700 text-sm text-center leading-tight">Juan Dela Cruz</p>
-        <span class="text-[10px] font-extrabold uppercase tracking-wide text-mint-600 bg-mint-50 px-2 py-0.5 rounded-full">Staff</span>
-      </button>
-    </div>
+    <form method="POST" action="{{ route('pos.login.store') }}" id="pinForm">
+      @csrf
+      <input type="hidden" name="passcode" id="passcodeInput" value="">
 
-    <div id="pinSection" class="hidden">
-      <p class="text-center text-sm font-bold text-stamp-600 mb-1">Enter PIN for <span id="selectedName">—</span></p>
       <p class="text-center text-[11px] text-stamp-300 font-semibold mb-4">Your PIN identifies you on every sale you process</p>
 
       <div class="flex items-center justify-center gap-3 mb-6">
@@ -102,10 +96,10 @@
         </button>
       </div>
 
-      <a id="unlockBtn" href="{{ route('pos.terminal') }}?role=owner" class="block text-center bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold tracking-wide text-sm py-3.5 rounded-2xl shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">
+      <button type="submit" class="block w-full text-center bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold tracking-wide text-sm py-3.5 rounded-2xl shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">
         Unlock POS
-      </a>
-    </div>
+      </button>
+    </form>
 
     <p class="text-center text-[11px] font-bold text-stamp-300 mt-7">
       Managing the shop instead? <a href="{{ route('admin.login') }}" class="text-stamp-500 hover:text-stamp-700 underline">Admin Dashboard Login</a>
@@ -120,20 +114,19 @@
         dot.classList.toggle('bg-stamp-500', i < pin.length);
         dot.classList.toggle('bg-cream-200', i >= pin.length);
       }
+      document.getElementById('passcodeInput').value = pin;
     }
-    function pressDigit(d){ if (pin.length < 4) { pin += d; updateDots(); } }
+    function pressDigit(d){
+      if (pin.length < 4) {
+        pin += d;
+        updateDots();
+        if (pin.length === 4) {
+          document.getElementById('pinForm').submit();
+        }
+      }
+    }
     function clearPin(){ pin = ''; updateDots(); }
     function backspace(){ pin = pin.slice(0, -1); updateDots(); }
-
-    function selectProfile(role, el){
-      document.querySelectorAll('.profile-card').forEach(c => c.classList.remove('ring-4', 'ring-stamp-500'));
-      el.classList.add('ring-4', 'ring-stamp-500');
-      document.getElementById('pinSection').classList.remove('hidden');
-      document.getElementById('selectedName').textContent = role === 'owner' ? 'Admin · Owner' : 'Juan Dela Cruz · Staff';
-      document.getElementById('unlockBtn').href = "{{ route('pos.terminal') }}?role=" + role;
-      pin = '';
-      updateDots();
-    }
   </script>
 
 </body>

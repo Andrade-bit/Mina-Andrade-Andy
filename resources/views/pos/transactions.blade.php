@@ -54,21 +54,60 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div class="bg-white rounded-3xl shadow-soft p-5">
         <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mb-1">Today's Sales</p>
-        <p id="statSales" class="font-display font-bold text-2xl text-stamp-700">₱0.00</p>
+        <p class="font-display font-bold text-2xl text-stamp-700">₱{{ number_format($todaysSales, 2) }}</p>
       </div>
       <div class="bg-white rounded-3xl shadow-soft p-5">
         <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mb-1">Transactions</p>
-        <p id="statCount" class="font-display font-bold text-2xl text-stamp-700">0</p>
+        <p class="font-display font-bold text-2xl text-stamp-700">{{ $todaysCount }}</p>
       </div>
       <div class="bg-white rounded-3xl shadow-soft p-5">
-        <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mb-1">By Owner</p>
-        <p id="statOwner" class="font-display font-bold text-2xl text-stamp-700">0</p>
+        <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mb-1">By Admin</p>
+        <p class="font-display font-bold text-2xl text-stamp-700">{{ $byOwnerCount }}</p>
       </div>
       <div class="bg-white rounded-3xl shadow-soft p-5">
         <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mb-1">By Staff</p>
-        <p id="statStaff" class="font-display font-bold text-2xl text-stamp-700">0</p>
+        <p class="font-display font-bold text-2xl text-stamp-700">{{ $byStaffCount }}</p>
       </div>
     </div>
+
+    <form method="GET" action="{{ route('pos.transactions') }}" class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6 mb-4 space-y-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-2 bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2.5 flex-1 min-w-[220px]">
+          <svg class="w-4 h-4 text-stamp-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" name="search" value="{{ request('search') }}" placeholder="Search order # or staff name..." class="w-full bg-transparent outline-none text-sm text-stamp-700 placeholder-stamp-300 font-semibold">
+        </div>
+        <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2.5">
+          <select name="payment_method" onchange="this.form.submit()" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
+            <option value="">All Payments</option>
+            <option value="Cash" @selected(request('payment_method') === 'Cash')>Cash</option>
+            <option value="GCash" @selected(request('payment_method') === 'GCash')>GCash</option>
+            <option value="Card" @selected(request('payment_method') === 'Card')>Card</option>
+          </select>
+        </div>
+        <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2.5">
+          <select name="credential_id" onchange="this.form.submit()" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
+            <option value="">All Staff</option>
+            @foreach ($staffOptions as $staff)
+              <option value="{{ $staff->id }}" @selected((int) request('credential_id') === $staff->id)>{{ $staff->first_name }} {{ $staff->last_name }}</option>
+            @endforeach
+          </select>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2.5 flex items-center gap-2">
+          <span class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">From</span>
+          <input type="date" name="from" value="{{ request('from') }}" class="bg-transparent outline-none text-sm text-stamp-700 font-semibold">
+        </div>
+        <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2.5 flex items-center gap-2">
+          <span class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">To</span>
+          <input type="date" name="to" value="{{ request('to') }}" class="bg-transparent outline-none text-sm text-stamp-700 font-semibold">
+        </div>
+        <button type="submit" class="px-5 py-2.5 rounded-2xl bg-stamp-500 hover:bg-stamp-600 text-cream-50 font-extrabold text-xs transition-colors">Filter</button>
+        @if (request()->anyFilled(['search', 'payment_method', 'credential_id', 'from', 'to']))
+          <a href="{{ route('pos.transactions') }}" class="px-4 py-2.5 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-500 font-extrabold text-xs transition-colors">Clear</a>
+        @endif
+      </div>
+    </form>
 
     <div class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6 overflow-x-auto">
       <h3 class="font-display font-bold text-stamp-700 text-lg mb-4">Sales Log</h3>
@@ -81,77 +120,41 @@
             <th class="py-2 px-4">Payment</th>
             <th class="py-2 px-4">Processed By</th>
             <th class="py-2 px-4">Total</th>
-            <th class="py-2 px-4">Actions</th>
           </tr>
         </thead>
-        <tbody id="txnBody">
-          <tr class="border-b border-cream-200">
-            <td class="py-3 px-4 font-bold text-stamp-700 text-sm">CB-20260917-0478</td>
-            <td class="py-3 px-4 text-stamp-500 text-sm">Sep 17, 2026, 8:14 AM</td>
-            <td class="py-3 px-4 text-stamp-500 text-sm">2x Cafe Latte, 1x Mango Juice</td>
-            <td class="py-3 px-4 text-stamp-500 text-sm">Cash</td>
-            <td class="py-3 px-4"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-mint-50 text-mint-600">Juan Dela Cruz</span></td>
-            <td class="py-3 px-4 font-display font-bold text-stamp-700">₱277.00</td>
-            <td class="py-3 px-4"><button class="text-coral-500 text-xs font-bold hover:underline">Void</button></td>
-          </tr>
-          <tr class="border-b border-cream-200">
-            <td class="py-3 px-4 font-bold text-stamp-700 text-sm">CB-20260917-0479</td>
-            <td class="py-3 px-4 text-stamp-500 text-sm">Sep 17, 2026, 9:02 AM</td>
-            <td class="py-3 px-4 text-stamp-500 text-sm">1x Spanish Latte, 1x Lemonade</td>
-            <td class="py-3 px-4 text-stamp-500 text-sm">GCash</td>
-            <td class="py-3 px-4"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-stamp-500 text-cream-50">Admin</span></td>
-            <td class="py-3 px-4 font-display font-bold text-stamp-700">₱178.00</td>
-            <td class="py-3 px-4"><button class="text-coral-500 text-xs font-bold hover:underline">Void</button></td>
-          </tr>
-          <tr class="border-b border-cream-200 last:border-0">
-            <td class="py-3 px-4 font-bold text-stamp-700 text-sm">CB-20260917-0480</td>
-            <td class="py-3 px-4 text-stamp-500 text-sm">Sep 17, 2026, 9:47 AM</td>
-            <td class="py-3 px-4 text-stamp-500 text-sm">3x Matcha Latte</td>
-            <td class="py-3 px-4 text-stamp-500 text-sm">Card</td>
-            <td class="py-3 px-4"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-mint-50 text-mint-600">Juan Dela Cruz</span></td>
-            <td class="py-3 px-4 font-display font-bold text-stamp-700">₱327.00</td>
-            <td class="py-3 px-4"><button class="text-coral-500 text-xs font-bold hover:underline">Void</button></td>
-          </tr>
+        <tbody>
+          @forelse ($transactions as $transaction)
+            <tr class="border-b border-cream-200 last:border-0">
+              <td class="py-3 px-4 font-bold text-stamp-700 text-sm">CB-{{ str_pad($transaction->id, 5, '0', STR_PAD_LEFT) }}</td>
+              <td class="py-3 px-4 text-stamp-500 text-sm">{{ $transaction->transaction_date->format('M j, Y, g:i A') }}</td>
+              <td class="py-3 px-4 text-stamp-500 text-sm">{{ $transaction->items->map(fn ($item) => $item->quantity.'x '.$item->product->product_name)->implode(', ') }}</td>
+              <td class="py-3 px-4 text-stamp-500 text-sm">{{ $transaction->payment_method }}</td>
+              <td class="py-3 px-4">
+                @if ($transaction->credential)
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold {{ $transaction->credential->role === 'admin' ? 'bg-stamp-500 text-cream-50' : 'bg-mint-50 text-mint-600' }}">{{ $transaction->credential->first_name }} {{ $transaction->credential->last_name }}</span>
+                @else
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-cream-100 text-stamp-400">Unknown</span>
+                @endif
+              </td>
+              <td class="py-3 px-4 font-display font-bold text-stamp-700">₱{{ number_format($transaction->total_amount, 2) }}</td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="6" class="py-10 text-center text-sm font-semibold text-stamp-300">
+                @if (request()->anyFilled(['search', 'payment_method', 'credential_id', 'from', 'to']))
+                  No sales match your filters.
+                @else
+                  No sales recorded yet.
+                @endif
+              </td>
+            </tr>
+          @endforelse
         </tbody>
       </table>
+
+      @include('admin.partials.pagination', ['paginator' => $transactions])
     </div>
   </main>
-
-  <script>
-    const seedTotals = { sales: 782, count: 3, owner: 1, staff: 2 };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const txns = JSON.parse(localStorage.getItem('cb_transactions') || '[]');
-      const tbody = document.getElementById('txnBody');
-
-      let sales = seedTotals.sales, count = seedTotals.count, owner = seedTotals.owner, staff = seedTotals.staff;
-
-      txns.slice().reverse().forEach(t => {
-        const row = document.createElement('tr');
-        row.className = 'border-b border-cream-200';
-        const badgeClass = t.processedByRole === 'Owner' ? 'bg-stamp-500 text-cream-50' : 'bg-mint-50 text-mint-600';
-        row.innerHTML = `
-          <td class="py-3 px-4 font-bold text-stamp-700 text-sm">${t.id}</td>
-          <td class="py-3 px-4 text-stamp-500 text-sm">${t.datetime}</td>
-          <td class="py-3 px-4 text-stamp-500 text-sm">${t.items.map(i => i.qty + 'x ' + i.name).join(', ')}</td>
-          <td class="py-3 px-4 text-stamp-500 text-sm">${t.payment}</td>
-          <td class="py-3 px-4"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${badgeClass}">${t.processedBy}</span></td>
-          <td class="py-3 px-4 font-display font-bold text-stamp-700">₱${t.total.toFixed(2)}</td>
-          <td class="py-3 px-4"><button class="text-coral-500 text-xs font-bold hover:underline">Void</button></td>
-        `;
-        tbody.prepend(row);
-
-        sales += t.total;
-        count += 1;
-        if (t.processedByRole === 'Owner') owner += 1; else staff += 1;
-      });
-
-      document.getElementById('statSales').textContent = '₱' + sales.toFixed(2);
-      document.getElementById('statCount').textContent = count;
-      document.getElementById('statOwner').textContent = owner;
-      document.getElementById('statStaff').textContent = staff;
-    });
-  </script>
 
 </body>
 </html>
