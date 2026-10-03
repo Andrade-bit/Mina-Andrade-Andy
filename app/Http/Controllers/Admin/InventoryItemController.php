@@ -8,6 +8,7 @@ use App\Models\InventoryTransaction;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class InventoryItemController extends Controller
@@ -18,8 +19,10 @@ class InventoryItemController extends Controller
      */
     public function index(): View
     {
-        $procurement = InventoryItem::where('type', 'ingredient')->orderBy('name')->get();
-        $supplier = InventoryItem::where('type', 'supply')->orderBy('name')->get();
+        $lowStockFirst = fn ($query) => $query->orderByRaw('current_quantity <= reorder_level DESC')->orderBy('name');
+
+        $procurement = $lowStockFirst(InventoryItem::where('type', 'ingredient'))->get();
+        $supplier = $lowStockFirst(InventoryItem::where('type', 'supply'))->get();
 
         $recentTransactions = InventoryTransaction::with('inventoryItem')
             ->latest('inventory_transaction_date')
@@ -38,6 +41,14 @@ class InventoryItemController extends Controller
     }
 
     /**
+     * Show the form for adding a new inventory item.
+     */
+    public function create(): View
+    {
+        return view('admin.inventory-items.create');
+    }
+
+    /**
      * Create a new inventory item.
      */
     public function store(Request $request): RedirectResponse
@@ -45,11 +56,16 @@ class InventoryItemController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::in(['supply', 'ingredient'])],
+            'image' => ['nullable', 'image', 'max:4096'],
             'unit' => ['required', 'string', 'max:50'],
+            'secondary_unit' => ['nullable', 'string', 'max:50'],
+            'conversion_factor' => ['nullable', 'required_with:secondary_unit', 'numeric', 'min:0.0001'],
             'current_quantity' => ['required', 'numeric', 'min:0'],
             'reorder_level' => ['required', 'numeric', 'min:0'],
             'status' => ['nullable', 'string', 'max:50'],
         ]);
+
+        $validated['image'] = $request->hasFile('image') ? $request->file('image')->store('inventory', 'public') : null;
 
         InventoryItem::create($validated);
 
@@ -64,10 +80,31 @@ class InventoryItemController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::in(['supply', 'ingredient'])],
+            'image' => ['nullable', 'image', 'max:4096'],
+            'remove_image' => ['nullable', 'boolean'],
             'unit' => ['required', 'string', 'max:50'],
+            'secondary_unit' => ['nullable', 'string', 'max:50'],
+            'conversion_factor' => ['nullable', 'required_with:secondary_unit', 'numeric', 'min:0.0001'],
             'reorder_level' => ['required', 'numeric', 'min:0'],
             'status' => ['nullable', 'string', 'max:50'],
         ]);
+
+        $imagePath = $inventoryItem->image;
+
+        if ($request->hasFile('image')) {
+            if ($imagePath) {
+                Storage::disk('public')->delete($imagePath);
+            }
+            $imagePath = $request->file('image')->store('inventory', 'public');
+        } elseif ($request->boolean('remove_image')) {
+            if ($imagePath) {
+                Storage::disk('public')->delete($imagePath);
+            }
+            $imagePath = null;
+        }
+
+        $validated['image'] = $imagePath;
+        unset($validated['remove_image']);
 
         $inventoryItem->update($validated);
 
@@ -79,6 +116,10 @@ class InventoryItemController extends Controller
      */
     public function destroy(InventoryItem $inventoryItem): RedirectResponse
     {
+        if ($inventoryItem->image) {
+            Storage::disk('public')->delete($inventoryItem->image);
+        }
+
         $inventoryItem->delete();
 
         return redirect()->route('admin.inventory-items.index')->with('status', 'Inventory item removed.');

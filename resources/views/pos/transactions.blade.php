@@ -36,7 +36,7 @@
 
   <header class="bg-white shadow-soft-sm px-5 py-3 flex items-center justify-between flex-wrap gap-3">
     <div class="flex items-center gap-3">
-      <a href="{{ route('pos.terminal') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Back to POS">
+      <a href="{{ auth()->check() ? route('admin.dashboard') : route('pos.terminal') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="{{ auth()->check() ? 'Back to Dashboard' : 'Back to POS' }}">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
       </a>
       <div>
@@ -50,6 +50,13 @@
   </header>
 
   <main class="p-5 md:p-8 max-w-6xl mx-auto">
+
+    @if (session('status'))
+      <div class="mb-5 bg-mint-50 text-mint-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('status') }}</div>
+    @endif
+    @if ($errors->has('void_reason') || $errors->has('admin_pin'))
+      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ $errors->first('void_reason') ?: $errors->first('admin_pin') }} Please click Void on the sale again to retry.</div>
+    @endif
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div class="bg-white rounded-3xl shadow-soft p-5">
@@ -120,11 +127,13 @@
             <th class="py-2 px-4">Payment</th>
             <th class="py-2 px-4">Processed By</th>
             <th class="py-2 px-4">Total</th>
+            <th class="py-2 px-4">Status</th>
+            <th class="py-2 px-4"></th>
           </tr>
         </thead>
         <tbody>
           @forelse ($transactions as $transaction)
-            <tr class="border-b border-cream-200 last:border-0">
+            <tr class="border-b border-cream-200 last:border-0 {{ $transaction->status === 'voided' ? 'opacity-50' : '' }}">
               <td class="py-3 px-4 font-bold text-stamp-700 text-sm">CB-{{ str_pad($transaction->id, 5, '0', STR_PAD_LEFT) }}</td>
               <td class="py-3 px-4 text-stamp-500 text-sm">{{ $transaction->transaction_date->format('M j, Y, g:i A') }}</td>
               <td class="py-3 px-4 text-stamp-500 text-sm">{{ $transaction->items->map(fn ($item) => $item->quantity.'x '.$item->product->product_name)->implode(', ') }}</td>
@@ -137,10 +146,22 @@
                 @endif
               </td>
               <td class="py-3 px-4 font-display font-bold text-stamp-700">₱{{ number_format($transaction->total_amount, 2) }}</td>
+              <td class="py-3 px-4">
+                @if ($transaction->status === 'voided')
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-coral-50 text-coral-600" title="{{ $transaction->void_reason }}">Voided</span>
+                @else
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-mint-50 text-mint-600">Completed</span>
+                @endif
+              </td>
+              <td class="py-3 px-4">
+                @if ($transaction->status !== 'voided')
+                  <button type="button" onclick="openVoidModal({{ $transaction->id }}, {{ Illuminate\Support\Js::from('CB-'.str_pad($transaction->id, 5, '0', STR_PAD_LEFT)) }})" class="text-[11px] font-extrabold text-coral-500 hover:text-coral-600">Void</button>
+                @endif
+              </td>
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="py-10 text-center text-sm font-semibold text-stamp-300">
+              <td colspan="8" class="py-10 text-center text-sm font-semibold text-stamp-300">
                 @if (request()->anyFilled(['search', 'payment_method', 'credential_id', 'from', 'to']))
                   No sales match your filters.
                 @else
@@ -155,6 +176,54 @@
       @include('admin.partials.pagination', ['paginator' => $transactions])
     </div>
   </main>
+
+  <!-- Void Sale Modal -->
+  <div id="voidModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-sm p-7 relative">
+      <button type="button" onclick="closeVoidModal()" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 rounded-2xl bg-coral-50 shadow-soft-inset mx-auto flex items-center justify-center text-coral-500 mb-3">
+          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-xl text-stamp-700">Void Sale</h3>
+        <p id="voidModalLabel" class="text-xs text-stamp-400 font-semibold mt-1">Voiding —</p>
+      </div>
+      @if ($errors->has('void_reason') || $errors->has('admin_pin'))
+        <div class="mb-4 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ $errors->first('void_reason') ?: $errors->first('admin_pin') }}</div>
+      @endif
+      <form id="voidForm" method="POST" action="" class="space-y-4">
+        @csrf
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Reason</label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+            <input type="text" name="void_reason" value="{{ old('void_reason') }}" placeholder="e.g. Wrong item rung up" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Admin PIN</label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+            <input type="password" inputmode="numeric" maxlength="4" name="admin_pin" placeholder="••••" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm tracking-[0.3em]">
+          </div>
+          <p class="text-[11px] text-stamp-300 font-semibold mt-1.5 ml-1">This does not restore inventory — it only marks the sale as voided.</p>
+        </div>
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-b from-coral-500 to-coral-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">
+          Confirm Void
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openVoidModal(id, label){
+      document.getElementById('voidModalLabel').textContent = 'Voiding ' + label;
+      document.getElementById('voidForm').action = '/pos/transactions/' + id + '/void';
+      document.getElementById('voidModal').classList.remove('hidden');
+    }
+    function closeVoidModal(){ document.getElementById('voidModal').classList.add('hidden'); }
+
+  </script>
 
 </body>
 </html>

@@ -16,7 +16,7 @@ class ExpenseController extends Controller
      */
     public function index(): View
     {
-        $expenses = Expense::with('expenseCategory')->latest('expense_date')->paginate(30);
+        $expenses = Expense::with('expenseCategory', 'supplyPurchase')->latest('expense_date')->paginate(30);
 
         return view('admin.expenses.index', [
             'expenses' => $expenses,

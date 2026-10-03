@@ -23,6 +23,14 @@ class SupplierController extends Controller
     }
 
     /**
+     * Show the form for registering a new supplier.
+     */
+    public function create(): View
+    {
+        return view('admin.suppliers.create');
+    }
+
+    /**
      * Register a new supplier.
      */
     public function store(Request $request): RedirectResponse

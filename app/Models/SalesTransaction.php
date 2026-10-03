@@ -17,11 +17,18 @@ class SalesTransaction extends Model
         'total_amount',
         'credential_id',
         'status',
+        'promo_id',
+        'discount_amount',
+        'void_reason',
+        'voided_by_credential_id',
+        'voided_at',
     ];
 
     protected $casts = [
         'transaction_date' => 'datetime',
         'total_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'voided_at' => 'datetime',
     ];
 
     public function credential(): BelongsTo
@@ -32,5 +39,15 @@ class SalesTransaction extends Model
     public function items(): HasMany
     {
         return $this->hasMany(SalesTransactionItem::class);
+    }
+
+    public function promo(): BelongsTo
+    {
+        return $this->belongsTo(Promo::class);
+    }
+
+    public function voidedBy(): BelongsTo
+    {
+        return $this->belongsTo(Credential::class, 'voided_by_credential_id');
     }
 }

@@ -36,90 +36,7 @@
 </head>
 <body class="min-h-screen bg-cream-50 font-body text-stamp-700 flex">
 
-  <!-- Mobile top bar -->
-  <div class="md:hidden fixed top-0 inset-x-0 z-30 bg-white shadow-soft-sm px-4 py-3 flex items-center gap-3">
-    <button onclick="openSidebar()" class="w-10 h-10 rounded-xl bg-cream-100 flex items-center justify-center text-stamp-600 shrink-0">
-      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
-    <p class="font-display font-bold text-stamp-700">Catbrews</p>
-  </div>
-
-  <!-- Sidebar backdrop (mobile) -->
-  <div id="sidebarBackdrop" onclick="closeSidebar()" class="hidden md:hidden fixed inset-0 bg-stamp-700/40 z-40"></div>
-
-  <!-- Sidebar -->
-  <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 flex flex-col w-72 md:w-64 bg-white md:bg-white/70 shadow-soft m-0 md:m-4 rounded-none md:rounded-[2rem] p-6 shrink-0 -translate-x-full md:translate-x-0 transition-transform duration-300 overflow-y-auto">
-    <button onclick="closeSidebar()" class="md:hidden absolute top-4 right-4 text-stamp-300 hover:text-stamp-600">
-      <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-    </button>
-    <div class="flex flex-col items-center mb-8">
-      <div class="w-16 h-16 rounded-full bg-cream-100 shadow-soft-inset ring-4 ring-white flex items-center justify-center text-stamp-600 mb-2">
-        <svg viewBox="0 0 64 64" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 24 L16 10 L28 20"/>
-          <path d="M44 24 L48 10 L36 20"/>
-          <path d="M24 16 Q32 8 40 16"/>
-          <circle cx="32" cy="8" r="3.2"/>
-          <circle cx="32" cy="36" r="17"/>
-          <circle cx="26" cy="34" r="1.6" fill="currentColor" stroke="none"/>
-          <circle cx="38" cy="34" r="1.6" fill="currentColor" stroke="none"/>
-          <path d="M30 40 Q32 42 34 40"/>
-          <path d="M9 32 L19 34 M9 38 L19 36" opacity="0.6"/>
-          <path d="M55 32 L45 34 M55 38 L45 36" opacity="0.6"/>
-        </svg>
-      </div>
-      <h1 class="font-display font-bold text-xl text-stamp-700">Catbrews</h1>
-      <p class="text-[10px] font-bold tracking-[0.2em] uppercase text-stamp-300">Admin Panel</p>
-    </div>
-
-    <nav class="flex-1 space-y-1.5">
-      <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-        Dashboard
-      </a>
-      <a href="{{ route('admin.users') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>
-        User Management
-      </a>
-      <a href="{{ route('pos.login') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-9 4h16a1 1 0 001-1V6a1 1 0 00-1-1H4a1 1 0 00-1 1v12a1 1 0 001 1z"/></svg>
-        POS Terminal
-      </a>
-      <a href="{{ route('admin.products.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-        Products
-      </a>
-      <a href="{{ route('admin.inventory') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-cream-50 bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 01-2-2V4a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-        Inventory
-      </a>
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5-1a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm11 6.5a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
-        Orders
-      </a>
-      <a href="{{ route('pos.transactions') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        Reports
-      </a>
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        Settings
-      </a>
-    </nav>
-
-    <div class="pt-4 mt-auto border-t border-cream-200 flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-sm">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
-      <div class="text-sm flex-1">
-        <p class="font-bold text-stamp-700 leading-tight">{{ auth()->user()->name }}</p>
-        <p class="text-stamp-300 text-xs font-bold">Owner</p>
-      </div>
-      <form method="POST" action="{{ route('admin.logout') }}">
-        @csrf
-        <button type="submit" title="Log out" class="text-stamp-300 hover:text-stamp-600">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-        </button>
-      </form>
-    </div>
-  </aside>
+  @include('admin.partials.sidebar', ['active' => 'inventory'])
 
   <!-- Main content -->
   <main class="flex-1 p-5 pt-20 md:p-8 overflow-y-auto">
@@ -129,10 +46,10 @@
         <h2 class="font-display font-bold text-2xl md:text-3xl text-stamp-700">Inventory</h2>
         <p class="text-stamp-500 text-sm font-semibold mt-1">Procurement stock and supplier orders for cups &amp; straws</p>
       </div>
-      <button onclick="openAddItem()" class="bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold px-5 py-3 rounded-2xl shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center gap-2 text-sm">
+      <a href="{{ route('admin.inventory-items.create') }}" class="bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold px-5 py-3 rounded-2xl shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center gap-2 text-sm">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
         Add Item
-      </button>
+      </a>
     </div>
 
     @if (session('status'))
@@ -225,69 +142,10 @@
     </div>
   </main>
 
-  <!-- Add Item Modal -->
-  <div id="addItemModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-md p-7 relative max-h-[90vh] overflow-y-auto">
-      <button type="button" onclick="closeModal('addItemModal')" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
-        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-      <div class="text-center mb-6">
-        <div class="w-14 h-14 rounded-2xl bg-stamp-100 shadow-soft-inset mx-auto flex items-center justify-center text-stamp-600 mb-3">
-          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-        </div>
-        <h3 class="font-display font-bold text-xl text-stamp-700">Add Inventory Item</h3>
-        <p class="text-xs text-stamp-400 font-semibold mt-1">Create a new SKU to track stock for</p>
-      </div>
-      <form method="POST" action="{{ route('admin.inventory-items.store') }}" class="space-y-4">
-        @csrf
-        <div>
-          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Item Name</label>
-          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input type="text" name="name" value="{{ old('name') }}" placeholder="e.g. Vanilla Syrup" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Category</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-              <select id="addItemType" name="type" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
-                <option value="ingredient" @selected(old('type', 'ingredient') === 'ingredient')>Procurement</option>
-                <option value="supply" @selected(old('type') === 'supply')>Supplier (Cups/Straws)</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Unit</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-              <input type="text" name="unit" value="{{ old('unit') }}" placeholder="e.g. kg, liters, pcs" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
-            </div>
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Starting Quantity</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-              <input type="number" min="0" step="0.01" name="current_quantity" value="{{ old('current_quantity', 0) }}" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
-            </div>
-          </div>
-          <div>
-            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Reorder Level</label>
-            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-              <input type="number" min="0" step="0.01" name="reorder_level" value="{{ old('reorder_level', 0) }}" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
-            </div>
-          </div>
-        </div>
-        <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center justify-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          Create Item
-        </button>
-      </form>
-    </div>
-  </div>
 
-  <!-- Stock In Modal -->
+  <!-- Stock In Modal (multi-line invoice) -->
   <div id="stockInModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-md p-7 relative max-h-[90vh] overflow-y-auto">
+    <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-2xl p-7 relative max-h-[92vh] overflow-y-auto">
       <button type="button" onclick="closeModal('stockInModal')" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
@@ -295,30 +153,16 @@
         <div class="w-14 h-14 rounded-2xl bg-mint-50 shadow-soft-inset mx-auto flex items-center justify-center text-mint-600 mb-3">
           <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6"/></svg>
         </div>
-        <h3 class="font-display font-bold text-xl text-stamp-700">Stock In</h3>
-        <p id="stockInItemLabel" class="text-xs text-stamp-400 font-semibold mt-1">Receiving stock for —</p>
+        <h3 class="font-display font-bold text-xl text-stamp-700">Stock In — Cash Invoice</h3>
+        <p class="text-xs text-stamp-400 font-semibold mt-1">Log a purchase receipt and receive stock in one go</p>
       </div>
-      <form method="POST" action="{{ route('admin.supply-purchases.store') }}" class="space-y-4">
+      <form method="POST" action="{{ route('admin.supply-purchases.store') }}" id="stockInForm" class="space-y-4">
         @csrf
-        <input type="hidden" id="stockInItemId" name="items[0][inventory_item_id]" value="{{ old('items.0.inventory_item_id') }}">
-        <div>
-          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Quantity Received</label>
-          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input id="stockInQty" type="number" min="0.01" step="0.01" name="items[0][quantity]" value="{{ old('items.0.quantity') }}" placeholder="e.g. 20" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Where did you buy this?</label>
-          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input type="text" name="purchase_source" value="{{ old('purchase_source', 'NCCC Mall') }}" placeholder="e.g. NCCC Mall" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
-          </div>
-          <p class="text-[11px] text-stamp-300 font-semibold mt-1.5 ml-1">Used when you personally buy stock because the supplier can't deliver.</p>
-        </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Unit Cost (₱)</label>
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Invoice / Ref #</label>
             <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-              <input type="number" min="0" step="0.01" name="items[0][unit_cost]" value="{{ old('items.0.unit_cost') }}" placeholder="0.00" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+              <input type="text" name="invoice_number" value="{{ old('invoice_number') }}" placeholder="e.g. INV-00231" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
             </div>
           </div>
           <div>
@@ -328,19 +172,65 @@
             </div>
           </div>
         </div>
-        <div>
-          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Paid Via</label>
-          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <select name="payment_method" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
-              <option value="Cash" @selected(old('payment_method', 'Cash') === 'Cash')>Cash</option>
-              <option value="Gcash" @selected(old('payment_method') === 'Gcash')>GCash</option>
-              <option value="Card" @selected(old('payment_method') === 'Card')>Card</option>
-            </select>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Bought From</label>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+              <input type="text" name="purchase_source" value="{{ old('purchase_source') }}" placeholder="e.g. NCCC Mall" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Paid Via</label>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+              <select name="payment_method" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+                <option value="Cash" @selected(old('payment_method', 'Cash') === 'Cash')>Cash</option>
+                <option value="Gcash" @selected(old('payment_method') === 'Gcash')>GCash</option>
+                <option value="Card" @selected(old('payment_method') === 'Card')>Card</option>
+              </select>
+            </div>
           </div>
         </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5 ml-1">
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500">Line Items</label>
+            <button type="button" onclick="addStockInRow()" class="text-[11px] font-extrabold text-stamp-500 hover:text-stamp-600 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              Add Line
+            </button>
+          </div>
+          <div id="stockInRows" class="space-y-2"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Notes (optional)</label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+            <input type="text" name="notes" value="{{ old('notes') }}" placeholder="e.g. Short delivery, 2 boxes missing" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-soft-inset p-4 space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-stamp-400 font-semibold">Subtotal</span>
+            <span id="stockInSubtotal" class="font-display font-bold text-stamp-700">₱0.00</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-stamp-400 font-semibold flex items-center gap-2">
+              Tax
+              <input type="number" min="0" max="100" step="0.01" name="tax_rate" value="{{ old('tax_rate', 0) }}" oninput="recalcStockInTotals()" class="w-16 bg-cream-100 rounded-lg shadow-soft-inset px-2 py-1 text-xs font-bold text-stamp-700 outline-none">
+              <span class="text-xs">%</span>
+            </span>
+            <span id="stockInTax" class="font-display font-bold text-stamp-700">₱0.00</span>
+          </div>
+          <div class="flex items-center justify-between text-base pt-2 border-t border-cream-200">
+            <span class="text-stamp-700 font-extrabold">Total</span>
+            <span id="stockInTotal" class="font-display font-bold text-lg text-mint-600">₱0.00</span>
+          </div>
+        </div>
+
         <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-b from-mint-500 to-mint-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn-mint active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center justify-center gap-2">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          Confirm Stock In
+          Confirm Stock In &amp; Log Expense
         </button>
       </form>
     </div>
@@ -364,8 +254,12 @@
         <input type="hidden" id="stockOutItemId" name="inventory_item_id" value="{{ old('inventory_item_id') }}">
         <div>
           <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Quantity Removed</label>
-          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5 flex items-center gap-2">
             <input id="stockOutQty" type="number" min="0.01" step="0.01" name="quantity" value="{{ old('quantity') }}" placeholder="e.g. 5" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            <select id="stockOutUnit" name="quantity_unit" class="bg-cream-50 rounded-xl px-2 py-1 text-xs font-bold text-stamp-600 outline-none shrink-0">
+              <option value="base">base</option>
+              <option value="secondary" id="stockOutSecondaryOption" class="hidden">secondary</option>
+            </select>
           </div>
           <p id="stockOutAvailable" class="text-[11px] text-stamp-300 font-semibold mt-1 ml-1">Available: 0</p>
         </div>
@@ -398,7 +292,82 @@
     </div>
   </div>
 
+  @php
+    $inventoryItemsForJs = $procurement->concat($supplier)->map(function ($item) {
+      return [
+        'id' => $item->id,
+        'name' => $item->name,
+        'unit' => $item->unit,
+        'secondary_unit' => $item->secondary_unit,
+        'conversion_factor' => $item->conversion_factor,
+      ];
+    })->values();
+  @endphp
   <script>
+    const INVENTORY_ITEMS = @json($inventoryItemsForJs);
+
+    let stockInRowCount = 0;
+
+    function stockInRowTemplate(index) {
+      const options = INVENTORY_ITEMS.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+      return `
+        <div class="stock-in-row bg-cream-100 rounded-2xl shadow-soft-inset p-3 grid grid-cols-12 gap-2 items-center" data-index="${index}">
+          <select name="items[${index}][inventory_item_id]" onchange="onStockInItemChange(this)" class="col-span-4 bg-cream-50 rounded-xl px-2 py-2 text-xs font-bold text-stamp-700 outline-none">
+            <option value="">Select item…</option>
+            ${options}
+          </select>
+          <input type="number" min="0.01" step="0.01" name="items[${index}][quantity]" placeholder="Qty" oninput="recalcStockInTotals()" class="col-span-2 bg-cream-50 rounded-xl px-2 py-2 text-xs font-bold text-stamp-700 outline-none">
+          <select name="items[${index}][quantity_unit]" class="stock-in-unit col-span-2 bg-cream-50 rounded-xl px-1 py-2 text-[11px] font-bold text-stamp-700 outline-none">
+            <option value="base">base</option>
+          </select>
+          <input type="number" min="0" step="0.01" name="items[${index}][unit_cost]" placeholder="Cost" oninput="recalcStockInTotals()" class="col-span-2 bg-cream-50 rounded-xl px-2 py-2 text-xs font-bold text-stamp-700 outline-none">
+          <span class="stock-in-amount col-span-1 text-xs font-display font-bold text-stamp-700 text-right">₱0</span>
+          <button type="button" onclick="removeStockInRow(this)" class="col-span-1 text-coral-500 hover:text-coral-600 flex justify-center">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>`;
+    }
+
+    function addStockInRow() {
+      const container = document.getElementById('stockInRows');
+      container.insertAdjacentHTML('beforeend', stockInRowTemplate(stockInRowCount));
+      stockInRowCount++;
+    }
+
+    function removeStockInRow(btn) {
+      const rows = document.querySelectorAll('.stock-in-row');
+      if (rows.length <= 1) { return; }
+      btn.closest('.stock-in-row').remove();
+      recalcStockInTotals();
+    }
+
+    function onStockInItemChange(select) {
+      const row = select.closest('.stock-in-row');
+      const unitSelect = row.querySelector('.stock-in-unit');
+      const item = INVENTORY_ITEMS.find(i => String(i.id) === select.value);
+      unitSelect.innerHTML = '<option value="base">' + (item ? item.unit : 'base') + '</option>';
+      if (item && item.secondary_unit && item.conversion_factor) {
+        unitSelect.insertAdjacentHTML('beforeend', `<option value="secondary">${item.secondary_unit}</option>`);
+      }
+    }
+
+    function recalcStockInTotals() {
+      let subtotal = 0;
+      document.querySelectorAll('.stock-in-row').forEach(row => {
+        const qty = parseFloat(row.querySelector('input[name*="[quantity]"]').value) || 0;
+        const cost = parseFloat(row.querySelector('input[name*="[unit_cost]"]').value) || 0;
+        const amount = qty * cost;
+        row.querySelector('.stock-in-amount').textContent = '₱' + amount.toFixed(0);
+        subtotal += amount;
+      });
+      const taxRate = parseFloat(document.querySelector('input[name="tax_rate"]').value) || 0;
+      const tax = subtotal * (taxRate / 100);
+      const total = subtotal + tax;
+      document.getElementById('stockInSubtotal').textContent = '₱' + subtotal.toFixed(2);
+      document.getElementById('stockInTax').textContent = '₱' + tax.toFixed(2);
+      document.getElementById('stockInTotal').textContent = '₱' + total.toFixed(2);
+    }
+
     const CATEGORY_HINTS = {
       procurement: 'Ingredients and general supplies the admin buys directly for the shop.',
       supplier: 'Only cups and straws are ordered through the packaging supplier.',
@@ -415,17 +384,20 @@
         document.getElementById('grid-' + c).classList.toggle('hidden', c !== cat);
       });
       document.getElementById('categoryHint').textContent = CATEGORY_HINTS[cat];
-      document.getElementById('addItemType').value = cat === 'supplier' ? 'supply' : 'ingredient';
     }
 
     function openModal(id){ document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
 
-    function openAddItem(){ openModal('addItemModal'); }
-
     function openStockIn(id, name){
-      document.getElementById('stockInItemId').value = id;
-      document.getElementById('stockInItemLabel').textContent = 'Receiving stock for ' + name;
+      document.getElementById('stockInRows').innerHTML = '';
+      stockInRowCount = 0;
+      addStockInRow();
+      const firstRow = document.querySelector('.stock-in-row');
+      const select = firstRow.querySelector('select[name*="[inventory_item_id]"]');
+      select.value = id;
+      onStockInItemChange(select);
+      recalcStockInTotals();
       openModal('stockInModal');
     }
 
@@ -433,27 +405,28 @@
       document.getElementById('stockOutItemId').value = id;
       document.getElementById('stockOutItemLabel').textContent = 'Removing stock for ' + name;
       document.getElementById('stockOutAvailable').textContent = 'Available: ' + quantity + ' ' + unit;
+
+      const item = INVENTORY_ITEMS.find(i => String(i.id) === String(id));
+      const secondaryOption = document.getElementById('stockOutSecondaryOption');
+      const unitSelect = document.getElementById('stockOutUnit');
+      unitSelect.value = 'base';
+      if (item && item.secondary_unit && item.conversion_factor) {
+        secondaryOption.textContent = item.secondary_unit;
+        secondaryOption.classList.remove('hidden');
+      } else {
+        secondaryOption.classList.add('hidden');
+      }
+
       openModal('stockOutModal');
     }
 
-    @if ($errors->has('current_quantity') || $errors->has('reorder_level'))
-      openModal('addItemModal');
-    @elseif ($errors->has('purchase_source') || $errors->has('items.0.unit_cost'))
+    addStockInRow();
+
+    @if ($errors->has('purchase_source') || $errors->has('items.0.unit_cost') || $errors->has('invoice_number') || $errors->has('tax_rate'))
       openModal('stockInModal');
     @elseif ($errors->has('transaction_type') || $errors->has('quantity'))
       openModal('stockOutModal');
     @endif
-  </script>
-
-  <script>
-    function openSidebar(){
-      document.getElementById('sidebar').classList.remove('-translate-x-full');
-      document.getElementById('sidebarBackdrop').classList.remove('hidden');
-    }
-    function closeSidebar(){
-      document.getElementById('sidebar').classList.add('-translate-x-full');
-      document.getElementById('sidebarBackdrop').classList.add('hidden');
-    }
   </script>
 
 </body>

@@ -8,7 +8,9 @@ use App\Http\Controllers\Admin\InventoryItemController;
 use App\Http\Controllers\Admin\InventoryTransactionController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\PromoController;
 use App\Http\Controllers\Admin\SalesReportController;
+use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SupplyPurchaseController;
 use App\Http\Controllers\Admin\UserController;
@@ -35,12 +37,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/admin/inventory', [InventoryItemController::class, 'index'])->name('admin.inventory');
     Route::get('/admin/inventory-items', [InventoryItemController::class, 'index'])->name('admin.inventory-items.index');
+    Route::get('/admin/inventory-items/create', [InventoryItemController::class, 'create'])->name('admin.inventory-items.create');
     Route::post('/admin/inventory-items', [InventoryItemController::class, 'store'])->name('admin.inventory-items.store');
     Route::put('/admin/inventory-items/{inventoryItem}', [InventoryItemController::class, 'update'])->name('admin.inventory-items.update');
     Route::delete('/admin/inventory-items/{inventoryItem}', [InventoryItemController::class, 'destroy'])->name('admin.inventory-items.destroy');
 
     Route::get('/admin/inventory-transactions', [InventoryTransactionController::class, 'index'])->name('admin.inventory-transactions.index');
-    Route::post('/admin/inventory-transactions/stock-in', [InventoryTransactionController::class, 'stockIn'])->name('admin.inventory-transactions.stock-in');
     Route::post('/admin/inventory-transactions/stock-out', [InventoryTransactionController::class, 'stockOut'])->name('admin.inventory-transactions.stock-out');
 
     Route::get('/admin/product-categories', [ProductCategoryController::class, 'index'])->name('admin.product-categories.index');
@@ -61,6 +63,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/admin/cup-sizes/{cupSize}', [CupSizeController::class, 'destroy'])->name('admin.cup-sizes.destroy');
 
     Route::get('/admin/suppliers', [SupplierController::class, 'index'])->name('admin.suppliers.index');
+    Route::get('/admin/suppliers/create', [SupplierController::class, 'create'])->name('admin.suppliers.create');
     Route::post('/admin/suppliers', [SupplierController::class, 'store'])->name('admin.suppliers.store');
     Route::put('/admin/suppliers/{supplier}', [SupplierController::class, 'update'])->name('admin.suppliers.update');
     Route::delete('/admin/suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('admin.suppliers.destroy');
@@ -78,6 +81,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/expenses/create', [ExpenseController::class, 'create'])->name('admin.expenses.create');
     Route::post('/admin/expenses', [ExpenseController::class, 'store'])->name('admin.expenses.store');
     Route::delete('/admin/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('admin.expenses.destroy');
+
+    Route::get('/admin/promos', [PromoController::class, 'index'])->name('admin.promos.index');
+    Route::post('/admin/promos', [PromoController::class, 'store'])->name('admin.promos.store');
+    Route::put('/admin/promos/{promo}', [PromoController::class, 'update'])->name('admin.promos.update');
+    Route::delete('/admin/promos/{promo}', [PromoController::class, 'destroy'])->name('admin.promos.destroy');
+
+    Route::get('/admin/settings', [SettingsController::class, 'index'])->name('admin.settings');
 });
 
 Route::get('/pos/login', [PosAuthController::class, 'create'])->name('pos.login');
@@ -88,3 +98,4 @@ Route::get('/pos/terminal', [TerminalController::class, 'index'])->name('pos.ter
 Route::post('/pos/terminal', [TerminalController::class, 'store'])->name('pos.terminal.store');
 
 Route::get('/pos/transactions', [SalesReportController::class, 'index'])->name('pos.transactions');
+Route::post('/pos/transactions/{salesTransaction}/void', [SalesReportController::class, 'void'])->name('pos.transactions.void');

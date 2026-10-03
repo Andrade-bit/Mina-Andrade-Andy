@@ -108,31 +108,30 @@
       <p class="text-[11px] text-stamp-300 font-semibold mb-3">🧊 Iced &amp; other drinks come in Small (₱35) / Medium (₱40) / Large (₱50) — 🔥 Hot Coffee is one size, ₱35.</p>
 
       @php
-        $oneSizeCup = $cupSizes->firstWhere('size_name', 'One Size');
-        $sizedCups = $cupSizes->where('size_name', '!=', 'One Size')->sortBy('price')->values();
         $categoryTabs = ['Hot Coffee' => 'hot', 'Iced Coffee' => 'coffee', 'Non-Coffee' => 'noncoffee', 'Fruit Juice' => 'juice'];
       @endphp
 
       @foreach ($categoryTabs as $categoryName => $tabId)
         <div id="cat-{{ $tabId }}" class="{{ $loop->first ? '' : 'hidden' }} grid grid-cols-2 sm:grid-cols-3 gap-4">
           @foreach ($products->where('productCategory.category_name', $categoryName) as $product)
-            @if ($categoryName === 'Hot Coffee')
-              <button onclick="addOneSizeToCart({{ $product->id }}, {{ $oneSizeCup->id }}, {{ Illuminate\Support\Js::from($product->product_name) }}, {{ $oneSizeCup->price }})" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
+            @php $sizes = $product->sizes; @endphp
+            @if ($sizes->count() === 1)
+              <button onclick="addOneSizeToCart({{ $product->id }}, {{ $sizes->first()->cup_size_id }}, {{ Illuminate\Support\Js::from($product->product_name) }}, {{ $sizes->first()->price }})" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
                 <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-                  <img src="{{ asset('images/products/'.$product->image) }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover">
+                  <img src="{{ $product->display_image }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover">
                   <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
                 </div>
                 <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">{{ $product->product_name }}</p>
-                <p class="font-display font-bold text-stamp-500 text-sm">₱{{ number_format($oneSizeCup->price, 2) }}</p>
+                <p class="font-display font-bold text-stamp-500 text-sm">₱{{ number_format($sizes->first()->price, 2) }}</p>
               </button>
             @else
-              <button onclick="openSizePicker({{ $product->id }}, {{ Illuminate\Support\Js::from($product->product_name) }}, {{ Illuminate\Support\Js::from(asset('images/products/'.$product->image)) }})" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
+              <button onclick="openSizePicker({{ $product->id }}, {{ Illuminate\Support\Js::from($product->product_name) }}, {{ Illuminate\Support\Js::from($product->display_image) }}, {{ Illuminate\Support\Js::from($sizes->values()) }})" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
                 <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-                  <img src="{{ asset('images/products/'.$product->image) }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover">
+                  <img src="{{ $product->display_image }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover">
                   <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
                 </div>
                 <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">{{ $product->product_name }}</p>
-                <p class="font-display font-bold text-stamp-500 text-sm">₱{{ number_format($sizedCups->first()->price, 0) }}&ndash;{{ number_format($sizedCups->last()->price, 0) }}</p>
+                <p class="font-display font-bold text-stamp-500 text-sm">₱{{ number_format($sizes->first()->price, 0) }}&ndash;{{ number_format($sizes->last()->price, 0) }}</p>
               </button>
             @endif
           @endforeach
@@ -267,15 +266,7 @@
       <img id="sizeModalImg" src="" alt="" class="w-24 h-24 rounded-2xl object-cover mx-auto shadow-soft-inset ring-1 ring-cream-200 mb-3">
       <p id="sizeModalName" class="text-center font-display font-bold text-stamp-700 text-lg mb-1">Product</p>
       <p class="text-center text-[11px] text-stamp-300 font-bold uppercase tracking-wide mb-4">Choose a cup size</p>
-      <div class="grid grid-cols-3 gap-2.5">
-        @foreach ($sizedCups as $size)
-          <button onclick="chooseSize({{ $size->id }}, {{ Illuminate\Support\Js::from($size->size_name) }}, {{ $size->price }}, this)" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all text-center">
-            <span class="block mb-1" style="font-size: {{ 20 + $loop->index * 8 }}px">🥤</span>
-            <span class="block font-display font-bold text-stamp-700 text-sm">{{ $size->size_name }}</span>
-            <span class="block font-bold text-stamp-500 text-xs">₱{{ number_format($size->price, 0) }}</span>
-          </button>
-        @endforeach
-      </div>
+      <div id="sizeModalOptions" class="grid grid-cols-3 gap-2.5"></div>
     </div>
   </div>
 
@@ -310,11 +301,18 @@
 
     let pendingProduct = null;
 
-    function openSizePicker(productId, name, img){
+    function openSizePicker(productId, name, img, sizes){
       pendingProduct = { productId, name, img };
       document.getElementById('sizeModalImg').src = img;
       document.getElementById('sizeModalImg').alt = name;
       document.getElementById('sizeModalName').textContent = name;
+      document.getElementById('sizeModalOptions').innerHTML = sizes.map((size, i) => `
+        <button onclick="chooseSize(${size.cup_size_id}, ${JSON.stringify(size.size_name)}, ${size.price}, this)" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all text-center">
+          <span class="block mb-1" style="font-size: ${20 + i * 8}px">🥤</span>
+          <span class="block font-display font-bold text-stamp-700 text-sm">${size.size_name}</span>
+          <span class="block font-bold text-stamp-500 text-xs">₱${Number(size.price).toFixed(0)}</span>
+        </button>
+      `).join('');
       const modal = document.getElementById('sizeModal');
       const card = document.getElementById('sizeModalCard');
       modal.classList.remove('hidden');
@@ -435,26 +433,23 @@
     }
     function toggleCartDrawer(){ setCartDrawerOpen(!cartDrawerOpen); }
 
+    let appliedPromoCode = '';
+
     function applyPromo(){
-      const code = document.getElementById('promoInput').value.trim().toUpperCase();
+      appliedPromoCode = document.getElementById('promoInput').value.trim();
       const banner = document.getElementById('promoBanner');
-      if (code === 'CATLOVE10') {
-        promoDiscount = 0.10;
-        banner.textContent = 'CATLOVE10 applied — 10% off';
+      if (appliedPromoCode) {
+        banner.textContent = 'Will apply "' + appliedPromoCode.toUpperCase() + '" at checkout';
         banner.classList.remove('hidden');
       } else {
-        promoDiscount = 0;
         banner.classList.add('hidden');
-        if (code) alert('Invalid or expired promo code.');
       }
-      updateTotals();
     }
 
     function computeTotals(){
       const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-      const discount = subtotal * promoDiscount;
-      const total = subtotal - discount;
-      return { subtotal, discount, total };
+      const total = subtotal;
+      return { subtotal, discount: 0, total };
     }
 
     function updateTotals(){
@@ -531,7 +526,7 @@
       if (cart.length === 0) return;
       if (confirm('Void this order? This clears the current sale.')) {
         cart = [];
-        promoDiscount = 0;
+        appliedPromoCode = '';
         document.getElementById('promoInput').value = '';
         document.getElementById('promoBanner').classList.add('hidden');
         document.getElementById('cashInput').value = '';
@@ -562,11 +557,12 @@
         },
         body: JSON.stringify({
           payment_method: selectedPayment,
+          promo_code: appliedPromoCode || null,
           items: cart.map(i => ({
             product_id: i.productId,
             cup_size_id: i.cupSizeId,
             quantity: i.qty,
-            price_at_order: Math.round(i.price * (1 - promoDiscount) * 100) / 100,
+            price_at_order: i.price,
           })),
         }),
       })
@@ -584,7 +580,7 @@
 
           showReceipt(data.transaction, { cashReceived, change, orderType: currentOrderType });
           cart = [];
-          promoDiscount = 0;
+          appliedPromoCode = '';
           document.getElementById('promoInput').value = '';
           document.getElementById('promoBanner').classList.add('hidden');
           document.getElementById('cashInput').value = '';
@@ -613,6 +609,7 @@
           `).join('')}
         </div>
         <div class="space-y-1 font-semibold text-stamp-500 mb-3">
+          ${transaction.discount_amount > 0 ? `<div class="flex justify-between text-mint-600"><span>Promo (${transaction.promo ? transaction.promo.code : ''})</span><span>-${format(transaction.discount_amount)}</span></div>` : ''}
           <div class="flex justify-between font-display font-bold text-stamp-700 text-base pt-1 border-t border-cream-200"><span>Total</span><span>${format(transaction.total_amount)}</span></div>
         </div>
         <div class="space-y-1 text-xs text-stamp-400 font-semibold">

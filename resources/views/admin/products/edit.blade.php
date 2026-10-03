@@ -22,63 +22,146 @@
           coral: { 50: '#FBEDEB', 500: '#E0776B', 600: '#9C4A41' },
         },
         boxShadow: {
-          soft: '0 16px 32px -10px rgba(26,59,82,0.18), 0 4px 10px rgba(26,59,82,0.08)',
+          soft: '0 16px 32px -10px rgba(26,59,82,0.16), 0 4px 10px rgba(26,59,82,0.06)',
+          'soft-sm': '0 6px 14px -4px rgba(26,59,82,0.15)',
           'soft-inset': 'inset 0 2px 6px rgba(26,59,82,0.14), inset 0 -1px 1px rgba(255,255,255,0.7)',
-          'soft-btn': '0 5px 0 #1A3B52, 0 10px 18px rgba(47,102,144,0.35)',
+          'soft-btn': '0 5px 0 #1A3B52, 0 10px 18px rgba(47,102,144,0.3)',
         },
       }
     }
   }
 </script>
 </head>
-<body class="min-h-screen bg-cream-50 font-body text-stamp-700 flex items-center justify-center p-6 relative overflow-hidden">
+<body class="min-h-screen bg-cream-50 font-body text-stamp-700">
 
-  <div class="absolute -top-28 -left-24 w-80 h-80 bg-stamp-100 rounded-full blur-3xl opacity-70"></div>
-  <div class="absolute -bottom-28 -right-20 w-96 h-96 bg-mint-500/10 rounded-full blur-3xl"></div>
-
-  <a href="{{ route('admin.products.index') }}" class="absolute top-6 left-6 z-10 w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 shadow-soft-sm flex items-center justify-center text-stamp-500 transition-colors" title="Back to Products">
-    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-  </a>
-
-  <div class="relative w-full max-w-md bg-cream-50 rounded-[2rem] shadow-soft p-10">
-    <div class="text-center mb-7">
-      <div class="w-14 h-14 rounded-2xl bg-cream-100 shadow-soft-inset mx-auto flex items-center justify-center text-stamp-600 mb-3">
-        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-      </div>
-      <h1 class="font-display font-bold text-2xl text-stamp-700">Edit Product</h1>
-      <p class="text-xs text-stamp-400 font-semibold mt-1">Update this menu item</p>
+  <header class="bg-white shadow-soft-sm px-5 md:px-10 py-4 flex items-center justify-between flex-wrap gap-3 sticky top-0 z-20">
+    <div>
+      <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">Products &rsaquo; Edit</p>
+      <h1 class="font-display font-bold text-xl md:text-2xl text-stamp-700">Edit Product</h1>
     </div>
+    <div class="flex items-center gap-2">
+      <a href="{{ route('admin.products.index') }}" class="px-4 md:px-5 py-2.5 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-display font-bold text-sm transition-colors">Cancel</a>
+      <button type="submit" form="productForm" class="px-5 md:px-6 py-2.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">Save Changes</button>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto p-5 md:p-8">
 
     @if ($errors->any())
       <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ $errors->first() }}</div>
     @endif
 
-    <form method="POST" action="{{ route('admin.products.update', $product) }}" class="space-y-5">
+    <form id="productForm" method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data" class="space-y-6">
       @csrf
       @method('PUT')
-      <div>
-        <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-2 ml-1">Product Name</label>
-        <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3.5">
-          <input type="text" name="product_name" value="{{ old('product_name', $product->product_name) }}" required autofocus class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+
+      <div class="bg-white rounded-[2rem] shadow-soft p-6 md:p-7">
+        <h2 class="font-display font-bold text-stamp-700 text-lg mb-5">Basic Information</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Product Name</label>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3">
+              <input type="text" name="product_name" value="{{ old('product_name', $product->product_name) }}" required autofocus class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Category</label>
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3">
+              <select name="product_category_id" required class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+                @foreach ($categories as $category)
+                  <option value="{{ $category->id }}" @selected((int) old('product_category_id', $product->product_category_id) === $category->id)>{{ $category->category_name }}</option>
+                @endforeach
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div>
-        <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-2 ml-1">Category</label>
-        <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3.5">
-          <select name="product_category_id" required class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
-            @foreach ($categories as $category)
-              <option value="{{ $category->id }}" @selected((int) old('product_category_id', $product->product_category_id) === $category->id)>{{ $category->category_name }}</option>
+      <div class="bg-white rounded-[2rem] shadow-soft p-6 md:p-7">
+        <h2 class="font-display font-bold text-stamp-700 text-lg mb-5">Product Photo</h2>
+        <div class="flex items-center gap-5 flex-wrap">
+          <div id="photoPreviewWrap" class="w-28 h-28 rounded-2xl bg-cream-100 border-2 border-dashed border-stamp-100 flex items-center justify-center text-stamp-300 shrink-0 overflow-hidden">
+            <svg id="photoPlaceholderIcon" class="w-9 h-9 {{ $product->image ? 'hidden' : '' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5V7.5A2.25 2.25 0 015.25 5.25h13.5A2.25 2.25 0 0121 7.5v9a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 16.5zm3-9.75h.008v.008H6V6.75zm2.47 4.03a2.25 2.25 0 113.182 0l-4.773 4.772a1.5 1.5 0 01-2.121 0L3 14.69M15 12l3.586-3.586a1.5 1.5 0 012.121 0L21 9"/></svg>
+            <img id="photoPreviewImg" src="{{ $product->imageUrl() }}" alt="" class="w-full h-full object-cover {{ $product->image ? '' : 'hidden' }}">
+          </div>
+          <div class="flex-1 min-w-[200px]">
+            <div class="flex items-center gap-3 flex-wrap">
+              <label for="photoInput" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-display font-bold text-sm cursor-pointer transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Change Photo
+              </label>
+              @if ($product->image)
+                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-coral-500 cursor-pointer">
+                  <input type="checkbox" name="remove_image" value="1" id="removeImageCheckbox" class="w-3.5 h-3.5 accent-coral-500">
+                  Remove photo
+                </label>
+              @endif
+            </div>
+            <input id="photoInput" type="file" name="image" accept="image/*" class="hidden" onchange="previewProductPhoto(this)">
+            <p class="text-[11px] text-stamp-300 font-semibold mt-2">JPG or PNG, up to 4MB.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-[2rem] shadow-soft p-6 md:p-7">
+        <h2 class="font-display font-bold text-stamp-700 text-lg mb-1">Sizes &amp; Pricing</h2>
+        <p class="text-xs text-stamp-300 font-semibold mb-5">Leave price blank to use the size's default. Uncheck a size to hide it for this product.</p>
+        <div class="space-y-2">
+          @foreach ($cupSizes as $cupSize)
+            @php $override = $overrides->get($cupSize->id); @endphp
+            <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3 flex items-center gap-3">
+              <label class="flex items-center gap-2 flex-1 min-w-0">
+                <input type="checkbox" name="sizes[{{ $cupSize->id }}][is_available]" value="1" @checked(old("sizes.{$cupSize->id}.is_available", $override ? $override->is_available : true)) class="w-4 h-4 accent-stamp-500 shrink-0">
+                <span class="text-sm font-bold text-stamp-700 truncate">{{ $cupSize->size_name }}</span>
+              </label>
+              <span class="text-xs text-stamp-300 font-semibold shrink-0">Default &#8369;{{ number_format($cupSize->price, 2) }}</span>
+              <div class="flex items-center gap-1 shrink-0">
+                <span class="text-stamp-400 text-xs font-bold">₱</span>
+                <input type="number" min="0" step="0.01" name="sizes[{{ $cupSize->id }}][price]" value="{{ old('sizes.'.$cupSize->id.'.price', $override?->price) }}" placeholder="{{ number_format($cupSize->price, 2) }}" class="w-20 bg-white rounded-xl px-2 py-1.5 text-xs font-bold text-stamp-700 outline-none">
+              </div>
+            </div>
+          @endforeach
+        </div>
+      </div>
+
+      <div class="bg-white rounded-[2rem] shadow-soft p-6 md:p-7">
+        <h2 class="font-display font-bold text-stamp-700 text-lg mb-1">Ingredients Used</h2>
+        <p class="text-xs text-stamp-300 font-semibold mb-5">How much of each stock item one sale of this product uses. Leave blank for ingredients that don't apply.</p>
+        @if ($inventoryItems->isEmpty())
+          <p class="text-sm font-semibold text-stamp-300">No procurement items yet. <a href="{{ route('admin.inventory-items.create') }}" class="text-stamp-500 underline">Add one</a> first.</p>
+        @else
+          <div class="space-y-2">
+            @foreach ($inventoryItems as $item)
+              @php $existing = $productIngredients->get($item->id); @endphp
+              <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3 flex items-center gap-3">
+                <span class="text-sm font-bold text-stamp-700 flex-1 min-w-0 truncate">{{ $item->name }}</span>
+                <input type="number" min="0" step="0.01" name="ingredients[{{ $item->id }}]" value="{{ old('ingredients.'.$item->id, $existing?->pivot->quantity_required) }}" placeholder="0" class="w-20 bg-white rounded-xl px-2 py-1.5 text-xs font-bold text-stamp-700 outline-none text-right">
+                <span class="text-xs text-stamp-300 font-semibold w-10 shrink-0">{{ $item->unit }}</span>
+              </div>
             @endforeach
-          </select>
-        </div>
+          </div>
+        @endif
       </div>
 
-      <button type="submit" class="block w-full text-center bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold tracking-wide text-sm py-4 rounded-2xl shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">
-        Save Changes
-      </button>
+      <div class="flex items-center justify-end gap-2 pb-6">
+        <a href="{{ route('admin.products.index') }}" class="px-5 py-3 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-display font-bold text-sm transition-colors">Cancel</a>
+        <button type="submit" class="px-6 py-3 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">Save Changes</button>
+      </div>
     </form>
-  </div>
+  </main>
+
+  <script>
+    function previewProductPhoto(input){
+      if (!input.files || !input.files[0]) return;
+      const img = document.getElementById('photoPreviewImg');
+      const icon = document.getElementById('photoPlaceholderIcon');
+      img.src = URL.createObjectURL(input.files[0]);
+      img.classList.remove('hidden');
+      icon.classList.add('hidden');
+      const removeCheckbox = document.getElementById('removeImageCheckbox');
+      if (removeCheckbox) removeCheckbox.checked = false;
+    }
+  </script>
 
 </body>
 </html>

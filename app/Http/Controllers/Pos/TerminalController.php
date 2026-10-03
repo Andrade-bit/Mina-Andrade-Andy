@@ -7,6 +7,7 @@ use App\Models\Credential;
 use App\Models\CupSize;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use App\Models\Promo;
 use App\Models\SalesTransaction;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -43,10 +44,15 @@ class TerminalController extends Controller
             'mango' => 'mango-juice.jpg',
         ];
 
-        $products = Product::with('productCategory')->orderBy('product_name')->get()->each(function (Product $product) use ($imagesByKeyword) {
-            $name = strtolower($product->product_name);
-            $match = collect($imagesByKeyword)->first(fn ($file, $keyword) => str_contains($name, $keyword));
-            $product->image = $match ?? 'placeholder.jpg';
+        $products = Product::with('productCategory', 'cupSizePrices')->orderBy('product_name')->get()->each(function (Product $product) use ($imagesByKeyword) {
+            if ($product->image) {
+                $product->display_image = $product->imageUrl();
+            } else {
+                $name = strtolower($product->product_name);
+                $match = collect($imagesByKeyword)->first(fn ($file, $keyword) => str_contains($name, $keyword));
+                $product->display_image = asset('images/products/'.($match ?? 'placeholder.jpg'));
+            }
+            $product->sizes = $product->effectiveCupSizes();
         });
 
         return view('pos.terminal', [
@@ -72,6 +78,7 @@ class TerminalController extends Controller
 
         $validated = $request->validate([
             'payment_method' => ['required', 'string', 'max:50'],
+            'promo_code' => ['nullable', 'string', 'max:50'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.cup_size_id' => ['required', 'exists:cup_sizes,id'],
@@ -79,19 +86,32 @@ class TerminalController extends Controller
             'items.*.price_at_order' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $transaction = DB::transaction(function () use ($validated, $credentialId) {
-            $totalAmount = 0;
+        $promo = null;
+        if (! empty($validated['promo_code'])) {
+            $promo = Promo::where('code', strtoupper($validated['promo_code']))->first();
+
+            if (! $promo || ! $promo->isValid()) {
+                return response()->json(['message' => 'That promo code is invalid or expired.'], 422);
+            }
+        }
+
+        $transaction = DB::transaction(function () use ($validated, $credentialId, $promo) {
+            $itemsTotal = 0;
 
             foreach ($validated['items'] as $item) {
-                $totalAmount += $item['quantity'] * $item['price_at_order'];
+                $itemsTotal += $item['quantity'] * $item['price_at_order'];
             }
+
+            $discountAmount = $promo ? $promo->discountFor($itemsTotal) : 0;
 
             $sale = SalesTransaction::create([
                 'transaction_date' => now(),
                 'payment_method' => $validated['payment_method'],
-                'total_amount' => $totalAmount,
+                'total_amount' => $itemsTotal - $discountAmount,
                 'credential_id' => $credentialId,
                 'status' => 'completed',
+                'promo_id' => $promo?->id,
+                'discount_amount' => $discountAmount,
             ]);
 
             foreach ($validated['items'] as $item) {
@@ -149,7 +169,7 @@ class TerminalController extends Controller
 
         return response()->json([
             'message' => 'Sale recorded.',
-            'transaction' => $transaction->load('items.product', 'items.cupSize'),
+            'transaction' => $transaction->load('items.product', 'items.cupSize', 'promo'),
         ], 201);
     }
 }

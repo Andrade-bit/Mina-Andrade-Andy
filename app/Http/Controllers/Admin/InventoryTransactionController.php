@@ -30,41 +30,19 @@ class InventoryTransactionController extends Controller
     }
 
     /**
-     * Record a Stock In (Restock) movement and increase the item's current quantity.
-     */
-    public function stockIn(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'inventory_item_id' => ['required', 'exists:inventory_items,id'],
-            'quantity' => ['required', 'numeric', 'min:0.01'],
-            'inventory_transaction_date' => ['required', 'date'],
-            'reason' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        DB::transaction(function () use ($validated) {
-            $item = InventoryItem::lockForUpdate()->findOrFail($validated['inventory_item_id']);
-            $item->increment('current_quantity', $validated['quantity']);
-
-            InventoryTransaction::create([
-                'inventory_item_id' => $item->id,
-                'transaction_type' => 'Restock',
-                'quantity' => $validated['quantity'],
-                'inventory_transaction_date' => $validated['inventory_transaction_date'],
-                'reason' => $validated['reason'] ?? null,
-            ]);
-        });
-
-        return redirect()->route('admin.inventory-items.index')->with('status', 'Stock in recorded.');
-    }
-
-    /**
      * Record a Stock Out (Waste/Adjustment) movement and decrease the item's current quantity.
+     *
+     * Quantity can be entered in the item's base unit or its secondary
+     * (purchase) unit — e.g. logging usage in ml even though the item is
+     * bought and tracked in bottles' worth of ml. A secondary-unit entry is
+     * converted to the base unit before it touches stock.
      */
     public function stockOut(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'inventory_item_id' => ['required', 'exists:inventory_items,id'],
             'quantity' => ['required', 'numeric', 'min:0.01'],
+            'quantity_unit' => ['nullable', Rule::in(['base', 'secondary'])],
             'transaction_type' => ['required', Rule::in(['Waste', 'Adjustment'])],
             'inventory_transaction_date' => ['required', 'date'],
             'reason' => ['nullable', 'string', 'max:255'],
@@ -73,16 +51,21 @@ class InventoryTransactionController extends Controller
         DB::transaction(function () use ($validated) {
             $item = InventoryItem::lockForUpdate()->findOrFail($validated['inventory_item_id']);
 
-            if ($validated['quantity'] > $item->current_quantity) {
+            $quantity = $validated['quantity'];
+            if (($validated['quantity_unit'] ?? 'base') === 'secondary' && $item->conversion_factor) {
+                $quantity *= (float) $item->conversion_factor;
+            }
+
+            if ($quantity > $item->current_quantity) {
                 throw ValidationException::withMessages(['quantity' => 'Quantity exceeds available stock.']);
             }
 
-            $item->decrement('current_quantity', $validated['quantity']);
+            $item->decrement('current_quantity', $quantity);
 
             InventoryTransaction::create([
                 'inventory_item_id' => $item->id,
                 'transaction_type' => $validated['transaction_type'],
-                'quantity' => $validated['quantity'],
+                'quantity' => $quantity,
                 'inventory_transaction_date' => $validated['inventory_transaction_date'],
                 'reason' => $validated['reason'] ?? null,
             ]);

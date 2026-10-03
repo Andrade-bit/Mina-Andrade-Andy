@@ -9,6 +9,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class SalesReportController extends Controller
 {
@@ -66,11 +67,53 @@ class SalesReportController extends Controller
 
         return view('pos.transactions', [
             'transactions' => $transactions,
-            'todaysSales' => SalesTransaction::whereDate('transaction_date', today())->sum('total_amount'),
-            'todaysCount' => SalesTransaction::whereDate('transaction_date', today())->count(),
-            'byOwnerCount' => SalesTransaction::whereHas('credential', fn ($q) => $q->where('role', 'admin'))->count(),
-            'byStaffCount' => SalesTransaction::whereHas('credential', fn ($q) => $q->where('role', 'assistant'))->count(),
+            'todaysSales' => SalesTransaction::whereDate('transaction_date', today())->where('status', '!=', 'voided')->sum('total_amount'),
+            'todaysCount' => SalesTransaction::whereDate('transaction_date', today())->where('status', '!=', 'voided')->count(),
+            'byOwnerCount' => SalesTransaction::where('status', '!=', 'voided')->whereHas('credential', fn ($q) => $q->where('role', 'admin'))->count(),
+            'byStaffCount' => SalesTransaction::where('status', '!=', 'voided')->whereHas('credential', fn ($q) => $q->where('role', 'assistant'))->count(),
             'staffOptions' => Credential::orderBy('first_name')->get(),
         ]);
+    }
+
+    /**
+     * Void a sale — admin-only, requires a typed reason and a live admin PIN
+     * confirmation (re-entered here regardless of how the admin is already
+     * signed in). Inventory is deliberately NOT auto-restored: voiding is a
+     * pure accounting action, any stock correction is done separately.
+     */
+    public function void(Request $request, SalesTransaction $salesTransaction): RedirectResponse
+    {
+        if (! Auth::check()) {
+            $credentialId = $request->session()->get('pos_credential_id');
+            $credential = $credentialId ? Credential::find($credentialId) : null;
+
+            if (! $credential || $credential->role !== 'admin') {
+                return redirect()->route('pos.login');
+            }
+        }
+
+        $validated = $request->validate([
+            'void_reason' => ['required', 'string', 'max:500'],
+            'admin_pin' => ['required', 'digits:4'],
+        ]);
+
+        if ($salesTransaction->status === 'voided') {
+            return back()->withErrors(['void_reason' => 'This sale is already voided.']);
+        }
+
+        $admin = Credential::where('passcode', $validated['admin_pin'])->where('role', 'admin')->first();
+
+        if (! $admin) {
+            throw ValidationException::withMessages(['admin_pin' => 'Incorrect admin PIN.']);
+        }
+
+        $salesTransaction->update([
+            'status' => 'voided',
+            'void_reason' => $validated['void_reason'],
+            'voided_by_credential_id' => $admin->id,
+            'voided_at' => now(),
+        ]);
+
+        return back()->with('status', 'Sale #'.$salesTransaction->id.' voided.');
     }
 }

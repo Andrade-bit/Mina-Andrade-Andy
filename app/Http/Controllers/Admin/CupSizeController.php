@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CupSize;
+use App\Models\InventoryItem;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class CupSizeController extends Controller
 
         return view('admin.cup-sizes.index', [
             'cupSizes' => $cupSizes,
+            'inventoryItems' => InventoryItem::orderBy('name')->get(),
         ]);
     }
 
