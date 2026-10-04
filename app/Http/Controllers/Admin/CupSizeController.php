@@ -14,9 +14,9 @@ class CupSizeController extends Controller
     /**
      * List every cup size and its price (Small ₱35 / Medium ₱40 / Large ₱50).
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $cupSizes = CupSize::with('inventoryItem')->orderBy('price')->get();
+        $cupSizes = CupSize::query()->when($request->boolean('archived'), fn ($q) => $q->onlyTrashed())->withCount('salesTransactionItems')->with('inventoryItem')->orderBy('price')->get();
 
         return view('admin.cup-sizes.index', [
             'cupSizes' => $cupSizes,
@@ -63,6 +63,16 @@ class CupSizeController extends Controller
     {
         $cupSize->delete();
 
-        return redirect()->route('admin.cup-sizes.index')->with('status', 'Cup size removed.');
+        return redirect()->route('admin.cup-sizes.index')->with('status', 'Cup size archived.');
+    }
+
+    /**
+     * Bring an archived cup size back.
+     */
+    public function restore(int $id): RedirectResponse
+    {
+        CupSize::onlyTrashed()->findOrFail($id)->restore();
+
+        return redirect()->route('admin.cup-sizes.index', ['archived' => 1])->with('status', 'Cup size restored.');
     }
 }

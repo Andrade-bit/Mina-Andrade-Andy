@@ -25,6 +25,6 @@ class InventoryTransaction extends Model
 
     public function inventoryItem(): BelongsTo
     {
-        return $this->belongsTo(InventoryItem::class);
+        return $this->belongsTo(InventoryItem::class)->withTrashed();
     }
 }

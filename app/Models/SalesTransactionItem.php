@@ -31,11 +31,11 @@ class SalesTransactionItem extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class)->withTrashed();
     }
 
     public function cupSize(): BelongsTo
     {
-        return $this->belongsTo(CupSize::class);
+        return $this->belongsTo(CupSize::class)->withTrashed();
     }
 }

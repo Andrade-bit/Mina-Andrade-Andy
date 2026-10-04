@@ -32,12 +32,13 @@ class SupplyPurchase extends Model
 
     public function supplier(): BelongsTo
     {
-        return $this->belongsTo(Supplier::class);
+        return $this->belongsTo(Supplier::class)->withTrashed();
     }
 
     public function items(): BelongsToMany
     {
         return $this->belongsToMany(InventoryItem::class, 'supply_purchase_items', 'supply_purchase_id', 'inventory_item_id')
+            ->withTrashed()
             ->withPivot('quantity', 'unit_cost', 'subtotal')
             ->withTimestamps();
     }

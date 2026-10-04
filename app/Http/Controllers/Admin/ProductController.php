@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Pos\TerminalController;
 use App\Models\CupSize;
 use App\Models\Ingredient;
 use App\Models\InventoryItem;
@@ -24,7 +25,14 @@ class ProductController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Product::with('productCategory');
+        $query = Product::with('productCategory')->withSum([
+            'salesTransactionItems as sold_today' => fn ($q) => $q->whereHas('salesTransaction', fn ($t) => $t->whereDate('transaction_date', today())->where('status', '!=', 'voided')),
+            'salesTransactionItems as sold_total' => fn ($q) => $q->whereHas('salesTransaction', fn ($t) => $t->where('status', '!=', 'voided')),
+        ], 'quantity');
+
+        if ($request->boolean('archived')) {
+            $query->onlyTrashed();
+        }
 
         if ($request->filled('search')) {
             $query->where('product_name', 'like', '%'.$request->string('search').'%');
@@ -243,16 +251,29 @@ class ProductController extends Controller
     }
 
     /**
-     * Remove a menu item.
+     * Archive a menu item (soft delete) — it leaves the POS and menu but
+     * stays in sales history and can be restored.
      */
     public function destroy(Product $product): RedirectResponse
     {
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
+        $holders = TerminalController::openCartsHolding([$product->id]);
+
+        if ($holders->isNotEmpty()) {
+            return redirect()->route('admin.products.index')->with('error', TerminalController::openCartMessage($product->product_name, $holders));
         }
 
         $product->delete();
 
-        return redirect()->route('admin.products.index')->with('status', 'Product removed.');
+        return redirect()->route('admin.products.index')->with('status', 'Product archived.');
+    }
+
+    /**
+     * Bring an archived menu item back.
+     */
+    public function restore(int $product): RedirectResponse
+    {
+        Product::onlyTrashed()->findOrFail($product)->restore();
+
+        return redirect()->route('admin.products.index', ['archived' => 1])->with('status', 'Product restored.');
     }
 }

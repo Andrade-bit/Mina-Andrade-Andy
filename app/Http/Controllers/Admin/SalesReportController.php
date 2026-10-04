@@ -33,7 +33,7 @@ class SalesReportController extends Controller
             }
         }
 
-        $query = SalesTransaction::with('credential', 'items.product', 'items.cupSize');
+        $query = SalesTransaction::with('credential', 'promo', 'items.product', 'items.cupSize');
 
         if ($request->filled('search')) {
             $search = $request->string('search');

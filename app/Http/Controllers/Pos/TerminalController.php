@@ -9,10 +9,13 @@ use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\Promo;
 use App\Models\SalesTransaction;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class TerminalController extends Controller
@@ -115,8 +118,8 @@ class TerminalController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
-                $product = Product::with('ingredients.inventoryItem')->findOrFail($item['product_id']);
-                $cupSize = CupSize::findOrFail($item['cup_size_id']);
+                $product = Product::withTrashed()->with('ingredients.inventoryItem')->findOrFail($item['product_id']);
+                $cupSize = CupSize::withTrashed()->findOrFail($item['cup_size_id']);
                 $subtotal = $item['quantity'] * $item['price_at_order'];
 
                 $sale->items()->create([
@@ -171,5 +174,93 @@ class TerminalController extends Controller
             'message' => 'Sale recorded.',
             'transaction' => $transaction->load('items.product', 'items.cupSize', 'promo'),
         ], 201);
+    }
+
+    /**
+     * A POS terminal reports which products are in its open (not yet charged)
+     * cart so the admin side can refuse to archive them mid-order. An empty
+     * list clears the terminal's cart. Entries expire on their own if the
+     * terminal goes quiet.
+     */
+    public function syncCart(Request $request): JsonResponse
+    {
+        $credentialId = $request->session()->get('pos_credential_id');
+
+        if (! $credentialId) {
+            return response()->json(['ok' => false], 401);
+        }
+
+        $productIds = collect($request->input('product_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $key = 'pos_cart:'.$request->session()->getId();
+        $index = Cache::get('pos_cart_index', []);
+
+        if ($productIds === []) {
+            Cache::forget($key);
+            $index = array_values(array_diff($index, [$key]));
+        } else {
+            $credential = Credential::find($credentialId);
+
+            Cache::put($key, [
+                'name' => trim(($credential->first_name ?? '').' '.($credential->last_name ?? '')),
+                'product_ids' => $productIds,
+                'at' => now()->timestamp,
+            ], now()->addMinutes(5));
+
+            if (! in_array($key, $index, true)) {
+                $index[] = $key;
+            }
+        }
+
+        Cache::put('pos_cart_index', $index, now()->addDay());
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * The open POS carts that currently contain any of the given products.
+     *
+     * @param  array<int, int>  $productIds
+     * @return Collection<int, array{name: string, product_ids: array<int, int>, at: int}>
+     */
+    public static function openCartsHolding(array $productIds): Collection
+    {
+        $liveKeys = [];
+        $holders = collect();
+
+        foreach (Cache::get('pos_cart_index', []) as $key) {
+            $cart = Cache::get($key);
+
+            if (! $cart) {
+                continue;
+            }
+
+            $liveKeys[] = $key;
+
+            if (array_intersect($productIds, $cart['product_ids'])) {
+                $holders->push($cart);
+            }
+        }
+
+        Cache::put('pos_cart_index', $liveKeys, now()->addDay());
+
+        return $holders;
+    }
+
+    /**
+     * A plain-language reason an archive was refused because of open carts.
+     *
+     * @param  Collection<int, array{name: string, product_ids: array<int, int>, at: int}>  $holders
+     */
+    public static function openCartMessage(string $subject, Collection $holders): string
+    {
+        $who = $holders->map(fn ($cart) => ($cart['name'] ?: 'a cashier').' ('.Carbon::createFromTimestamp($cart['at'])->diffForHumans().')')->unique()->implode(', ');
+
+        return "Can't archive {$subject} right now. It's in an open order on a POS terminal: {$who}. Wait until the order is charged or cleared, then try again.";
     }
 }

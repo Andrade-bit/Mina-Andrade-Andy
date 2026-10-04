@@ -14,9 +14,9 @@ class PromoController extends Controller
     /**
      * List every promo code.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $promos = Promo::orderByDesc('active')->orderBy('code')->get();
+        $promos = Promo::query()->when($request->boolean('archived'), fn ($q) => $q->onlyTrashed())->withCount('salesTransactions')->orderByDesc('active')->orderBy('code')->get();
 
         return view('admin.promos.index', [
             'promos' => $promos,
@@ -31,10 +31,10 @@ class PromoController extends Controller
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:50', 'unique:promos,code'],
             'type' => ['required', Rule::in(['percent', 'fixed'])],
-            'value' => ['required', 'numeric', 'min:0.01'],
-            'reason' => ['nullable', 'string', 'max:255'],
+            'value' => ['required', 'numeric', 'min:0.01', Rule::when($request->input('type') === 'percent', ['max:100'])],
+            'reason' => ['nullable', 'string', 'max:500'],
             'active' => ['nullable', 'boolean'],
-            'expires_at' => ['nullable', 'date'],
+            'expires_at' => ['nullable', 'date', 'after_or_equal:today'],
         ]);
 
         Promo::create([
@@ -57,10 +57,13 @@ class PromoController extends Controller
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:50', Rule::unique('promos', 'code')->ignore($promo->id)],
             'type' => ['required', Rule::in(['percent', 'fixed'])],
-            'value' => ['required', 'numeric', 'min:0.01'],
-            'reason' => ['nullable', 'string', 'max:255'],
+            'value' => ['required', 'numeric', 'min:0.01', Rule::when($request->input('type') === 'percent', ['max:100'])],
+            'reason' => ['nullable', 'string', 'max:500'],
             'active' => ['nullable', 'boolean'],
-            'expires_at' => ['nullable', 'date'],
+            'expires_at' => ['nullable', 'date', Rule::when(
+                $request->date('expires_at')?->toDateString() !== $promo->expires_at?->toDateString(),
+                ['after_or_equal:today'],
+            )],
         ]);
 
         $promo->update([
@@ -82,6 +85,16 @@ class PromoController extends Controller
     {
         $promo->delete();
 
-        return redirect()->route('admin.promos.index')->with('status', 'Promo removed.');
+        return redirect()->route('admin.promos.index')->with('status', 'Promo archived.');
+    }
+
+    /**
+     * Bring an archived promo back.
+     */
+    public function restore(int $id): RedirectResponse
+    {
+        Promo::onlyTrashed()->findOrFail($id)->restore();
+
+        return redirect()->route('admin.promos.index', ['archived' => 1])->with('status', 'Promo restored.');
     }
 }

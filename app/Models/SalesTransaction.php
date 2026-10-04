@@ -33,7 +33,7 @@ class SalesTransaction extends Model
 
     public function credential(): BelongsTo
     {
-        return $this->belongsTo(Credential::class);
+        return $this->belongsTo(Credential::class)->withTrashed();
     }
 
     public function items(): HasMany
@@ -43,11 +43,11 @@ class SalesTransaction extends Model
 
     public function promo(): BelongsTo
     {
-        return $this->belongsTo(Promo::class);
+        return $this->belongsTo(Promo::class)->withTrashed();
     }
 
     public function voidedBy(): BelongsTo
     {
-        return $this->belongsTo(Credential::class, 'voided_by_credential_id');
+        return $this->belongsTo(Credential::class, 'voided_by_credential_id')->withTrashed();
     }
 }

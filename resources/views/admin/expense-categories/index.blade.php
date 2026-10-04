@@ -50,6 +50,14 @@
       </button>
     </div>
 
+    <div class="flex justify-end mb-3">
+      @if (request()->boolean('archived'))
+        <a href="{{ route('admin.expense-categories.index') }}" class="px-4 py-2 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-extrabold text-xs transition-colors">&larr; Back to active</a>
+      @else
+        <a href="{{ route('admin.expense-categories.index', ['archived' => 1]) }}" class="px-4 py-2 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-extrabold text-xs transition-colors">View archived</a>
+      @endif
+    </div>
+
     @if (session('status'))
       <div class="mb-5 bg-mint-50 text-mint-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('status') }}</div>
     @endif
@@ -69,12 +77,21 @@
               <p class="text-xs text-stamp-400 font-semibold">{{ $category->expenses_count }} {{ Str::plural('expense', $category->expenses_count) }}</p>
             </div>
             <div class="flex items-center gap-2">
+              @unless ($category->trashed())
               <button type="button" onclick='openEditModal(@json($category))' class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
-              <form method="POST" action="{{ route('admin.expense-categories.destroy', $category) }}" onsubmit="return confirm('Remove {{ $category->category_name }}?');">
+              @endunless
+              @if ($category->trashed())
+                <form method="POST" action="{{ route('admin.expense-categories.restore', $category->id) }}">
+                  @csrf
+                  <button type="submit" class="px-3.5 py-2 rounded-xl bg-mint-50 hover:bg-mint-500 hover:text-cream-50 text-mint-600 font-extrabold text-xs transition-colors">Restore</button>
+                </form>
+              @else
+              <form method="POST" action="{{ route('admin.expense-categories.destroy', $category) }}" onsubmit="return confirm('Archive {{ $category->category_name }}? {{ $category->expenses_count ? 'Has '.$category->expenses_count.' expense(s). ' : '' }}You can restore it anytime.');">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-coral-50 flex items-center justify-center text-coral-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                <button type="submit" title="Archive" class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-coral-50 flex items-center justify-center text-coral-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 01-2-2V4a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg></button>
               </form>
+              @endif
             </div>
           </div>
         @empty

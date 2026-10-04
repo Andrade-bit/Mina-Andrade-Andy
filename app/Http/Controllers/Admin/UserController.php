@@ -14,9 +14,9 @@ class UserController extends Controller
     /**
      * List every staff/admin account.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $staff = Credential::orderBy('first_name')->get();
+        $staff = Credential::query()->when($request->boolean('archived'), fn ($q) => $q->onlyTrashed())->withCount('salesTransactions')->orderBy('first_name')->get();
 
         return view('admin.user-management', [
             'staff' => $staff,
@@ -66,6 +66,16 @@ class UserController extends Controller
     {
         $credential->delete();
 
-        return redirect()->route('admin.users')->with('status', 'Staff account removed.');
+        return redirect()->route('admin.users')->with('status', 'Staff account archived.');
+    }
+
+    /**
+     * Bring an archived staff account back.
+     */
+    public function restore(int $id): RedirectResponse
+    {
+        Credential::onlyTrashed()->findOrFail($id)->restore();
+
+        return redirect()->route('admin.users', ['archived' => 1])->with('status', 'Staff account restored.');
     }
 }

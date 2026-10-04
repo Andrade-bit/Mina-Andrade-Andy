@@ -13,9 +13,9 @@ class ExpenseCategoryController extends Controller
     /**
      * List every expense category (e.g. Rent, Utilities, Supplies).
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $categories = ExpenseCategory::withCount('expenses')->orderBy('category_name')->get();
+        $categories = ExpenseCategory::query()->when($request->boolean('archived'), fn ($q) => $q->onlyTrashed())->withCount('expenses')->orderBy('category_name')->get();
 
         return view('admin.expense-categories.index', [
             'categories' => $categories,
@@ -57,6 +57,16 @@ class ExpenseCategoryController extends Controller
     {
         $expenseCategory->delete();
 
-        return redirect()->route('admin.expense-categories.index')->with('status', 'Category removed.');
+        return redirect()->route('admin.expense-categories.index')->with('status', 'Category archived.');
+    }
+
+    /**
+     * Bring an archived expense category back.
+     */
+    public function restore(int $id): RedirectResponse
+    {
+        ExpenseCategory::onlyTrashed()->findOrFail($id)->restore();
+
+        return redirect()->route('admin.expense-categories.index', ['archived' => 1])->with('status', 'Category restored.');
     }
 }

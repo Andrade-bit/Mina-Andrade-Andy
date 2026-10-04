@@ -50,6 +50,14 @@
       </a>
     </div>
 
+    <div class="flex justify-end mb-3">
+      @if (request()->boolean('archived'))
+        <a href="{{ route('admin.expenses.index') }}" class="px-4 py-2 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-extrabold text-xs transition-colors">&larr; Back to active</a>
+      @else
+        <a href="{{ route('admin.expenses.index', ['archived' => 1]) }}" class="px-4 py-2 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-extrabold text-xs transition-colors">View archived</a>
+      @endif
+    </div>
+
     @if (session('status'))
       <div class="mb-5 bg-mint-50 text-mint-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('status') }}</div>
     @endif
@@ -90,11 +98,18 @@
               <td class="py-3 px-4 text-stamp-500 text-sm">{{ $expense->payment_method }}</td>
               <td class="py-3 px-4 font-display font-bold text-stamp-700">₱{{ number_format($expense->amount, 2) }}</td>
               <td class="py-3 px-4">
-                <form method="POST" action="{{ route('admin.expenses.destroy', $expense) }}" onsubmit="return confirm('Remove this expense?');">
+                @if ($expense->trashed())
+                  <form method="POST" action="{{ route('admin.expenses.restore', $expense->id) }}">
+                    @csrf
+                    <button type="submit" class="px-3.5 py-2 rounded-xl bg-mint-50 hover:bg-mint-500 hover:text-cream-50 text-mint-600 font-extrabold text-xs transition-colors">Restore</button>
+                  </form>
+                @else
+                <form method="POST" action="{{ route('admin.expenses.destroy', $expense) }}" onsubmit="return confirm('Archive this expense? You can restore it anytime.');">
                   @csrf
                   @method('DELETE')
-                  <button type="submit" class="text-coral-500 text-xs font-bold hover:underline">Delete</button>
+                  <button type="submit" title="Archive" class="text-coral-500 text-xs font-bold hover:underline">Archive</button>
                 </form>
+                @endif
               </td>
             </tr>
           @empty

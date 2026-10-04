@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
+use App\Models\Supplier;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,6 +36,7 @@ class InventoryItemController extends Controller
             'supplier' => $supplier,
             'lowStockCount' => InventoryItem::whereColumn('current_quantity', '<=', 'reorder_level')->count(),
             'recentTransactions' => $recentTransactions,
+            'suppliers' => Supplier::orderBy('supplier_name')->get(['id', 'supplier_name', 'payment_terms']),
             'stockInCount' => InventoryTransaction::where('transaction_type', 'Restock')->count(),
             'stockOutCount' => InventoryTransaction::whereIn('transaction_type', ['Waste', 'Adjustment', 'Sales'])->count(),
         ]);
@@ -116,12 +118,8 @@ class InventoryItemController extends Controller
      */
     public function destroy(InventoryItem $inventoryItem): RedirectResponse
     {
-        if ($inventoryItem->image) {
-            Storage::disk('public')->delete($inventoryItem->image);
-        }
-
         $inventoryItem->delete();
 
-        return redirect()->route('admin.inventory-items.index')->with('status', 'Inventory item removed.');
+        return redirect()->route('admin.inventory-items.index')->with('status', 'Inventory item archived.');
     }
 }

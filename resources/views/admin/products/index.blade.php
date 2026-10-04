@@ -50,6 +50,9 @@
       </a>
     </div>
 
+    @if (session('error'))
+      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('error') }}</div>
+    @endif
     @if (session('status'))
       <div class="mb-5 bg-mint-50 text-mint-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('status') }}</div>
     @endif
@@ -75,8 +78,12 @@
           <option value="never" @selected(request('performance') === 'never')>Never Sold</option>
         </select>
       </div>
+      <label class="flex items-center gap-2 bg-white rounded-2xl shadow-soft-sm px-4 py-2.5 text-sm text-stamp-600 font-semibold cursor-pointer">
+        <input type="checkbox" name="archived" value="1" onchange="this.form.submit()" @checked(request()->boolean('archived')) class="w-4 h-4 accent-stamp-500">
+        Archived
+      </label>
       <button type="submit" class="px-5 py-2.5 rounded-2xl bg-stamp-500 hover:bg-stamp-600 text-cream-50 font-extrabold text-xs transition-colors">Search</button>
-      @if (request('search') || request('category') || request('performance'))
+      @if (request('search') || request('category') || request('performance') || request()->boolean('archived'))
         <a href="{{ route('admin.products.index') }}" class="px-4 py-2.5 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-500 font-extrabold text-xs transition-colors">Clear</a>
       @endif
     </form>
@@ -102,12 +109,19 @@
               <span class="bg-{{ request('performance') === 'top' ? 'mint' : 'coral' }}-50 text-{{ request('performance') === 'top' ? 'mint-600' : 'coral-500' }} text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full shrink-0">{{ $soldCounts[$product->id] ?? 0 }} sold (30d)</span>
             @endif
             <div class="flex items-center gap-2">
-              <a href="{{ route('admin.products.edit', $product) }}" class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></a>
-              <form method="POST" action="{{ route('admin.products.destroy', $product) }}" onsubmit="return confirm('Remove {{ $product->product_name }} from the menu?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-coral-50 flex items-center justify-center text-coral-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-              </form>
+              @if ($product->trashed())
+                <form method="POST" action="{{ route('admin.products.restore', $product->id) }}">
+                  @csrf
+                  <button type="submit" class="px-3.5 py-2 rounded-xl bg-mint-50 hover:bg-mint-500 hover:text-cream-50 text-mint-600 font-extrabold text-xs transition-colors">Restore</button>
+                </form>
+              @else
+                <a href="{{ route('admin.products.edit', $product) }}" class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></a>
+                <form method="POST" action="{{ route('admin.products.destroy', $product) }}" onsubmit="return confirm('Archive {{ $product->product_name }}? {{ (int) $product->sold_today > 0 ? 'It was ordered '.(int) $product->sold_today.' time(s) today, so a customer may be ordering it right now. ' : ((int) $product->sold_total > 0 ? 'It has been ordered '.(int) $product->sold_total.' time(s) in total. ' : 'It has never been ordered. ') }}It will leave the menu and POS, but past sales keep it. You can restore it anytime.');">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" title="Archive" class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-coral-50 flex items-center justify-center text-coral-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 01-2-2V4a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg></button>
+                </form>
+              @endif
             </div>
           </div>
         @empty

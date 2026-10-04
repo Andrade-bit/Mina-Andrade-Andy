@@ -34,9 +34,13 @@
 </head>
 <body class="min-h-screen bg-cream-50 font-body text-stamp-700">
 
+  @php
+    $fromTerminal = request('back') === 'terminal';
+  @endphp
+
   <header class="bg-white shadow-soft-sm px-5 py-3 flex items-center justify-between flex-wrap gap-3">
     <div class="flex items-center gap-3">
-      <a href="{{ auth()->check() ? route('admin.dashboard') : route('pos.terminal') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="{{ auth()->check() ? 'Back to Dashboard' : 'Back to POS' }}">
+      <a href="{{ $fromTerminal ? route('pos.terminal') : (auth()->check() ? route('admin.dashboard') : route('pos.terminal')) }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="{{ $fromTerminal || ! auth()->check() ? 'Back to POS' : 'Back to Dashboard' }}">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
       </a>
       <div>
@@ -78,6 +82,9 @@
     </div>
 
     <form method="GET" action="{{ route('pos.transactions') }}" class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6 mb-4 space-y-3">
+      @if ($fromTerminal)
+        <input type="hidden" name="back" value="terminal">
+      @endif
       <div class="flex flex-wrap items-center gap-3">
         <div class="flex items-center gap-2 bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2.5 flex-1 min-w-[220px]">
           <svg class="w-4 h-4 text-stamp-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -111,7 +118,7 @@
         </div>
         <button type="submit" class="px-5 py-2.5 rounded-2xl bg-stamp-500 hover:bg-stamp-600 text-cream-50 font-extrabold text-xs transition-colors">Filter</button>
         @if (request()->anyFilled(['search', 'payment_method', 'credential_id', 'from', 'to']))
-          <a href="{{ route('pos.transactions') }}" class="px-4 py-2.5 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-500 font-extrabold text-xs transition-colors">Clear</a>
+          <a href="{{ route('pos.transactions', $fromTerminal ? ['back' => 'terminal'] : []) }}" class="px-4 py-2.5 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-500 font-extrabold text-xs transition-colors">Clear</a>
         @endif
       </div>
     </form>
@@ -136,7 +143,20 @@
             <tr class="border-b border-cream-200 last:border-0 {{ $transaction->status === 'voided' ? 'opacity-50' : '' }}">
               <td class="py-3 px-4 font-bold text-stamp-700 text-sm">CB-{{ str_pad($transaction->id, 5, '0', STR_PAD_LEFT) }}</td>
               <td class="py-3 px-4 text-stamp-500 text-sm">{{ $transaction->transaction_date->format('M j, Y, g:i A') }}</td>
-              <td class="py-3 px-4 text-stamp-500 text-sm">{{ $transaction->items->map(fn ($item) => $item->quantity.'x '.$item->product->product_name)->implode(', ') }}</td>
+              <td class="py-3 px-4 text-stamp-500 text-sm">
+                {{ $transaction->items->map(fn ($item) => $item->quantity.'x '.$item->product->product_name)->implode(', ') }}
+                @if ($transaction->promo)
+                  <div class="mt-1.5 max-w-xs">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-mint-50 text-mint-600">Promo {{ $transaction->promo->code }} &middot; &minus;₱{{ number_format($transaction->discount_amount, 2) }}</span>
+                    @if ($transaction->promo->reason)
+                      <p class="text-[11px] text-stamp-400 font-semibold italic break-words mt-0.5">&ldquo;{{ $transaction->promo->reason }}&rdquo;</p>
+                    @endif
+                  </div>
+                @endif
+                @if ($transaction->status === 'voided' && $transaction->void_reason)
+                  <p class="mt-1.5 max-w-xs text-[11px] text-coral-600 font-semibold break-words">Voided: {{ $transaction->void_reason }}</p>
+                @endif
+              </td>
               <td class="py-3 px-4 text-stamp-500 text-sm">{{ $transaction->payment_method }}</td>
               <td class="py-3 px-4">
                 @if ($transaction->credential)
@@ -179,7 +199,7 @@
 
   <!-- Void Sale Modal -->
   <div id="voidModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-sm p-7 relative">
+    <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-md p-7 relative max-h-[90vh] overflow-y-auto">
       <button type="button" onclick="closeVoidModal()" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
@@ -198,8 +218,9 @@
         <div>
           <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Reason</label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input type="text" name="void_reason" value="{{ old('void_reason') }}" placeholder="e.g. Wrong item rung up" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+            <textarea name="void_reason" rows="4" maxlength="500" required oninput="document.getElementById('voidReasonCount').textContent = this.value.length" placeholder="e.g. Wrong item rung up, customer changed their mind" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm resize-none">{{ old('void_reason') }}</textarea>
           </div>
+          <p class="text-[11px] text-stamp-300 font-semibold text-right mt-1 mr-1"><span id="voidReasonCount">0</span>/500</p>
         </div>
         <div>
           <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Admin PIN</label>

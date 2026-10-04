@@ -14,9 +14,9 @@ class ExpenseController extends Controller
     /**
      * List recorded expenses, most recent first.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $expenses = Expense::with('expenseCategory', 'supplyPurchase')->latest('expense_date')->paginate(30);
+        $expenses = Expense::query()->when($request->boolean('archived'), fn ($q) => $q->onlyTrashed())->with('expenseCategory', 'supplyPurchase')->latest('expense_date')->paginate(30);
 
         return view('admin.expenses.index', [
             'expenses' => $expenses,
@@ -63,6 +63,16 @@ class ExpenseController extends Controller
     {
         $expense->delete();
 
-        return redirect()->route('admin.expenses.index')->with('status', 'Expense removed.');
+        return redirect()->route('admin.expenses.index')->with('status', 'Expense archived.');
+    }
+
+    /**
+     * Bring an archived expense back.
+     */
+    public function restore(int $id): RedirectResponse
+    {
+        Expense::onlyTrashed()->findOrFail($id)->restore();
+
+        return redirect()->route('admin.expenses.index', ['archived' => 1])->with('status', 'Expense restored.');
     }
 }

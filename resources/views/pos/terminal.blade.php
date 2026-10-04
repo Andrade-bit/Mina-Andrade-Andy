@@ -44,6 +44,24 @@
     }
   }
 </script>
+<style>
+  @media (max-width: 1023px) {
+    #cartDrawer {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+      width: auto; max-width: 560px; margin: 0 auto; padding: 0 10px 10px;
+      transform: translateY(110%); transition: transform .32s cubic-bezier(.22,1,.36,1);
+      pointer-events: none;
+    }
+    #cartDrawer.sheet-open { transform: translateY(0); pointer-events: auto; }
+    #cartDrawer.sheet-dragging { transition: none; }
+    #cartPanel {
+      max-height: calc(100dvh - 90px); overflow-y: auto; overscroll-behavior: contain;
+      border-radius: 1.75rem; box-shadow: 0 -12px 40px rgba(26,59,82,.28);
+    }
+    #cartBackdrop.show { display: block; animation: fadeIn .25s ease-out both; }
+  }
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+</style>
 </head>
 <body class="min-h-screen bg-cream-50 font-body text-stamp-700">
 
@@ -64,14 +82,9 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-1 bg-cream-100 rounded-2xl p-1 shadow-soft-inset">
-      <button id="typeDineIn" onclick="setOrderType('Dine In')" class="px-4 py-2 rounded-xl text-xs font-extrabold transition-all bg-stamp-500 text-cream-50">Dine In</button>
-      <button id="typeTakeOut" onclick="setOrderType('Take Out')" class="px-4 py-2 rounded-xl text-xs font-extrabold transition-all text-stamp-500">Take Out</button>
-    </div>
-
     <div class="flex items-center gap-3">
       @if ($credential->role === 'admin')
-        <a href="{{ route('pos.transactions') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Transactions &amp; reports">
+        <a href="{{ route('pos.transactions', ['back' => 'terminal']) }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Transactions &amp; reports">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         </a>
         <a href="{{ route('admin.users') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Admin dashboard">
@@ -116,21 +129,19 @@
           @foreach ($products->where('productCategory.category_name', $categoryName) as $product)
             @php $sizes = $product->sizes; @endphp
             @if ($sizes->count() === 1)
-              <button onclick="addOneSizeToCart({{ $product->id }}, {{ $sizes->first()->cup_size_id }}, {{ Illuminate\Support\Js::from($product->product_name) }}, {{ $sizes->first()->price }})" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
+              <button onclick="addOneSizeToCart({{ $product->id }}, {{ $sizes->first()->cup_size_id }}, {{ Illuminate\Support\Js::from($product->product_name) }}, {{ $sizes->first()->price }})" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_24px_44px_-14px_rgba(26,59,82,0.32)] active:translate-y-0 active:scale-[0.97]">
                 <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-                  <img src="{{ $product->display_image }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover">
-                  <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
+                  <img src="{{ $product->display_image }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110">
                 </div>
-                <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">{{ $product->product_name }}</p>
+                <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate transition-colors duration-300 group-hover:text-stamp-500">{{ $product->product_name }}</p>
                 <p class="font-display font-bold text-stamp-500 text-sm">₱{{ number_format($sizes->first()->price, 2) }}</p>
               </button>
             @else
-              <button onclick="openSizePicker({{ $product->id }}, {{ Illuminate\Support\Js::from($product->product_name) }}, {{ Illuminate\Support\Js::from($product->display_image) }}, {{ Illuminate\Support\Js::from($sizes->values()) }})" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left hover:-translate-y-1 transition-transform">
+              <button onclick="openSizePicker({{ $product->id }}, {{ Illuminate\Support\Js::from($product->product_name) }}, {{ Illuminate\Support\Js::from($product->display_image) }}, {{ Illuminate\Support\Js::from($sizes->values()) }})" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_24px_44px_-14px_rgba(26,59,82,0.32)] active:translate-y-0 active:scale-[0.97]">
                 <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
-                  <img src="{{ $product->display_image }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover">
-                  <span class="add-badge absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gradient-to-b from-stamp-500 to-stamp-600 shadow-soft-btn text-cream-50 flex items-center justify-center font-bold text-lg group-hover:scale-110 active:scale-90 transition-transform">+</span>
+                  <img src="{{ $product->display_image }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110">
                 </div>
-                <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate">{{ $product->product_name }}</p>
+                <p class="font-extrabold text-stamp-700 text-sm mt-2.5 truncate transition-colors duration-300 group-hover:text-stamp-500">{{ $product->product_name }}</p>
                 <p class="font-display font-bold text-stamp-500 text-sm">₱{{ number_format($sizes->first()->price, 0) }}&ndash;{{ number_format($sizes->last()->price, 0) }}</p>
               </button>
             @endif
@@ -140,6 +151,7 @@
     </div>
 
     <!-- Cart -->
+    <div id="cartBackdrop" onclick="closeCartSheet()" class="hidden lg:hidden fixed inset-0 bg-stamp-700/40 backdrop-blur-sm z-40"></div>
     <div id="cartDrawer" class="w-full lg:w-96 shrink-0 lg:fixed lg:top-20 lg:bottom-4 lg:right-4 lg:z-30 lg:transition-transform lg:duration-300 lg:translate-x-full relative">
       <button id="cartTabBtn" onclick="toggleCartDrawer()" class="hidden lg:flex absolute top-1/2 -left-11 -translate-y-1/2 flex-col items-center gap-2 bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 rounded-l-2xl shadow-soft-btn px-2.5 py-4 z-10">
         <svg id="cartTabChevron" class="w-4 h-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
@@ -147,7 +159,15 @@
         <span id="cartTabBadge" class="w-5 h-5 rounded-full bg-coral-500 text-[10px] font-extrabold flex items-center justify-center">0</span>
       </button>
       <div id="cartPanel" class="bg-white rounded-[2rem] shadow-soft p-5 lg:sticky lg:top-0 lg:h-full lg:overflow-y-auto transition-shadow duration-300">
-        <h2 class="font-display font-bold text-lg text-stamp-700 mb-3">Current Order</h2>
+        <div id="cartSheetHandle" class="lg:hidden -mt-1 mb-2 pt-1 touch-none cursor-grab">
+          <div class="w-10 h-1.5 rounded-full bg-cream-200 mx-auto"></div>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-display font-bold text-lg text-stamp-700">Current Order</h2>
+          <button type="button" onclick="closeCartSheet()" class="lg:hidden w-9 h-9 rounded-xl bg-cream-100 hover:bg-cream-200 flex items-center justify-center text-stamp-500" aria-label="Close order">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+        </div>
 
         <div id="cartList" class="space-y-3 max-h-64 overflow-y-auto mb-4 pr-1">
           <p class="text-center text-stamp-300 text-sm py-10">No items yet — tap a product to add it.</p>
@@ -178,30 +198,12 @@
           <p class="text-xs font-extrabold uppercase tracking-wide text-stamp-300 mb-2">Cash Received</p>
           <div class="flex items-center gap-2 bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3 mb-2">
             <span class="font-display font-bold text-stamp-500">₱</span>
-            <input id="cashInput" type="text" inputmode="decimal" readonly placeholder="0.00" oninput="updateChange()" class="w-full bg-transparent outline-none text-stamp-700 font-display font-bold text-lg">
+            <input id="cashInput" type="text" inputmode="decimal" placeholder="0.00" oninput="updateChange()" class="w-full bg-transparent outline-none text-stamp-700 font-display font-bold text-lg">
           </div>
           <div class="lg:hidden grid grid-cols-3 gap-2 mb-3">
             <button onclick="setCashReceived('exact')" class="py-2 rounded-xl bg-cream-100 hover:bg-stamp-100 text-stamp-600 font-extrabold text-xs transition-colors active:scale-90">Exact</button>
             <button onclick="setCashReceived(100)" class="py-2 rounded-xl bg-cream-100 hover:bg-stamp-100 text-stamp-600 font-extrabold text-xs transition-colors active:scale-90">₱100</button>
             <button onclick="setCashReceived(500)" class="py-2 rounded-xl bg-cream-100 hover:bg-stamp-100 text-stamp-600 font-extrabold text-xs transition-colors active:scale-90">₱500</button>
-          </div>
-
-          <!-- Cash numeric keypad: touch devices only, hidden on laptop/desktop where typing works -->
-          <div id="cashKeypad" class="lg:hidden grid grid-cols-3 gap-2 mb-3">
-            <button onclick="keypadPress('1')" class="aspect-square rounded-2xl bg-cream-100 shadow-soft-sm font-display font-bold text-stamp-700 text-lg sm:text-xl transition-all active:shadow-none active:translate-y-[2px] active:bg-stamp-100">1</button>
-            <button onclick="keypadPress('2')" class="aspect-square rounded-2xl bg-cream-100 shadow-soft-sm font-display font-bold text-stamp-700 text-lg sm:text-xl transition-all active:shadow-none active:translate-y-[2px] active:bg-stamp-100">2</button>
-            <button onclick="keypadPress('3')" class="aspect-square rounded-2xl bg-cream-100 shadow-soft-sm font-display font-bold text-stamp-700 text-lg sm:text-xl transition-all active:shadow-none active:translate-y-[2px] active:bg-stamp-100">3</button>
-            <button onclick="keypadPress('4')" class="aspect-square rounded-2xl bg-cream-100 shadow-soft-sm font-display font-bold text-stamp-700 text-lg sm:text-xl transition-all active:shadow-none active:translate-y-[2px] active:bg-stamp-100">4</button>
-            <button onclick="keypadPress('5')" class="aspect-square rounded-2xl bg-cream-100 shadow-soft-sm font-display font-bold text-stamp-700 text-lg sm:text-xl transition-all active:shadow-none active:translate-y-[2px] active:bg-stamp-100">5</button>
-            <button onclick="keypadPress('6')" class="aspect-square rounded-2xl bg-cream-100 shadow-soft-sm font-display font-bold text-stamp-700 text-lg sm:text-xl transition-all active:shadow-none active:translate-y-[2px] active:bg-stamp-100">6</button>
-            <button onclick="keypadPress('7')" class="aspect-square rounded-2xl bg-cream-100 shadow-soft-sm font-display font-bold text-stamp-700 text-lg sm:text-xl transition-all active:shadow-none active:translate-y-[2px] active:bg-stamp-100">7</button>
-            <button onclick="keypadPress('8')" class="aspect-square rounded-2xl bg-cream-100 shadow-soft-sm font-display font-bold text-stamp-700 text-lg sm:text-xl transition-all active:shadow-none active:translate-y-[2px] active:bg-stamp-100">8</button>
-            <button onclick="keypadPress('9')" class="aspect-square rounded-2xl bg-cream-100 shadow-soft-sm font-display font-bold text-stamp-700 text-lg sm:text-xl transition-all active:shadow-none active:translate-y-[2px] active:bg-stamp-100">9</button>
-            <button onclick="keypadPress('C')" class="aspect-square rounded-2xl bg-coral-50 shadow-soft-sm font-display font-bold text-coral-500 text-sm sm:text-base transition-all active:shadow-none active:translate-y-[2px]">C</button>
-            <button onclick="keypadPress('0')" class="aspect-square rounded-2xl bg-cream-100 shadow-soft-sm font-display font-bold text-stamp-700 text-lg sm:text-xl transition-all active:shadow-none active:translate-y-[2px] active:bg-stamp-100">0</button>
-            <button onclick="keypadPress('back')" class="aspect-square rounded-2xl bg-cream-100 shadow-soft-sm font-display font-bold text-stamp-700 transition-all active:shadow-none active:translate-y-[2px] active:bg-stamp-100 flex items-center justify-center">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l-7-7 7-7m-7 7h18"/></svg>
-            </button>
           </div>
 
           <div class="flex justify-between items-center bg-cream-50 rounded-xl px-3 py-2.5">
@@ -211,12 +213,10 @@
         </div>
 
         <div class="flex gap-2">
-          @if ($credential->role === 'admin')
-            <button onclick="voidOrder()" class="px-4 py-3.5 rounded-2xl bg-coral-50 text-coral-600 font-display font-bold text-sm hover:bg-coral-100 transition-colors flex items-center gap-1.5">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              Void
-            </button>
-          @endif
+          <button onclick="clearOrder()" class="px-4 py-3.5 rounded-2xl bg-coral-50 text-coral-600 font-display font-bold text-sm hover:bg-coral-100 transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            Clear
+          </button>
           <button id="chargeBtn" onclick="charge()" disabled class="flex-1 py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 disabled:opacity-40 disabled:pointer-events-none">
             Charge <span id="chargeAmount">₱0.00</span>
           </button>
@@ -226,7 +226,7 @@
   </div>
 
   <!-- Floating cart bar: mobile/tablet only, stays stuck to the bottom while scrolling -->
-  <button id="floatingCartBar" onclick="scrollToCart()" class="lg:hidden fixed bottom-4 left-4 right-4 z-40 bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 rounded-full shadow-soft-btn px-5 py-3.5 flex items-center justify-between gap-3 transition-all duration-300 translate-y-24 opacity-0 pointer-events-none">
+  <button id="floatingCartBar" onclick="openCartSheet()" class="lg:hidden fixed bottom-4 left-4 right-4 z-40 bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 rounded-full shadow-soft-btn px-5 py-3.5 flex items-center justify-between gap-3 transition-all duration-300 translate-y-24 opacity-0 pointer-events-none">
     <div class="flex items-center gap-2.5">
       <span class="relative shrink-0">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h1.5l.9 4.5M6.4 7.5h13.85a.6.6 0 01.58.76l-1.62 6a.6.6 0 01-.58.44H8.1M6.4 7.5L8.1 14.7M8.1 14.7L7 17.4a.6.6 0 00.6.8h10.9M10 20.5a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"/></svg>
@@ -273,9 +273,28 @@
   <script>
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     let cart = [];
-    let promoDiscount = 0;
+    const cartSyncUrl = '{{ route('pos.terminal.cart') }}';
+    let cartSyncTimer = null;
+
+    function syncCartToServer(){
+      fetch(cartSyncUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+        body: JSON.stringify({ product_ids: [...new Set(cart.map(i => i.productId))] }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+    function scheduleCartSync(){
+      clearTimeout(cartSyncTimer);
+      cartSyncTimer = setTimeout(syncCartToServer, 300);
+    }
+    setInterval(() => { if (cart.length) syncCartToServer(); }, 60000);
+    window.addEventListener('pagehide', () => {
+      const data = new FormData();
+      data.append('_token', csrfToken);
+      navigator.sendBeacon(cartSyncUrl, data);
+    });
     let selectedPayment = 'Cash';
-    let currentOrderType = 'Dine In';
 
     function showCategory(cat){
       ['hot','coffee','noncoffee','juice'].forEach(c => {
@@ -302,12 +321,12 @@
     let pendingProduct = null;
 
     function openSizePicker(productId, name, img, sizes){
-      pendingProduct = { productId, name, img };
+      pendingProduct = { productId, name, img, sizes };
       document.getElementById('sizeModalImg').src = img;
       document.getElementById('sizeModalImg').alt = name;
       document.getElementById('sizeModalName').textContent = name;
       document.getElementById('sizeModalOptions').innerHTML = sizes.map((size, i) => `
-        <button onclick="chooseSize(${size.cup_size_id}, ${JSON.stringify(size.size_name)}, ${size.price}, this)" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all text-center">
+        <button type="button" onclick="chooseSize(${i}, this)" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all text-center">
           <span class="block mb-1" style="font-size: ${20 + i * 8}px">🥤</span>
           <span class="block font-display font-bold text-stamp-700 text-sm">${size.size_name}</span>
           <span class="block font-bold text-stamp-500 text-xs">₱${Number(size.price).toFixed(0)}</span>
@@ -328,27 +347,19 @@
       card.classList.add('opacity-0', 'scale-90');
       setTimeout(() => modal.classList.add('hidden'), 150);
     }
-    function chooseSize(cupSizeId, sizeName, price, el){
+    function chooseSize(index, el){
       if (!pendingProduct) return;
+      const size = pendingProduct.sizes[index];
+      const product = pendingProduct;
       el.classList.add('animate-bounce-in');
       setTimeout(() => {
-        addToCart(pendingProduct.productId, cupSizeId, pendingProduct.name + ' (' + sizeName + ')', price);
+        addToCart(product.productId, size.cup_size_id, product.name + ' (' + size.size_name + ')', Number(size.price));
         closeSizePicker();
       }, 120);
     }
 
     function addOneSizeToCart(productId, cupSizeId, name, price){
-      addToCart(productId, cupSizeId, name, price);
-    }
-
-    function setOrderType(type){
-      currentOrderType = type;
-      document.getElementById('typeDineIn').classList.toggle('bg-stamp-500', type === 'Dine In');
-      document.getElementById('typeDineIn').classList.toggle('text-cream-50', type === 'Dine In');
-      document.getElementById('typeDineIn').classList.toggle('text-stamp-500', type !== 'Dine In');
-      document.getElementById('typeTakeOut').classList.toggle('bg-stamp-500', type === 'Take Out');
-      document.getElementById('typeTakeOut').classList.toggle('text-cream-50', type === 'Take Out');
-      document.getElementById('typeTakeOut').classList.toggle('text-stamp-500', type !== 'Take Out');
+      addToCart(productId, cupSizeId, name, Number(price));
     }
 
     function format(n){ return '₱' + Number(n).toFixed(2); }
@@ -396,6 +407,7 @@
       }
       updateTotals();
       updateFloatingCart();
+      scheduleCartSync();
     }
 
     function updateFloatingCart(){
@@ -407,7 +419,10 @@
       document.getElementById('cartTabBadge').textContent = count;
       const shown = ['translate-y-0', 'opacity-100', 'pointer-events-auto'];
       const hidden = ['translate-y-24', 'opacity-0', 'pointer-events-none'];
-      if (count > 0) {
+      if (count > 0 && cartSheetOpen) {
+        bar.classList.remove(...shown);
+        bar.classList.add(...hidden);
+      } else if (count > 0) {
         bar.classList.remove(...hidden);
         bar.classList.add(...shown);
         if (!cartDrawerOpen && window.matchMedia('(min-width: 1024px)').matches) {
@@ -416,13 +431,47 @@
       } else {
         bar.classList.remove(...shown);
         bar.classList.add(...hidden);
+        if (cartSheetOpen) closeCartSheet();
       }
     }
 
-    function scrollToCart(){
-      document.getElementById('cartPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setTimeout(pulseCart, 450);
+    let cartSheetOpen = false;
+
+    function openCartSheet(){
+      cartSheetOpen = true;
+      document.getElementById('cartDrawer').classList.add('sheet-open');
+      document.getElementById('cartBackdrop').classList.add('show');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('floatingCartBar').classList.add('opacity-0', 'pointer-events-none');
     }
+    function closeCartSheet(){
+      if (!cartSheetOpen) return;
+      cartSheetOpen = false;
+      const drawer = document.getElementById('cartDrawer');
+      drawer.classList.remove('sheet-open', 'sheet-dragging');
+      drawer.style.transform = '';
+      document.getElementById('cartBackdrop').classList.remove('show');
+      document.body.style.overflow = '';
+      updateFloatingCart();
+    }
+    (function enableSheetDrag(){
+      const handle = document.getElementById('cartSheetHandle');
+      const drawer = document.getElementById('cartDrawer');
+      let startY = null;
+      handle.addEventListener('touchstart', e => { startY = e.touches[0].clientY; drawer.classList.add('sheet-dragging'); }, { passive: true });
+      handle.addEventListener('touchmove', e => {
+        if (startY === null) return;
+        const dy = Math.max(0, e.touches[0].clientY - startY);
+        drawer.style.transform = 'translateY(' + dy + 'px)';
+      }, { passive: true });
+      handle.addEventListener('touchend', e => {
+        if (startY === null) return;
+        const dy = e.changedTouches[0].clientY - startY;
+        startY = null;
+        drawer.classList.remove('sheet-dragging');
+        if (dy > 90) { closeCartSheet(); } else { drawer.style.transform = ''; }
+      });
+    })();
 
     let cartDrawerOpen = false;
     function setCartDrawerOpen(open){
@@ -479,30 +528,6 @@
       updateChange();
     }
 
-    function syncCashInputMode(){
-      const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
-      const input = document.getElementById('cashInput');
-      input.readOnly = !isDesktop;
-      input.classList.toggle('cursor-default', !isDesktop);
-    }
-    window.addEventListener('resize', syncCashInputMode);
-
-    function keypadPress(key){
-      const input = document.getElementById('cashInput');
-      let val = input.value;
-      if (key === 'C') {
-        val = '';
-      } else if (key === 'back') {
-        val = val.slice(0, -1);
-      } else if (key === '.') {
-        if (!val.includes('.')) val += '.';
-      } else {
-        if (val.replace('.', '').length < 6) val += key;
-      }
-      input.value = val;
-      updateChange();
-    }
-
     function updateChargeState(){
       const { total } = computeTotals();
       const cash = parseFloat(document.getElementById('cashInput').value) || 0;
@@ -522,9 +547,9 @@
       updateChargeState();
     }
 
-    function voidOrder(){
+    function clearOrder(){
       if (cart.length === 0) return;
-      if (confirm('Void this order? This clears the current sale.')) {
+      if (confirm('Clear this order? All items in the current cart will be removed.')) {
         cart = [];
         appliedPromoCode = '';
         document.getElementById('promoInput').value = '';
@@ -578,7 +603,8 @@
             return;
           }
 
-          showReceipt(data.transaction, { cashReceived, change, orderType: currentOrderType });
+          closeCartSheet();
+          showReceipt(data.transaction, { cashReceived, change });
           cart = [];
           appliedPromoCode = '';
           document.getElementById('promoInput').value = '';
@@ -615,7 +641,6 @@
         <div class="space-y-1 text-xs text-stamp-400 font-semibold">
           <div class="flex justify-between"><span>Transaction ID</span><span class="font-bold text-stamp-600">CB-${String(transaction.id).padStart(5, '0')}</span></div>
           <div class="flex justify-between"><span>Date/Time</span><span>${dateStr}</span></div>
-          <div class="flex justify-between"><span>Order Type</span><span>${extra.orderType}</span></div>
           <div class="flex justify-between"><span>Payment Method</span><span>${transaction.payment_method}</span></div>
           ${transaction.payment_method === 'Cash' ? `
             <div class="flex justify-between"><span>Cash Received</span><span>${format(extra.cashReceived)}</span></div>
@@ -631,7 +656,6 @@
 
     renderCart();
     animateCategory('hot');
-    syncCashInputMode();
   </script>
 
 </body>

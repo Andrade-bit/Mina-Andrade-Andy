@@ -13,9 +13,9 @@ class SupplierController extends Controller
     /**
      * List every registered supplier (e.g. the cups & straws vendor).
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $suppliers = Supplier::orderBy('supplier_name')->get();
+        $suppliers = Supplier::query()->when($request->boolean('archived'), fn ($q) => $q->onlyTrashed())->withCount('supplyPurchases')->orderBy('supplier_name')->get();
 
         return view('admin.suppliers.index', [
             'suppliers' => $suppliers,
@@ -75,6 +75,16 @@ class SupplierController extends Controller
     {
         $supplier->delete();
 
-        return redirect()->route('admin.suppliers.index')->with('status', 'Supplier removed.');
+        return redirect()->route('admin.suppliers.index')->with('status', 'Supplier archived.');
+    }
+
+    /**
+     * Bring an archived supplier back.
+     */
+    public function restore(int $id): RedirectResponse
+    {
+        Supplier::onlyTrashed()->findOrFail($id)->restore();
+
+        return redirect()->route('admin.suppliers.index', ['archived' => 1])->with('status', 'Supplier restored.');
     }
 }

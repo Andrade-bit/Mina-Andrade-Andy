@@ -127,7 +127,7 @@
           @forelse ($recentTransactions as $transaction)
             <tr class="border-b border-cream-200 last:border-0">
               <td class="py-3 px-3 text-stamp-500 text-sm whitespace-nowrap">{{ $transaction->inventory_transaction_date->format('M j, Y') }}</td>
-              <td class="py-3 px-3 font-bold text-stamp-700 text-sm">{{ $transaction->inventoryItem->name ?? 'Deleted item' }}</td>
+              <td class="py-3 px-3 font-bold text-stamp-700 text-sm">{{ $transaction->inventoryItem->name ?? 'Unknown item' }}</td>
               <td class="py-3 px-3">
                 <span class="text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full {{ $transaction->transaction_type === 'Restock' ? 'bg-mint-50 text-mint-600' : 'bg-coral-50 text-coral-600' }}">{{ $transaction->transaction_type }}</span>
               </td>
@@ -171,6 +171,18 @@
               <input type="date" name="purchase_date" value="{{ old('purchase_date', now()->toDateString()) }}" required class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
             </div>
           </div>
+        </div>
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Supplier <span class="text-stamp-300 normal-case font-semibold">(optional)</span></label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+            <select name="supplier_id" onchange="onSupplierChange(this)" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+              <option value="" data-terms="">No supplier (bought at a store)</option>
+              @foreach ($suppliers as $vendor)
+                <option value="{{ $vendor->id }}" data-terms="{{ $vendor->payment_terms }}" @selected((int) old('supplier_id') === $vendor->id)>{{ $vendor->supplier_name }}</option>
+              @endforeach
+            </select>
+          </div>
+          <input type="hidden" name="payment_terms" id="stockInPaymentTerms" value="{{ old('payment_terms') }}">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -307,6 +319,15 @@
     const INVENTORY_ITEMS = @json($inventoryItemsForJs);
 
     let stockInRowCount = 0;
+
+    function onSupplierChange(select) {
+      const option = select.options[select.selectedIndex];
+      document.getElementById('stockInPaymentTerms').value = option.dataset.terms || '';
+      const sourceInput = document.querySelector('#stockInForm input[name="purchase_source"]');
+      if (sourceInput && select.value && !sourceInput.value) {
+        sourceInput.value = option.textContent.trim();
+      }
+    }
 
     function stockInRowTemplate(index) {
       const options = INVENTORY_ITEMS.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
