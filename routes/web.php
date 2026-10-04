@@ -21,8 +21,8 @@ use App\Http\Controllers\Pos\TerminalController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('admin.login');
-});
+    return view('landing');
+})->name('home');
 
 Route::get('/admin/login', [AdminAuthController::class, 'create'])->name('admin.login');
 Route::post('/admin/login', [AdminAuthController::class, 'store'])->name('admin.login.store');
