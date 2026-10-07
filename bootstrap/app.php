@@ -13,6 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Vercel and most hosts put a proxy in front of the app; trust it so https links and cookies come out right.
+        $middleware->trustProxies(at: '*');
         $middleware->redirectGuestsTo(fn () => route('admin.login'));
         $middleware->web(append: [AjaxFormRedirects::class]);
     })
