@@ -61,6 +61,19 @@
   .copy .swap{transition:opacity .35s,transform .35s}
   .copy.out .swap{opacity:0;transform:translateY(8px)}
   .cta{margin-top:22px}
+  .pick{position:absolute;left:0;bottom:calc(100% + 18px);z-index:5}
+  .pick-btn{display:inline-flex;align-items:center;gap:10px;min-height:40px;padding:0 14px 0 12px;border-radius:999px;border:2px solid var(--ink);background:var(--glass);color:var(--ink);
+            font:700 15px/1 var(--display);cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .2s}
+  .pick-btn:hover{background:var(--cream)}
+  .pick-btn .lab{font:800 11px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;opacity:.65}
+  .pick-btn svg{flex:none;transition:transform .2s}
+  .pick-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
+  .pick-dot{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid var(--cream);box-shadow:0 0 0 1.5px var(--line)}
+  .pick-menu{position:absolute;top:calc(100% + 8px);left:0;z-index:6;min-width:240px;margin:0;padding:6px;list-style:none;border-radius:20px;background:var(--cream);border:1px solid var(--line);box-shadow:0 24px 40px -18px rgba(26,59,82,.35)}
+  .pick-menu li{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;font:700 16px/1 var(--display);cursor:pointer}
+  .pick-menu li:hover,.pick-menu li:focus-visible{background:rgba(26,59,82,.07);outline:none}
+  .pick-menu li[aria-selected="true"]{background:rgba(26,59,82,.1)}
+  .pick-menu small{margin-left:auto;font:800 10px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;opacity:.6}
   .rail{position:absolute;z-index:2;right:clamp(16px,3vw,36px);top:50%;transform:translateY(-50%);margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:18px}
   .rail li{display:flex;align-items:center;justify-content:flex-end;gap:12px;font-weight:800;font-size:13px;letter-spacing:.04em;opacity:.42;transition:opacity .3s}
   .rail li i{width:12px;height:12px;border-radius:50%;border:2px solid var(--ink);transition:background .3s,transform .3s}
@@ -75,6 +88,7 @@
   @keyframes hint{0%{transform:scaleY(0)}60%{transform:scaleY(1)}100%{transform:scaleY(1);opacity:0}}
   .fallback{display:none;position:absolute;z-index:0;right:8vw;top:22vh;width:min(34vw,380px);aspect-ratio:1;max-width:100%;border-radius:48px;background:linear-gradient(#e8c9a0,#7a4a2a)}
   .no-gl .fallback{display:block}
+  .no-gl .pick{display:none}
 
   /* ---------- sections ---------- */
   .sec{padding-block:clamp(72px,10vw,120px)}
@@ -135,6 +149,8 @@
     h1{font-size:clamp(30px,8.4vw,44px)}
     .desc{margin-top:8px;font-size:16px}
     .cta{margin-top:14px}
+    .pick{position:relative;bottom:auto;margin-bottom:12px}
+    .pick-menu{top:auto;bottom:calc(100% + 8px)}
     .rail{top:auto;right:auto;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);flex-direction:row;gap:14px}
     .rail li span{display:none}
     .hint{display:none}
@@ -183,9 +199,16 @@
     <canvas id="gl" aria-hidden="true"></canvas>
     <div class="fallback" aria-hidden="true"></div>
 
-    <div class="copy" id="copy" aria-live="polite">
-      <div class="swap">
-        <div class="kicker" id="kicker">Iced Mocha Latte</div>
+    <div class="copy" id="copy">
+      <div class="pick" id="pick">
+        <button class="pick-btn" id="pickBtn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="pickMenu">
+          <span class="lab">Drink</span><span class="pick-dot" id="pickDot"></span><span id="pickVal">Oreo Matcha</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <ul class="pick-menu" id="pickMenu" role="listbox" aria-label="Choose your drink" hidden></ul>
+      </div>
+      <div class="swap" aria-live="polite">
+        <div class="kicker" id="kicker">Iced Oreo Matcha</div>
         <h1 id="title">Watch it come together.</h1>
         <p class="desc" id="desc">Scroll to make one, layer by layer.</p>
         <a class="btn cta" id="cta" href="#menu" hidden>See our menu</a>
@@ -194,9 +217,9 @@
 
     <ol class="rail" aria-label="Recipe steps">
       <li data-i="1"><span>Ice</span><i></i></li>
-      <li data-i="2"><span>Chocolate</span><i></i></li>
-      <li data-i="3"><span>Espresso &amp; milk</span><i></i></li>
-      <li data-i="4"><span>Foam</span><i></i></li>
+      <li data-i="2"><span>Oreo sauce</span><i></i></li>
+      <li data-i="3"><span>Matcha &amp; milk</span><i></i></li>
+      <li data-i="4"><span>Foam &amp; Oreo</span><i></i></li>
       <li data-i="5"><span>Lid</span><i></i></li>
     </ol>
     <div class="hint" id="hint" aria-hidden="true"><i></i>Scroll</div>
@@ -369,8 +392,64 @@
   function rIn(y) { return RB + (y - YB) / (YT - YB) * (RT - RB); }
   var FILL_END = 1.1, FOAM = 0.34;
 
+  /* ---------- the drinks you can pick: colors, toppings and the words for each step ---------- */
+  function makeSteps(name, a, b, c) {
+    return [
+      { k: name, t: 'Watch it come together.', d: 'Scroll to make one, layer by layer.' },
+      { k: 'Step 1 of 5', t: 'Ice into a clear cup.', d: 'Cold first, so every sip stays cold.' },
+      { k: 'Step 2 of 5', t: a[0], d: a[1] },
+      { k: 'Step 3 of 5', t: b[0], d: b[1] },
+      { k: 'Step 4 of 5', t: c[0], d: c[1] },
+      { k: 'Step 5 of 5', t: 'Lid on. Ready.', d: 'Made to order at the Catbrews counter.' }
+    ];
+  }
+  var ORDER = ['oreo', 'mocha', 'strawberry', 'sea'];
+  var FLAVORS = {
+    oreo: {
+      label: 'Oreo Matcha', dots: ['#8DB864', '#2A2424'], isDefault: true,
+      rail: ['Ice', 'Oreo sauce', 'Matcha & milk', 'Foam & Oreo', 'Lid'],
+      steps: makeSteps('Iced Oreo Matcha', ['Oreo sauce goes in first.', 'Dark cookie sauce runs down the inside of the cup.'], ['Matcha, then cold milk.', 'Bright green matcha pours over the cookie sauce and swirls with the milk.'], ['Cream foam and Oreo crumbs.', 'Soft foam, topped with crushed Oreo cookies.']),
+      milk: { stops: [[0, '#cfe3a6'], [0.5, '#9cc271'], [1, '#5f8c3f']], dark: '50,86,30', light: '232,246,200', flecks: 'rgba(32,28,28,.55)' },
+      sauce: { a: 'rgba(28,24,24,.97)', b: 'rgba(66,58,56,.9)', speck: 'rgba(238,234,226,.85)' },
+      foam: { c0: '#f4f7e4', c1: '#d5e5b6', dark: 'rgba(150,178,106,.4)', light: 'rgba(255,255,244,.6)' },
+      cap: 0xa9cf7e, bottom: 0x4f7a34, sauceStream: 0x2a2424, milkStream: 0x93bb68,
+      topping: { colors: ['#1b1717', '#2c2524', '#3a3231', '#1b1717', '#f3efe6'], count: 90, min: 0.05, max: 0.16, h: 0.03, rough: 0.9 }
+    },
+    mocha: {
+      label: 'Mocha Latte', dots: ['#B9824D', '#2B170C'],
+      rail: ['Ice', 'Chocolate', 'Espresso & milk', 'Foam', 'Lid'],
+      steps: makeSteps('Iced Mocha Latte', ['Chocolate goes in first.', 'Dark sauce runs down the inside of the cup.'], ['Espresso, then cold milk.', 'They pour over the chocolate and swirl together.'], ['A creamy foam on top.', 'Soft and sweet, with a little caramel on the surface.']),
+      milk: { stops: [[0, '#d6a66c'], [0.55, '#b9824d'], [1, '#6f4226']], dark: '58,31,17', light: '244,214,174' },
+      sauce: { a: 'rgba(36,19,10,.97)', b: 'rgba(78,46,28,.88)' },
+      foam: { c0: '#ecd1a6', c1: '#d4a46a', dark: 'rgba(176,126,74,.45)', light: 'rgba(255,238,212,.55)' },
+      cap: 0xb5804c, bottom: 0x5a331c, sauceStream: 0x2b170c, milkStream: 0xc08a54,
+      topping: null
+    },
+    strawberry: {
+      label: 'Strawberry Matcha', dots: ['#E0577C', '#8DB864'],
+      rail: ['Ice', 'Strawberry', 'Milk & matcha', 'Foam & berries', 'Lid'],
+      steps: makeSteps('Iced Strawberry Matcha', ['Strawberry puree goes in first.', 'Red strawberry puree runs down the inside of the cup.'], ['Milk, then matcha.', 'Pink strawberry milk at the bottom, green matcha on top.'], ['Light foam, strawberry bits.', 'Soft foam with a sprinkle of freeze-dried strawberry.']),
+      milk: { stops: [[0, '#c9df9d'], [0.3, '#9bc46d'], [0.52, '#8fbd68'], [0.6, '#d9a9a0'], [0.68, '#f2a0b4'], [1, '#e0577c']], dark: '110,60,60', light: '255,222,230', k: 0.45 },
+      sauce: { a: 'rgba(176,24,56,.95)', b: 'rgba(226,76,108,.86)', speck: 'rgba(255,205,215,.55)' },
+      foam: { c0: '#fbeee8', c1: '#f0cfc8', dark: 'rgba(214,150,150,.35)', light: 'rgba(255,248,244,.65)' },
+      cap: 0xa8cf78, bottom: 0xcc4f70, sauceStream: 0xc2234a, milkStream: 0xe8a0ae,
+      topping: { colors: ['#e2456c', '#f08aa4', '#c42b53', '#f7b6c4'], count: 46, min: 0.05, max: 0.13, h: 0.03, rough: 0.8 }
+    },
+    sea: {
+      label: 'Sea Salt', dots: ['#FFFAF0', '#B9741F'],
+      rail: ['Ice', 'Caramel', 'Espresso & milk', 'Salt cream', 'Lid'],
+      steps: makeSteps('Iced Sea Salt Latte', ['Salted caramel goes in first.', 'Amber caramel runs down the inside of the cup.'], ['Espresso, then cold milk.', 'They pour over the caramel and swirl together.'], ['Sea salt cream on top.', 'Thick, creamy foam with a pinch of flaky sea salt.']),
+      milk: { stops: [[0, '#e1b987'], [0.55, '#c08d56'], [1, '#7a4a2a']], dark: '70,40,22', light: '246,222,184' },
+      sauce: { a: 'rgba(168,98,24,.96)', b: 'rgba(216,146,56,.88)' },
+      foam: { c0: '#fffaf0', c1: '#efe3cc', dark: 'rgba(205,180,140,.35)', light: 'rgba(255,255,255,.7)' },
+      cap: 0xc79458, bottom: 0x6a3f1f, sauceStream: 0xb9741f, milkStream: 0xc99358,
+      topping: { colors: ['#ffffff', '#f6f1e6', '#ffffff'], count: 95, min: 0.025, max: 0.06, h: 0.03, rough: 0.3, glint: true }
+    }
+  };
+  var current = 'oreo';
+
   /* ---------- procedural textures ---------- */
-  function chocolateTexture() {
+  function sauceTexture(s) {
     var W = 1024, H = 512, c = document.createElement('canvas'); c.width = W; c.height = H;
     var x = c.getContext('2d');
     for (var i = 0; i < 56; i++) {
@@ -383,36 +462,43 @@
       for (var y2 = len; y2 >= 0; y2 -= 10) x.lineTo(cx + half(y2) + Math.sin(y2 * 0.045 + cx) * wob, y2);
       x.closePath();
       var gg = x.createLinearGradient(0, 0, 0, len);
-      gg.addColorStop(0, 'rgba(36,19,10,.97)'); gg.addColorStop(1, 'rgba(78,46,28,.88)');
+      gg.addColorStop(0, s.a); gg.addColorStop(1, s.b);
       x.fillStyle = gg; x.fill();
+    }
+    if (s.speck) {
+      x.globalCompositeOperation = 'source-atop';
+      for (var k = 0; k < 260; k++) { x.fillStyle = s.speck; x.beginPath(); x.arc(rnd() * W, rnd() * H * 0.7, 1.2 + rnd() * 2.6, 0, 6.283); x.fill(); }
+      x.globalCompositeOperation = 'source-over';
     }
     var t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4; return t;
   }
-  function milkTexture() {
+  function milkTexture(m) {
     var W = 1024, H = 512, c = document.createElement('canvas'); c.width = W; c.height = H;
-    var x = c.getContext('2d');
+    var x = c.getContext('2d'), k = m.k == null ? 1 : m.k;
     var g = x.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#d6a66c'); g.addColorStop(0.55, '#b9824d'); g.addColorStop(1, '#6f4226');
+    m.stops.forEach(function (s) { g.addColorStop(s[0], s[1]); });
     x.fillStyle = g; x.fillRect(0, 0, W, H);
     try { x.filter = 'blur(9px)'; } catch (e) {}
     for (var i = 0; i < 70; i++) {
-      x.fillStyle = 'rgba(58,31,17,' + (0.1 + rnd() * 0.2) + ')';
+      x.fillStyle = 'rgba(' + m.dark + ',' + ((0.1 + rnd() * 0.2) * k) + ')';
       x.beginPath(); x.ellipse(rnd() * W, rnd() * H, 8 + rnd() * 22, 40 + rnd() * 120, 0, 0, 6.283); x.fill();
     }
     for (var j = 0; j < 40; j++) {
-      x.fillStyle = 'rgba(244,214,174,' + (0.08 + rnd() * 0.14) + ')';
+      x.fillStyle = 'rgba(' + m.light + ',' + ((0.08 + rnd() * 0.14) * Math.max(k, 0.7)) + ')';
       x.beginPath(); x.ellipse(rnd() * W, rnd() * H, 10 + rnd() * 26, 30 + rnd() * 90, 0, 0, 6.283); x.fill();
     }
+    try { x.filter = 'none'; } catch (e) {}
+    if (m.flecks) { for (var f = 0; f < 110; f++) { x.fillStyle = m.flecks; x.beginPath(); x.arc(rnd() * W, rnd() * H, 1.2 + rnd() * 3, 0, 6.283); x.fill(); } }
     var t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4; return t;
   }
-  function foamTexture() {
+  function foamTexture(f) {
     var S = 512, c = document.createElement('canvas'); c.width = c.height = S;
     var x = c.getContext('2d');
     var g = x.createRadialGradient(S / 2, S / 2, 20, S / 2, S / 2, S * 0.7);
-    g.addColorStop(0, '#ecd1a6'); g.addColorStop(1, '#d4a46a');
+    g.addColorStop(0, f.c0); g.addColorStop(1, f.c1);
     x.fillStyle = g; x.fillRect(0, 0, S, S);
     for (var i = 0; i < 1100; i++) {
-      x.fillStyle = rnd() > 0.5 ? 'rgba(176,126,74,.45)' : 'rgba(255,238,212,.55)';
+      x.fillStyle = rnd() > 0.5 ? f.dark : f.light;
       x.beginPath(); x.arc(rnd() * S, rnd() * S, 1 + rnd() * 4, 0, 6.283); x.fill();
     }
     var t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
@@ -452,12 +538,12 @@
   shadow.rotation.x = -Math.PI / 2; shadow.position.y = -1.58; cupRoot.add(shadow);
 
   /* liquid: espresso and milk */
-  var milkTex = milkTexture(), chocTex = chocolateTexture(), foamTex = foamTexture();
+  var tex = {};
   var VERT = 'varying vec2 vUv; varying float vY; varying vec3 vN; varying vec3 vV;' +
     'void main(){ vUv=uv; vY=position.y+OFFSET; vec4 mv=modelViewMatrix*vec4(position,1.0); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }';
   var liquidMat = new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
-    uniforms: { uMap: { value: milkTex }, uFill: { value: -2 }, uTime: { value: 0 } },
+    uniforms: { uMap: { value: null }, uFill: { value: -2 }, uTime: { value: 0 } },
     vertexShader: VERT.replace('OFFSET', '0.03'),
     fragmentShader: 'uniform sampler2D uMap; uniform float uFill; uniform float uTime; varying vec2 vUv; varying float vY; varying vec3 vN; varying vec3 vV;' +
       'void main(){ if(vY>uFill) discard; vec2 uv=vUv; uv.x+=uTime*0.012; vec3 c=texture2D(uMap,uv).rgb;' +
@@ -466,16 +552,18 @@
   var liquidWall = new THREE.Mesh(new THREE.CylinderGeometry(rIn(1.46) - 0.02, rIn(-1.4) - 0.02, 2.86, 64, 1, true), liquidMat);
   liquidWall.position.y = 0.03; spin.add(liquidWall);
 
-  var liquidBottom = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshStandardMaterial({ color: 0x5a331c, roughness: 0.6 }));
+  var liquidBottomMat = new THREE.MeshStandardMaterial({ color: 0x5a331c, roughness: 0.6 });
+  var liquidBottom = new THREE.Mesh(new THREE.CircleGeometry(1, 48), liquidBottomMat);
   liquidBottom.rotation.x = -Math.PI / 2; liquidBottom.position.y = -1.4; liquidBottom.scale.setScalar(rIn(-1.4) - 0.02); spin.add(liquidBottom);
 
-  var liquidCap = new THREE.Mesh(new THREE.CircleGeometry(1, 64), new THREE.MeshStandardMaterial({ color: 0xb5804c, roughness: 0.3 }));
+  var liquidCapMat = new THREE.MeshStandardMaterial({ color: 0xb5804c, roughness: 0.3 });
+  var liquidCap = new THREE.Mesh(new THREE.CircleGeometry(1, 64), liquidCapMat);
   liquidCap.rotation.x = -Math.PI / 2; spin.add(liquidCap);
 
   /* chocolate sauce clinging to the wall */
   var chocMat = new THREE.ShaderMaterial({
     side: THREE.DoubleSide, transparent: true, depthWrite: false,
-    uniforms: { uMap: { value: chocTex }, uReveal: { value: 0 } },
+    uniforms: { uMap: { value: null }, uReveal: { value: 0 } },
     vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
     fragmentShader: 'uniform sampler2D uMap; uniform float uReveal; varying vec2 vUv;' +
       'float h(float x){ return fract(sin(x*127.1)*43758.5453); }' +
@@ -486,11 +574,34 @@
   chocWall.position.y = 0.03; chocWall.renderOrder = 2; spin.add(chocWall);
 
   /* foam */
-  var foamMat = new THREE.MeshStandardMaterial({ map: foamTex, roughness: 0.75 });
+  var foamMat = new THREE.MeshStandardMaterial({ roughness: 0.75 });
   var foamWall = new THREE.Mesh(new THREE.CylinderGeometry(rIn(FILL_END + FOAM) - 0.001, rIn(FILL_END) - 0.001, 1, 64, 1, true), foamMat);
   foamWall.material.side = THREE.DoubleSide; spin.add(foamWall);
   var foamCap = new THREE.Mesh(new THREE.CircleGeometry(1, 64), foamMat);
   foamCap.rotation.x = -Math.PI / 2; foamCap.scale.setScalar(rIn(FILL_END + FOAM) - 0.02); spin.add(foamCap);
+
+  /* toppings lying flat on the foam: Oreo crumbs, strawberry bits, sea salt flakes */
+  var toppings = new THREE.Group(); toppings.visible = false; spin.add(toppings);
+  var unitBox = new THREE.BoxGeometry(1, 1, 1);
+  function buildToppings(cfg) {
+    while (toppings.children.length) { var old = toppings.children[0]; toppings.remove(old); if (old.material) old.material.dispose(); }
+    if (!cfg) return;
+    seed = 11;
+    var mats = cfg.colors.map(function (hex) {
+      var m = new THREE.MeshStandardMaterial({ color: hex, roughness: cfg.rough });
+      if (cfg.glint) { m.emissive = new THREE.Color('#ffffff'); m.emissiveIntensity = 0.18; }
+      return m;
+    });
+    var yTop = FILL_END + FOAM + 0.004;
+    for (var i = 0; i < cfg.count; i++) {
+      var r = Math.sqrt(rnd()) * 1.02, a = rnd() * 6.283, w = cfg.min + rnd() * (cfg.max - cfg.min);
+      var m = new THREE.Mesh(unitBox, mats[Math.floor(rnd() * mats.length)].clone());
+      m.scale.set(w, cfg.h, w * (0.6 + rnd() * 0.6));
+      m.position.set(Math.cos(a) * r, yTop + cfg.h / 2, Math.sin(a) * r); m.rotation.y = rnd() * 6.283;
+      toppings.add(m);
+    }
+    mats.forEach(function (m) { m.dispose(); });
+  }
 
   /* ice cubes */
   var iceDefs = [[-0.4, -1.12, 0.2, 0.46], [0.32, -1.08, -0.28, 0.44], [0.04, -0.7, 0.36, 0.42], [-0.42, -0.62, -0.22, 0.4], [0.46, -0.52, 0.12, 0.4]];
@@ -553,8 +664,10 @@
   lid.visible = false; spin.add(lid);
 
   /* pour streams */
-  var chocStream = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 14), new THREE.MeshStandardMaterial({ color: 0x2b170c, roughness: 0.25 }));
-  var milkStream = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1, 18), new THREE.MeshStandardMaterial({ color: 0xc08a54, roughness: 0.3 }));
+  var chocStreamMat = new THREE.MeshStandardMaterial({ color: 0x2b170c, roughness: 0.25 });
+  var milkStreamMat = new THREE.MeshStandardMaterial({ color: 0xc08a54, roughness: 0.3 });
+  var chocStream = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 14), chocStreamMat);
+  var milkStream = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1, 18), milkStreamMat);
   chocStream.visible = milkStream.visible = false; spin.add(chocStream); spin.add(milkStream);
 
   /* ---------- layout, scroll and steps ---------- */
@@ -573,32 +686,45 @@
     return clamp01(-r.top / Math.max(1, r.height - vh));
   }
 
-  var STEPS = [
-    { k: 'Iced Mocha Latte', t: 'Watch it come together.', d: 'Scroll to make one, layer by layer.' },
-    { k: 'Step 1 of 5', t: 'Ice into a clear cup.', d: 'Cold first, so every sip stays cold.' },
-    { k: 'Step 2 of 5', t: 'Chocolate goes in first.', d: 'Dark sauce runs down the inside of the cup.' },
-    { k: 'Step 3 of 5', t: 'Espresso, then cold milk.', d: 'They pour over the chocolate and swirl together.' },
-    { k: 'Step 4 of 5', t: 'A creamy foam on top.', d: 'Soft and sweet, with a little caramel on the surface.' },
-    { k: 'Step 5 of 5', t: 'Lid on. Ready.', d: 'Made to order at the Catbrews counter.' }
-  ];
   var THRESH = [0, 0.1, 0.3, 0.5, 0.72, 0.84];
   var ctaEl = document.getElementById('cta'), copyEl = document.getElementById('copy'), kEl = document.getElementById('kicker'), tEl = document.getElementById('title'), dEl = document.getElementById('desc');
   var railItems = Array.prototype.slice.call(document.querySelectorAll('.rail li'));
   var hint = document.getElementById('hint');
   var stepNow = 0, swapTimer = null;
-  function setStep(n) {
-    if (n === stepNow) return;
+  function setStep(n, instant) {
+    if (n === stepNow && !instant) return;
     stepNow = n;
     railItems.forEach(function (li) {
       var i = +li.getAttribute('data-i');
       li.classList.toggle('on', i === n); li.classList.toggle('done', i < n);
     });
-    copyEl.classList.add('out');
     clearTimeout(swapTimer);
-    swapTimer = setTimeout(function () {
-      kEl.textContent = STEPS[n].k; tEl.textContent = STEPS[n].t; dEl.textContent = STEPS[n].d; ctaEl.hidden = n !== 5;
+    function write() {
+      var s = FLAVORS[current].steps[n];
+      kEl.textContent = s.k; tEl.textContent = s.t; dEl.textContent = s.d; ctaEl.hidden = n !== 5;
       copyEl.classList.remove('out');
-    }, reduce ? 0 : 260);
+    }
+    if (instant || reduce) { write(); return; }
+    copyEl.classList.add('out');
+    swapTimer = setTimeout(write, 260);
+  }
+
+  /* switch the whole cup, the rail labels and the words to another drink */
+  function applyFlavor(name) {
+    current = name;
+    var f = FLAVORS[name];
+    ['milk', 'sauce', 'foam'].forEach(function (k) { if (tex[k]) tex[k].dispose(); });
+    seed = 7; tex.milk = milkTexture(f.milk);
+    tex.sauce = sauceTexture(f.sauce);
+    tex.foam = foamTexture(f.foam);
+    liquidMat.uniforms.uMap.value = tex.milk;
+    chocMat.uniforms.uMap.value = tex.sauce;
+    foamMat.map = tex.foam; foamMat.needsUpdate = true;
+    liquidCapMat.color.setHex(f.cap); liquidBottomMat.color.setHex(f.bottom);
+    chocStreamMat.color.setHex(f.sauceStream); milkStreamMat.color.setHex(f.milkStream);
+    buildToppings(f.topping);
+    railItems.forEach(function (li, i) { li.querySelector('span').textContent = f.rail[i]; });
+    setStep(stepNow, true);
   }
 
   var BG0 = new THREE.Color('#F1E6D8'), BG1 = new THREE.Color('#E4C7A1'), bgTmp = new THREE.Color(), lastBg = '';
@@ -638,6 +764,7 @@
     foamWall.visible = foamCap.visible = foamQ > 0.001;
     foamWall.scale.y = foamH; foamWall.position.y = FILL_END + foamH / 2;
     foamCap.position.y = FILL_END + foamH;
+    toppings.visible = foamQ > 0.97 && toppings.children.length > 0;
 
     /* ice drops in, then floats up with the milk */
     ice.forEach(function (m) {
@@ -683,7 +810,51 @@
     if (!reduce) requestAnimationFrame(frame);
   }
 
-    measure();
+  /* ---------- the drink dropdown ---------- */
+  var pickEl = document.getElementById('pick'), pickBtn = document.getElementById('pickBtn'), pickMenu = document.getElementById('pickMenu');
+  var pickDot = document.getElementById('pickDot'), pickVal = document.getElementById('pickVal');
+  function dotBg(f) { return 'linear-gradient(135deg,' + f.dots[0] + ' 50%,' + f.dots[1] + ' 50%)'; }
+  ORDER.forEach(function (name) {
+    var f = FLAVORS[name], li = document.createElement('li');
+    li.setAttribute('role', 'option'); li.tabIndex = -1; li.dataset.key = name;
+    li.innerHTML = '<span class="pick-dot"></span><span></span>' + (f.isDefault ? '<small>Default</small>' : '');
+    li.firstChild.style.background = dotBg(f); li.children[1].textContent = f.label;
+    pickMenu.appendChild(li);
+  });
+  function openMenu() {
+    pickMenu.hidden = false; pickBtn.setAttribute('aria-expanded', 'true');
+    (pickMenu.querySelector('[aria-selected="true"]') || pickMenu.firstElementChild).focus();
+  }
+  function closeMenu(refocus) {
+    if (pickMenu.hidden) return;
+    pickMenu.hidden = true; pickBtn.setAttribute('aria-expanded', 'false'); if (refocus) pickBtn.focus();
+  }
+  function chooseDrink(name) {
+    var f = FLAVORS[name];
+    pickVal.textContent = f.label; pickDot.style.background = dotBg(f);
+    Array.prototype.forEach.call(pickMenu.children, function (li) { li.setAttribute('aria-selected', li.dataset.key === name ? 'true' : 'false'); });
+    applyFlavor(name);
+    if (reduce) frame();
+  }
+  pickBtn.addEventListener('click', function () { if (pickMenu.hidden) openMenu(); else closeMenu(false); });
+  pickBtn.addEventListener('keydown', function (e) { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); openMenu(); } });
+  pickMenu.addEventListener('click', function (e) { var li = e.target.closest('li'); if (li) { chooseDrink(li.dataset.key); closeMenu(true); } });
+  pickMenu.addEventListener('keydown', function (e) {
+    var items = Array.prototype.slice.call(pickMenu.children), i = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+    else if (e.key === 'Home') { e.preventDefault(); items[0].focus(); }
+    else if (e.key === 'End') { e.preventDefault(); items[items.length - 1].focus(); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (i >= 0) { chooseDrink(items[i].dataset.key); closeMenu(true); } }
+    else if (e.key === 'Escape') { e.preventDefault(); closeMenu(true); }
+    else if (e.key === 'Tab') { closeMenu(false); }
+  });
+  document.addEventListener('click', function (e) { if (!pickEl.contains(e.target)) closeMenu(false); });
+  pickDot.style.background = dotBg(FLAVORS[current]);
+  Array.prototype.forEach.call(pickMenu.children, function (li) { li.setAttribute('aria-selected', li.dataset.key === current ? 'true' : 'false'); });
+  applyFlavor(current);
+
+  measure();
   window.addEventListener('resize', function () { measure(); if (reduce) frame(); });
   window.addEventListener('load', function () { measure(); if (reduce) frame(); });
   if (reduce) window.addEventListener('scroll', frame, { passive: true });
