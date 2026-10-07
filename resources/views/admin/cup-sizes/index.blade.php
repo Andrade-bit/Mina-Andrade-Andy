@@ -58,12 +58,10 @@
       @endif
     </div>
 
-    @if (session('status'))
-      <div class="mb-5 bg-mint-50 text-mint-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('status') }}</div>
-    @endif
-    @if ($errors->any())
-      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ $errors->first() }}</div>
-    @endif
+
+    <div class="mb-5 rounded-2xl bg-stamp-50 px-4 py-3 text-xs font-bold text-stamp-600">
+      How much of each ingredient a size needs is set per product: open a product from <a href="{{ route('admin.products.index') }}" class="underline">Products</a> and fill in its Ingredients Used grid (for example Caramel Syrup: Small 1, Medium 2, Large 3). When a product leaves a size blank, it uses the recipe size's amount adjusted by cup volume, so set each size's volume in ml and mark the recipe size here as that fallback.
+    </div>
 
     <div class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6">
       <div class="grid gap-3">
@@ -74,7 +72,10 @@
             </div>
             <div class="flex-1 min-w-[160px]">
               <p class="font-extrabold text-stamp-700">{{ $size->size_name }}</p>
-              <p class="text-xs text-stamp-400 font-semibold">{{ $size->inventoryItem->name ?? 'No stock item linked' }}</p>
+              <p class="text-xs text-stamp-400 font-semibold">{{ $size->inventoryItem->name ?? 'Cups not tracked in stock' }}@if ($size->volume_ml) &middot; {{ rtrim(rtrim(number_format($size->volume_ml, 2), '0'), '.') }} ml @endif</p>
+              @if ($size->is_recipe_size)
+                <span class="inline-block mt-1 bg-mint-50 text-mint-600 text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-full">Recipe size</span>
+              @endif
             </div>
             <span class="bg-cream-100 text-stamp-600 text-xs font-extrabold px-3 py-1.5 rounded-full">₱{{ number_format($size->price, 2) }}</span>
             <div class="flex items-center gap-2">
@@ -129,16 +130,26 @@
           </div>
         </div>
         <div>
-          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Linked Stock Item <span class="normal-case font-semibold text-stamp-300">(optional)</span></label>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Volume (ml) <span class="normal-case font-semibold text-stamp-300">(optional)</span></label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+            <input type="number" min="1" max="5000" step="1" name="volume_ml" value="{{ old('volume_ml') }}" placeholder="e.g. 480" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+          </div>
+          <label class="flex items-start gap-2 mt-2 ml-1 text-[11px] font-semibold text-stamp-400 cursor-pointer">
+            <input type="checkbox" name="is_recipe_size" value="1" @checked(old('is_recipe_size')) class="mt-0.5 rounded">
+            <span>Fallback size: a size left blank on a product uses this size's amount, adjusted by cup volume.</span>
+          </label>
+        </div>
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Cup Stock Used <span class="normal-case font-semibold text-stamp-300">(optional)</span></label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
             <select name="inventory_item_id" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
-              <option value="">None</option>
+              <option value="">None (don't track cups)</option>
               @foreach ($inventoryItems as $item)
                 <option value="{{ $item->id }}" @selected((int) old('inventory_item_id') === $item->id)>{{ $item->name }}</option>
               @endforeach
             </select>
           </div>
-          <p class="text-[11px] text-stamp-300 font-semibold mt-1.5 ml-1">Linking a cup stock item deducts it automatically when this size is sold.</p>
+          <p class="text-[11px] text-stamp-300 font-semibold mt-1.5 ml-1">Pick the inventory item for this cup, e.g. Small Cups (12oz). Every sale of this size takes 1 off that stock automatically.</p>
         </div>
         <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">
           Create Cup Size
@@ -175,15 +186,26 @@
           </div>
         </div>
         <div>
-          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Linked Stock Item <span class="normal-case font-semibold text-stamp-300">(optional)</span></label>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Volume (ml) <span class="normal-case font-semibold text-stamp-300">(optional)</span></label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
+            <input type="number" min="1" max="5000" step="1" name="volume_ml" id="edit_volume_ml"  placeholder="e.g. 480" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
+          </div>
+          <label class="flex items-start gap-2 mt-2 ml-1 text-[11px] font-semibold text-stamp-400 cursor-pointer">
+            <input type="checkbox" name="is_recipe_size" value="1" id="edit_is_recipe_size"  class="mt-0.5 rounded">
+            <span>Fallback size: a size left blank on a product uses this size's amount, adjusted by cup volume.</span>
+          </label>
+        </div>
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Cup Stock Used <span class="normal-case font-semibold text-stamp-300">(optional)</span></label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
             <select name="inventory_item_id" id="edit_inventory_item_id" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
-              <option value="">None</option>
+              <option value="">None (don't track cups)</option>
               @foreach ($inventoryItems as $item)
                 <option value="{{ $item->id }}">{{ $item->name }}</option>
               @endforeach
             </select>
           </div>
+          <p class="text-[11px] text-stamp-300 font-semibold mt-1.5 ml-1">Pick the inventory item for this cup, e.g. Small Cups (12oz). Every sale of this size takes 1 off that stock automatically.</p>
         </div>
         <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">
           Save Changes
@@ -200,6 +222,8 @@
       document.getElementById('edit_size_name').value = size.size_name || '';
       document.getElementById('edit_price').value = size.price || '';
       document.getElementById('edit_inventory_item_id').value = size.inventory_item_id || '';
+      document.getElementById('edit_volume_ml').value = size.volume_ml ? parseFloat(size.volume_ml) : '';
+      document.getElementById('edit_is_recipe_size').checked = !!size.is_recipe_size;
       document.getElementById('editModal').classList.remove('hidden');
     }
 
@@ -207,6 +231,8 @@
       openCreate();
     @endif
   </script>
+
+  @include('admin.partials.toasts')
 
 </body>
 </html>

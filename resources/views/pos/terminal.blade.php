@@ -61,6 +61,9 @@
     #cartBackdrop.show { display: block; animation: fadeIn .25s ease-out both; }
   }
   @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+  /* keep the floating FAQ button clear of the order bar (phones) and the open order panel (desktop) */
+  @media (max-width: 1023px) { #faqFab { bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); } }
+  @media (min-width: 1024px) { #faqFab.faq-shifted { right: 26rem; } }
 </style>
 </head>
 <body class="min-h-screen bg-cream-50 font-body text-stamp-700">
@@ -87,7 +90,7 @@
         <a href="{{ route('pos.transactions', ['back' => 'terminal']) }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Transactions &amp; reports">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         </a>
-        <a href="{{ route('admin.users') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Admin dashboard">
+        <a href="{{ route('admin.dashboard') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Admin dashboard">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </a>
       @endif
@@ -128,7 +131,16 @@
         <div id="cat-{{ $tabId }}" class="{{ $loop->first ? '' : 'hidden' }} grid grid-cols-2 sm:grid-cols-3 gap-4">
           @foreach ($products->where('productCategory.category_name', $categoryName) as $product)
             @php $sizes = $product->sizes; @endphp
-            @if ($sizes->count() === 1)
+            @if ($product->blocked_by->isNotEmpty())
+              <div class="product-card relative bg-white rounded-3xl shadow-soft p-3 text-left cursor-not-allowed select-none" aria-disabled="true" title="Not available: out of {{ $product->blocked_by->join(', ', ' and ') }}">
+                <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
+                  <img src="{{ $product->display_image }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover grayscale opacity-60">
+                  <span class="absolute top-2 left-2 bg-coral-500 text-cream-50 text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-soft-sm">Not available</span>
+                </div>
+                <p class="font-extrabold text-stamp-400 text-sm mt-2.5 truncate">{{ $product->product_name }}</p>
+                <p class="text-[11px] font-bold text-coral-600 truncate">Out of {{ $product->blocked_by->first() }}@if ($product->blocked_by->count() > 1) +{{ $product->blocked_by->count() - 1 }} more @endif</p>
+              </div>
+            @elseif ($sizes->count() === 1)
               <button onclick="addOneSizeToCart({{ $product->id }}, {{ $sizes->first()->cup_size_id }}, {{ Illuminate\Support\Js::from($product->product_name) }}, {{ $sizes->first()->price }})" class="product-card group bg-white rounded-3xl shadow-soft p-3 text-left transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_24px_44px_-14px_rgba(26,59,82,0.32)] active:translate-y-0 active:scale-[0.97]">
                 <div class="relative rounded-2xl overflow-hidden aspect-square shadow-soft-inset ring-1 ring-cream-200">
                   <img src="{{ $product->display_image }}" alt="{{ $product->product_name }}" class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110">
@@ -153,7 +165,7 @@
     <!-- Cart -->
     <div id="cartBackdrop" onclick="closeCartSheet()" class="hidden lg:hidden fixed inset-0 bg-stamp-700/40 backdrop-blur-sm z-40"></div>
     <div id="cartDrawer" class="w-full lg:w-96 shrink-0 lg:fixed lg:top-20 lg:bottom-4 lg:right-4 lg:z-30 lg:transition-transform lg:duration-300 lg:translate-x-full relative">
-      <button id="cartTabBtn" onclick="toggleCartDrawer()" class="hidden lg:flex absolute top-1/2 -left-11 -translate-y-1/2 flex-col items-center gap-2 bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 rounded-l-2xl shadow-soft-btn px-2.5 py-4 z-10">
+      <button id="cartTabBtn" onclick="toggleCartDrawer()" class="hidden lg:flex absolute top-1/2 right-full -mr-px -translate-y-1/2 flex-col items-center gap-2 bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 rounded-l-2xl shadow-soft-btn px-2.5 py-4 z-10">
         <svg id="cartTabChevron" class="w-4 h-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
         <span class="[writing-mode:vertical-rl] rotate-180 font-display font-bold text-xs tracking-widest">CURRENT ORDER</span>
         <span id="cartTabBadge" class="w-5 h-5 rounded-full bg-coral-500 text-[10px] font-extrabold flex items-center justify-center">0</span>
@@ -169,9 +181,13 @@
           </button>
         </div>
 
-        <div id="cartList" class="space-y-3 max-h-64 overflow-y-auto mb-4 pr-1">
-          <p class="text-center text-stamp-300 text-sm py-10">No items yet — tap a product to add it.</p>
-        </div>
+        @php
+          $emptyOrderHtml = '<div class="flex items-center gap-3 rounded-2xl border border-cream-200 bg-cream-100 px-4 py-4 text-stamp-400" role="status">'
+            .'<svg class="w-6 h-6 shrink-0 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>'
+            .'<div><p class="text-sm font-extrabold leading-tight">No order yet</p><p class="text-xs font-semibold opacity-80">Tap a product to start a new order.</p></div>'
+            .'</div>';
+        @endphp
+        <div id="cartList" class="space-y-3 max-h-64 overflow-y-auto mb-4 pr-1">{!! $emptyOrderHtml !!}</div>
 
         <div class="flex items-center gap-2 mb-4">
           <div class="flex-1 bg-cream-100 rounded-xl shadow-soft-inset px-3 py-2">
@@ -325,7 +341,13 @@
       document.getElementById('sizeModalImg').src = img;
       document.getElementById('sizeModalImg').alt = name;
       document.getElementById('sizeModalName').textContent = name;
-      document.getElementById('sizeModalOptions').innerHTML = sizes.map((size, i) => `
+      document.getElementById('sizeModalOptions').innerHTML = sizes.map((size, i) => size.available === false ? `
+        <button type="button" disabled aria-disabled="true" title="Out of ${size.lacking.join(', ')}" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm text-center opacity-60 cursor-not-allowed">
+          <span class="block mb-1 grayscale" style="font-size: ${20 + i * 8}px">🥤</span>
+          <span class="block font-display font-bold text-stamp-400 text-sm">${size.size_name}</span>
+          <span class="block font-extrabold text-coral-600 text-[10px] uppercase leading-tight">Not available</span>
+        </button>
+      ` : `
         <button type="button" onclick="chooseSize(${i}, this)" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all text-center">
           <span class="block mb-1" style="font-size: ${20 + i * 8}px">🥤</span>
           <span class="block font-display font-bold text-stamp-700 text-sm">${size.size_name}</span>
@@ -378,6 +400,36 @@
       panel.classList.add('ring-2', 'ring-mint-500', 'shadow-soft');
       setTimeout(() => panel.classList.remove('ring-2', 'ring-mint-500'), 350);
     }
+    const EMPTY_ORDER_HTML = @json($emptyOrderHtml);
+    const MAX_LINE_QTY = 99;
+
+    // Live preview while typing: update this line and the totals without re-rendering (which would drop focus).
+    function typeQty(input, lineId){
+      input.value = input.value.replace(/\D/g, '').slice(0, 2);
+      const item = cart.find(i => i.lineId === lineId);
+      const qty = parseInt(input.value, 10);
+      if (!item || !qty) return;
+      item.qty = qty;
+      input.closest('[data-line]').querySelector('[data-line-total]').textContent = format(item.price * qty);
+      updateTotals();
+      updateFloatingCart();
+      scheduleCartSync();
+    }
+
+    // Commit on blur / Enter: 0 removes the line, an empty box goes back to the current quantity.
+    function setQty(lineId, raw){
+      const item = cart.find(i => i.lineId === lineId);
+      if (!item) return;
+      let qty = parseInt(raw, 10);
+      if (isNaN(qty)) { renderCart(); return; }
+      if (qty > MAX_LINE_QTY) {
+        qty = MAX_LINE_QTY;
+        toast('Maximum ' + MAX_LINE_QTY + ' of one item per order.', 'info');
+      }
+      if (qty <= 0) { cart = cart.filter(i => i.lineId !== lineId); } else { item.qty = qty; }
+      renderCart();
+    }
+
     function changeQty(lineId, delta){
       const item = cart.find(i => i.lineId === lineId);
       if (!item) return;
@@ -388,20 +440,20 @@
     function renderCart(){
       const list = document.getElementById('cartList');
       if (cart.length === 0) {
-        list.innerHTML = '<p class="text-center text-stamp-300 text-sm py-10">No items yet — tap a product to add it.</p>';
+        list.innerHTML = EMPTY_ORDER_HTML;
       } else {
         list.innerHTML = cart.map((i, idx) => `
-          <div class="flex items-center gap-3 animate-slide-in" style="animation-delay:${idx * 30}ms">
+          <div class="flex items-center gap-3 animate-slide-in" data-line="${i.lineId}" style="animation-delay:${idx * 30}ms">
             <div class="flex-1 min-w-0">
               <p class="font-bold text-stamp-700 text-sm truncate">${i.name}</p>
               <p class="text-xs text-stamp-300 font-semibold">${format(i.price)} each</p>
             </div>
             <div class="flex items-center gap-2 bg-cream-100 rounded-full px-1 py-1">
               <button onclick="changeQty('${i.lineId}', -1)" class="w-6 h-6 rounded-full bg-white shadow-soft-sm text-stamp-600 font-bold text-sm flex items-center justify-center active:scale-90 transition-transform">−</button>
-              <span class="w-5 text-center text-sm font-extrabold text-stamp-700">${i.qty}</span>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="${i.qty}" aria-label="Quantity" onfocus="this.select()" oninput="typeQty(this, '${i.lineId}')" onchange="setQty('${i.lineId}', this.value)" onkeydown="if (event.key === 'Enter') { event.preventDefault(); this.blur(); }" class="w-8 text-center text-sm font-extrabold text-stamp-700 bg-transparent rounded-md outline-none focus:bg-white focus:shadow-soft-inset">
               <button onclick="changeQty('${i.lineId}', 1)" class="w-6 h-6 rounded-full bg-white shadow-soft-sm text-stamp-600 font-bold text-sm flex items-center justify-center active:scale-90 transition-transform">+</button>
             </div>
-            <p class="font-display font-bold text-stamp-700 text-sm w-16 text-right">${format(i.price * i.qty)}</p>
+            <p data-line-total class="font-display font-bold text-stamp-700 text-sm w-16 text-right">${format(i.price * i.qty)}</p>
           </div>
         `).join('');
       }
@@ -479,6 +531,7 @@
       document.getElementById('cartDrawer').classList.toggle('lg:translate-x-0', open);
       document.getElementById('cartDrawer').classList.toggle('lg:translate-x-full', !open);
       document.getElementById('cartTabChevron').classList.toggle('rotate-180', open);
+      document.getElementById('faqFab').classList.toggle('faq-shifted', open);
     }
     function toggleCartDrawer(){ setCartDrawerOpen(!cartDrawerOpen); }
 
@@ -595,11 +648,11 @@
           const data = await res.json();
           if (!res.ok) {
             if (res.status === 401) {
-              alert(data.message || 'Your session expired. Please log in again.');
-              window.location.href = '{{ route('pos.login') }}';
+              toast(data.message || 'Your session expired. Please log in again.', 'error');
+              setTimeout(() => { window.location.href = '{{ route('pos.login') }}'; }, 1500);
               return;
             }
-            alert(data.message || 'Could not process this sale. Please try again.');
+            toast(data.message || 'Could not process this sale. Please try again.', 'error');
             return;
           }
 
@@ -612,7 +665,7 @@
           document.getElementById('cashInput').value = '';
           renderCart();
         })
-        .catch(() => alert('Network error — the sale was not recorded. Please try again.'))
+        .catch(() => toast('Network error — the sale was not recorded. Please try again.', 'error'))
         .finally(() => { chargeBtn.disabled = false; updateChargeState(); });
     }
 
@@ -657,6 +710,9 @@
     renderCart();
     animateCategory('hot');
   </script>
+
+  @include('admin.partials.pos-faq')
+  @include('admin.partials.toasts')
 
 </body>
 </html>

@@ -47,9 +47,6 @@
 
   <main class="max-w-4xl mx-auto p-5 md:p-8">
 
-    @if ($errors->any())
-      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ $errors->first() }}</div>
-    @endif
 
     <form id="productForm" method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data" class="space-y-6">
       @csrf
@@ -116,19 +113,43 @@
       </div>
 
       <div class="bg-white rounded-[2rem] shadow-soft p-6 md:p-7">
-        <h2 class="font-display font-bold text-stamp-700 text-lg mb-1">Ingredients Used</h2>
-        <p class="text-xs text-stamp-300 font-semibold mb-5">How much of each stock item one sale of this product uses. Leave blank for ingredients that don't apply.</p>
+        <h2 class="font-display font-bold text-stamp-700 text-lg mb-1">Ingredients Used <span class="ml-1 align-middle text-[10px] font-extrabold uppercase tracking-wide text-coral-600 bg-coral-50 px-2 py-0.5 rounded-full">Required</span></h2>
+        <p class="text-xs text-stamp-300 font-semibold mb-5">Type how much of each ingredient one drink uses in each cup size, in the ingredient's stock unit (ml, g or pcs). For example Caramel Syrup: Small 20, Medium 30, Large 40. Leave an ingredient blank if this drink doesn't use it. When stock is below a size's amount, the POS marks that size Not available.</p>
+        @php $recipeSize = $cupSizes->firstWhere('is_recipe_size', true); @endphp
+        <p class="-mt-3 mb-5 text-xs font-bold text-stamp-400">
+          @if ($recipeSize)
+            A size left blank uses the {{ $recipeSize->size_name }} amount, adjusted for cup volume.
+          @else
+            A size left blank uses the smallest amount typed.
+          @endif
+        </p>
+        <p id="ingredientHint" class="mb-4 rounded-xl bg-coral-50 px-3 py-2 text-xs font-bold text-coral-600">Enter an amount for at least one ingredient to save this product.</p>
         @if ($inventoryItems->isEmpty())
-          <p class="text-sm font-semibold text-stamp-300">No procurement items yet. <a href="{{ route('admin.inventory-items.create') }}" class="text-stamp-500 underline">Add one</a> first.</p>
+          <p class="text-sm font-semibold text-stamp-300">No ingredients yet. <a href="{{ route('admin.supply-purchases.index', ['record' => 1]) }}" class="text-stamp-500 underline">Record a purchase</a> to add some first.</p>
         @else
-          <div class="space-y-2">
-            @foreach ($inventoryItems as $item)
-              <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3 flex items-center gap-3">
-                <span class="text-sm font-bold text-stamp-700 flex-1 min-w-0 truncate">{{ $item->name }}</span>
-                <input type="number" min="0" step="0.01" name="ingredients[{{ $item->id }}]" value="{{ old('ingredients.'.$item->id) }}" placeholder="0" class="w-20 bg-white rounded-xl px-2 py-1.5 text-xs font-bold text-stamp-700 outline-none text-right">
-                <span class="text-xs text-stamp-300 font-semibold w-10 shrink-0">{{ $item->unit }}</span>
+          <div class="overflow-x-auto -mx-1 px-1 pb-1">
+            <div class="min-w-[460px] space-y-2">
+              <div class="flex items-center gap-2 px-4 text-[10px] font-extrabold uppercase tracking-wide text-stamp-300">
+                <span class="flex-1">Ingredient</span>
+                @foreach ($cupSizes as $size)
+                  <span class="w-16 text-center truncate" title="{{ $size->size_name }}">{{ $size->size_name }}</span>
+                @endforeach
+                <span class="w-10"></span>
               </div>
-            @endforeach
+              @foreach ($inventoryItems as $item)
+                <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3 flex items-center gap-2">
+                  <span class="text-sm font-bold text-stamp-700 flex-1 min-w-0 truncate">{{ $item->name }}</span>
+                  @foreach ($cupSizes as $size)
+                    <input type="number" min="0" step="0.01" name="ingredients[{{ $item->id }}][{{ $size->id }}]" value="{{ old('ingredients.'.$item->id.'.'.$size->id, $sizeAmounts[$item->id][$size->id] ?? null) }}" placeholder="0" aria-label="{{ $item->name }}, {{ $size->size_name }}" class="w-16 bg-white rounded-xl px-2 py-1.5 text-xs font-bold text-stamp-700 outline-none text-right">
+                  @endforeach
+                  @if ($item->hasStandardUnit())
+                    <span class="text-xs font-extrabold text-stamp-500 w-10 shrink-0">{{ $item->unit }}</span>
+                  @else
+                    <a href="{{ route('admin.inventory-items.edit', $item) }}" title="This item is counted in {{ $item->unit }}. Set it to ml, g or pcs first." class="text-[10px] font-extrabold uppercase text-coral-600 bg-coral-50 rounded-full px-2 py-1 shrink-0 w-10 text-center">Set unit</a>
+                  @endif
+                </div>
+              @endforeach
+            </div>
           </div>
         @endif
       </div>
@@ -150,6 +171,32 @@
       icon.classList.add('hidden');
     }
   </script>
+
+  <script>
+    // A product needs at least one ingredient: saving stays off until one has an amount.
+    (function () {
+      var saveButtons = document.querySelectorAll('button[type=submit][form=productForm], #productForm button[type=submit]');
+      var hint = document.getElementById('ingredientHint');
+      var amounts = document.querySelectorAll('input[name^="ingredients["]');
+
+      function refresh() {
+        var ready = Array.prototype.some.call(amounts, function (input) { return parseFloat(input.value) > 0; });
+        saveButtons.forEach(function (button) {
+          button.disabled = !ready;
+          button.classList.toggle('opacity-50', !ready);
+          button.classList.toggle('cursor-not-allowed', !ready);
+          button.title = ready ? '' : 'Add at least one ingredient to save';
+        });
+        if (hint) { hint.classList.toggle('hidden', ready); }
+      }
+
+      amounts.forEach(function (input) { input.addEventListener('input', refresh); });
+      refresh();
+    })();
+  </script>
+
+  @include('admin.partials.card-strokes')
+  @include('admin.partials.toasts')
 
 </body>
 </html>

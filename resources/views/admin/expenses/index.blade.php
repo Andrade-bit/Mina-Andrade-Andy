@@ -58,9 +58,6 @@
       @endif
     </div>
 
-    @if (session('status'))
-      <div class="mb-5 bg-mint-50 text-mint-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('status') }}</div>
-    @endif
 
     <div class="bg-white rounded-3xl shadow-soft p-5 mb-6 flex items-center gap-4 max-w-xs">
       <div class="w-12 h-12 rounded-2xl bg-coral-50 flex items-center justify-center text-coral-500 shrink-0">
@@ -121,6 +118,8 @@
       @include('admin.partials.pagination', ['paginator' => $expenses])
     </div>
   </main>
+
+  @include('admin.partials.toasts')
 
 </body>
 </html>

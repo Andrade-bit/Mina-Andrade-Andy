@@ -14,17 +14,18 @@ class InventorySeeder extends Seeder
      */
     public function run(): void
     {
+        // Stock is counted in ml, g or pcs; "bought" is the unit it is purchased in and "size" how many base units it holds.
         $ingredients = [
-            ['name' => 'Coffee Beans', 'unit' => 'kg', 'current_quantity' => 25, 'reorder_level' => 10],
-            ['name' => 'Fresh Milk', 'unit' => 'liters', 'current_quantity' => 40, 'reorder_level' => 15],
-            ['name' => 'Condensed Milk', 'unit' => 'cans', 'current_quantity' => 30, 'reorder_level' => 12],
-            ['name' => 'Caramel Syrup', 'unit' => 'bottles', 'current_quantity' => 8, 'reorder_level' => 5],
-            ['name' => 'Matcha Powder', 'unit' => 'kg', 'current_quantity' => 4, 'reorder_level' => 3],
-            ['name' => 'Chocolate Powder', 'unit' => 'kg', 'current_quantity' => 12, 'reorder_level' => 5],
-            ['name' => 'Mango Puree', 'unit' => 'liters', 'current_quantity' => 10, 'reorder_level' => 6],
-            ['name' => 'Lemon Juice Concentrate', 'unit' => 'liters', 'current_quantity' => 6, 'reorder_level' => 4],
-            ['name' => 'White Sugar', 'unit' => 'kg', 'current_quantity' => 20, 'reorder_level' => 8],
-            ['name' => 'Strawberry Syrup', 'unit' => 'bottles', 'current_quantity' => 7, 'reorder_level' => 5],
+            ['name' => 'Coffee Beans', 'unit' => 'g', 'bought' => 'kg', 'size' => 1000, 'current_quantity' => 25000, 'reorder_level' => 10000],
+            ['name' => 'Fresh Milk', 'unit' => 'ml', 'bought' => 'L', 'size' => 1000, 'current_quantity' => 40000, 'reorder_level' => 15000],
+            ['name' => 'Condensed Milk', 'unit' => 'g', 'bought' => 'can', 'size' => 390, 'current_quantity' => 11700, 'reorder_level' => 4680],
+            ['name' => 'Caramel Syrup', 'unit' => 'ml', 'bought' => 'bottle', 'size' => 750, 'current_quantity' => 6000, 'reorder_level' => 3750],
+            ['name' => 'Matcha Powder', 'unit' => 'g', 'bought' => 'kg', 'size' => 1000, 'current_quantity' => 4000, 'reorder_level' => 3000],
+            ['name' => 'Chocolate Powder', 'unit' => 'g', 'bought' => 'kg', 'size' => 1000, 'current_quantity' => 12000, 'reorder_level' => 5000],
+            ['name' => 'Mango Puree', 'unit' => 'ml', 'bought' => 'L', 'size' => 1000, 'current_quantity' => 10000, 'reorder_level' => 6000],
+            ['name' => 'Lemon Juice Concentrate', 'unit' => 'ml', 'bought' => 'L', 'size' => 1000, 'current_quantity' => 6000, 'reorder_level' => 4000],
+            ['name' => 'White Sugar', 'unit' => 'g', 'bought' => 'kg', 'size' => 1000, 'current_quantity' => 20000, 'reorder_level' => 8000],
+            ['name' => 'Strawberry Syrup', 'unit' => 'ml', 'bought' => 'bottle', 'size' => 750, 'current_quantity' => 5250, 'reorder_level' => 3750],
         ];
 
         foreach ($ingredients as $ingredient) {
@@ -33,6 +34,8 @@ class InventorySeeder extends Seeder
                 [
                     'type' => 'ingredient',
                     'unit' => $ingredient['unit'],
+                    'secondary_unit' => $ingredient['bought'],
+                    'conversion_factor' => $ingredient['size'],
                     'current_quantity' => $ingredient['current_quantity'],
                     'reorder_level' => $ingredient['reorder_level'],
                     'status' => 'active',

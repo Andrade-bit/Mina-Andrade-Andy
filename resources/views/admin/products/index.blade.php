@@ -50,12 +50,6 @@
       </a>
     </div>
 
-    @if (session('error'))
-      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('error') }}</div>
-    @endif
-    @if (session('status'))
-      <div class="mb-5 bg-mint-50 text-mint-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('status') }}</div>
-    @endif
 
     <form method="GET" action="{{ route('admin.products.index') }}" class="flex flex-wrap items-center gap-3 mb-5">
       <div class="flex items-center gap-2 bg-white rounded-2xl shadow-soft-sm px-4 py-2.5 flex-1 min-w-[220px]">
@@ -78,12 +72,18 @@
           <option value="never" @selected(request('performance') === 'never')>Never Sold</option>
         </select>
       </div>
+      <div class="bg-white rounded-2xl shadow-soft-sm px-4 py-2.5">
+        <select name="availability" onchange="this.form.submit()" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
+          <option value="">All Availability</option>
+          <option value="unavailable" @selected(request('availability') === 'unavailable')>Not available in POS</option>
+        </select>
+      </div>
       <label class="flex items-center gap-2 bg-white rounded-2xl shadow-soft-sm px-4 py-2.5 text-sm text-stamp-600 font-semibold cursor-pointer">
         <input type="checkbox" name="archived" value="1" onchange="this.form.submit()" @checked(request()->boolean('archived')) class="w-4 h-4 accent-stamp-500">
         Archived
       </label>
       <button type="submit" class="px-5 py-2.5 rounded-2xl bg-stamp-500 hover:bg-stamp-600 text-cream-50 font-extrabold text-xs transition-colors">Search</button>
-      @if (request('search') || request('category') || request('performance') || request()->boolean('archived'))
+      @if (request('search') || request('category') || request('performance') || request('availability') || request()->boolean('archived'))
         <a href="{{ route('admin.products.index') }}" class="px-4 py-2.5 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-500 font-extrabold text-xs transition-colors">Clear</a>
       @endif
     </form>
@@ -100,8 +100,15 @@
               @endif
             </div>
             <div class="flex-1 min-w-[160px]">
-              <p class="font-extrabold text-stamp-700">{{ $product->product_name }}</p>
+              <p class="font-extrabold text-stamp-700">{{ $product->product_name }}
+                @if (! $product->trashed() && $unavailable->has($product->id))
+                  <span class="ml-1.5 align-middle bg-coral-50 text-coral-600 text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full">Not available in POS</span>
+                @endif
+              </p>
               <p class="text-xs text-stamp-400 font-semibold">{{ $product->productCategory->category_name ?? 'Uncategorized' }}</p>
+              @if (! $product->trashed() && $unavailable->has($product->id))
+                <p class="mt-1 text-[11px] font-bold text-coral-600">Can't be sold now: out of {{ $unavailable[$product->id]->pluck('name')->join(', ', ' and ') }}. <a href="{{ route('admin.supply-purchases.index', ['restock' => $unavailable[$product->id]->first()->id]) }}" class="underline">Restock</a></p>
+              @endif
             </div>
             @if (request('performance') === 'never')
               <span class="bg-coral-50 text-coral-600 text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full shrink-0">Never Sold</span>
@@ -137,6 +144,8 @@
       @include('admin.partials.pagination', ['paginator' => $products])
     </div>
   </main>
+
+  @include('admin.partials.toasts')
 
 </body>
 </html>

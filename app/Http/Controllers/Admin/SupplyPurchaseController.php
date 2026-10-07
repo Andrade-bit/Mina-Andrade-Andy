@@ -7,7 +7,9 @@ use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
+use App\Models\Supplier;
 use App\Models\SupplyPurchase;
+use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,16 +19,91 @@ use Illuminate\Validation\Rule;
 class SupplyPurchaseController extends Controller
 {
     /**
-     * List every purchase order placed with a supplier.
+     * List every purchase and host the "Record Purchase" form: this is where stock is bought, and each
+     * purchase adds to Inventory. "?payment_method=" narrows the list, "?restock={item id}" opens the form
+     * with that item already picked.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         $purchases = SupplyPurchase::with('supplier', 'items')
+            ->when($request->filled('payment_method'), fn ($query) => $query->where('payment_method', $request->string('payment_method')))
             ->latest('purchase_date')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         return view('admin.supply-purchases.index', [
             'purchases' => $purchases,
+            'suppliers' => Supplier::orderBy('supplier_name')->get(['id', 'supplier_name', 'payment_terms']),
+            'itemOptions' => InventoryItem::orderBy('name')->get()->map->toFormOption()->values(),
+            'restockItemId' => $request->integer('restock') ?: null,
+            'openForm' => $request->boolean('record'),
+        ]);
+    }
+
+    /**
+     * Validation for lines that bring in a brand-new item ("New item" on the purchase form): its name, kind,
+     * the fixed stock unit (ml, g or pcs) and, if it is bought by the bottle, can or box, how much one holds.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    private function newItemRules(Request $request): array
+    {
+        $rules = [];
+        $namesInThisPurchase = [];
+
+        foreach ((array) $request->input('items', []) as $index => $line) {
+            if (($line['inventory_item_id'] ?? null) !== 'new') {
+                continue;
+            }
+
+            $unit = (string) ($line['new_item']['unit'] ?? '');
+            $buy = (string) ($line['new_item']['secondary_unit'] ?? '');
+            $isKnownUnit = array_key_exists($buy, InventoryItem::PURCHASE_UNITS[$unit] ?? []);
+            $needsSize = $isKnownUnit && InventoryItem::fixedPurchaseFactor($unit, $buy) === null;
+
+            $rules["items.{$index}.new_item.name"] = ['required', 'string', 'max:255', function (string $attribute, mixed $value, Closure $fail) use (&$namesInThisPurchase) {
+                $key = mb_strtolower(trim($value));
+                $existing = InventoryItem::withTrashed()->whereRaw('LOWER(TRIM(name)) = ?', [$key])->first();
+
+                if ($existing) {
+                    $fail($existing->trashed()
+                        ? "\"{$existing->name}\" is archived. Restore it from Inventory > Archived instead of adding it again."
+                        : "\"{$existing->name}\" already exists. Pick it from the item list instead.");
+                } elseif (in_array($key, $namesInThisPurchase, true)) {
+                    $fail("\"{$value}\" is on this purchase twice. Combine them into one line.");
+                }
+
+                $namesInThisPurchase[] = $key;
+            }];
+            $rules["items.{$index}.new_item.type"] = ['required', Rule::in(['ingredient', 'supply'])];
+            $rules["items.{$index}.new_item.unit"] = ['required', Rule::in(array_keys(InventoryItem::BASE_UNITS))];
+            $rules["items.{$index}.new_item.secondary_unit"] = ['nullable', Rule::in(array_keys(InventoryItem::PURCHASE_UNITS[$unit] ?? []))];
+            $rules["items.{$index}.new_item.conversion_factor"] = [$needsSize ? 'required' : 'nullable', 'numeric', 'min:0.0001'];
+            $rules["items.{$index}.new_item.reorder_level"] = ['nullable', 'numeric', 'min:0'];
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Create the item behind a "New item" line. It starts with no stock; the purchase line brings it in.
+     *
+     * @param  array<string, mixed>  $new
+     */
+    private function createItem(array $new): InventoryItem
+    {
+        $buy = $new['secondary_unit'] ?? null;
+        $factor = $buy ? (InventoryItem::fixedPurchaseFactor($new['unit'], $buy) ?? (float) $new['conversion_factor']) : null;
+
+        return InventoryItem::create([
+            'name' => trim($new['name']),
+            'type' => $new['type'],
+            'unit' => $new['unit'],
+            'secondary_unit' => $buy ?: null,
+            'conversion_factor' => $factor,
+            'current_quantity' => 0,
+            'reorder_level' => $new['reorder_level'] ?? 0,
+            'status' => 'active',
         ]);
     }
 
@@ -56,6 +133,7 @@ class SupplyPurchaseController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            ...$this->newItemRules($request),
             'supplier_id' => ['nullable', 'exists:suppliers,id'],
             'purchase_date' => ['required', 'date'],
             'invoice_number' => ['nullable', 'string', 'max:255'],
@@ -65,10 +143,22 @@ class SupplyPurchaseController extends Controller
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.inventory_item_id' => ['required', 'exists:inventory_items,id'],
+            'items.*.inventory_item_id' => ['required', fn (string $attribute, mixed $value, Closure $fail) => $value === 'new' || InventoryItem::whereKey($value)->exists() || $fail('Pick an item for every line.')],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'items.*.quantity_unit' => ['nullable', Rule::in(['base', 'secondary'])],
+            'items.*.unit_size' => ['nullable', 'numeric', 'min:0.0001'],
+        ], [
+            'items.*.inventory_item_id.required' => 'Pick an item (or New item) for every line.',
+            'items.*.quantity.required' => 'Enter a quantity for every line.',
+            'items.*.unit_cost.required' => 'Enter the cost for every line.',
+            'items.*.new_item.name.required' => 'Type a name for the new item.',
+            'items.*.new_item.type.required' => 'Choose whether the new item is an ingredient or cups and straws.',
+            'items.*.new_item.unit.required' => 'Choose a stock unit (ml, g or pcs) for the new item.',
+            'items.*.new_item.unit.in' => 'The stock unit must be ml, g or pcs.',
+            'items.*.new_item.secondary_unit.in' => 'That "Bought as" unit does not fit the stock unit. Pick one from the list.',
+            'items.*.new_item.conversion_factor.required' => 'Enter how much one bottle, can or box of the new item holds.',
+            'items.*.new_item.conversion_factor.min' => 'How much one holds must be more than 0.',
         ]);
 
         $purchase = DB::transaction(function () use ($validated) {
@@ -93,12 +183,23 @@ class SupplyPurchaseController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
-                $inventoryItem = InventoryItem::lockForUpdate()->findOrFail($item['inventory_item_id']);
+                $inventoryItem = $item['inventory_item_id'] === 'new'
+                    ? $this->createItem($item['new_item'])
+                    : InventoryItem::lockForUpdate()->findOrFail($item['inventory_item_id']);
                 $lineTotal = $item['quantity'] * $item['unit_cost'];
 
+                // Buying by the bottle/can/box: use this purchase's own pack size when given (brands differ),
+                // otherwise the size saved on the item. Fixed units like L and kg never change.
                 $baseQuantity = $item['quantity'];
-                if (($item['quantity_unit'] ?? 'base') === 'secondary' && $inventoryItem->conversion_factor) {
-                    $baseQuantity = $item['quantity'] * (float) $inventoryItem->conversion_factor;
+                if (($item['quantity_unit'] ?? 'base') === 'secondary') {
+                    $isFixedSize = $inventoryItem->secondary_unit
+                        && InventoryItem::fixedPurchaseFactor($inventoryItem->unit, $inventoryItem->secondary_unit) !== null;
+                    $unitSize = $isFixedSize ? 0 : (float) ($item['unit_size'] ?? 0);
+                    $factor = $unitSize > 0 ? $unitSize : (float) $inventoryItem->conversion_factor;
+
+                    if ($factor > 0) {
+                        $baseQuantity = $item['quantity'] * $factor;
+                    }
                 }
 
                 $baseUnitCost = $baseQuantity > 0 ? $lineTotal / $baseQuantity : 0;
@@ -134,6 +235,6 @@ class SupplyPurchaseController extends Controller
             return $purchase;
         });
 
-        return redirect()->route('admin.inventory-items.index')->with('status', 'Purchase #'.$purchase->id.' recorded, stock received, and logged in Expenses.');
+        return redirect()->route('admin.supply-purchases.index')->with('status', 'Purchase #'.$purchase->id.' recorded, stock received, and logged in Expenses.');
     }
 }

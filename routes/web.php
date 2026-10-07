@@ -16,19 +16,25 @@ use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SupplyPurchaseController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AdminAuthController;
+use App\Http\Controllers\Auth\DashboardLockController;
 use App\Http\Controllers\Auth\PosAuthController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Pos\TerminalController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('landing');
-})->name('home');
+Route::get('/', LandingController::class)->name('home');
 
 Route::get('/admin/login', [AdminAuthController::class, 'create'])->name('admin.login');
 Route::post('/admin/login', [AdminAuthController::class, 'store'])->name('admin.login.store');
 Route::post('/admin/logout', [AdminAuthController::class, 'destroy'])->name('admin.logout');
 
+// Signed-in admins land here when the dashboard was locked by opening the POS on this device.
 Route::middleware('auth')->group(function () {
+    Route::get('/admin/unlock', [DashboardLockController::class, 'show'])->name('admin.unlock');
+    Route::post('/admin/unlock', [DashboardLockController::class, 'store'])->middleware('throttle:5,1')->name('admin.unlock.store');
+});
+
+Route::middleware(['auth', 'dashboard.unlocked'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
@@ -39,10 +45,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/admin/inventory', [InventoryItemController::class, 'index'])->name('admin.inventory');
     Route::get('/admin/inventory-items', [InventoryItemController::class, 'index'])->name('admin.inventory-items.index');
-    Route::get('/admin/inventory-items/create', [InventoryItemController::class, 'create'])->name('admin.inventory-items.create');
-    Route::post('/admin/inventory-items', [InventoryItemController::class, 'store'])->name('admin.inventory-items.store');
+    Route::get('/admin/inventory-items/{inventoryItem}/edit', [InventoryItemController::class, 'edit'])->name('admin.inventory-items.edit');
     Route::put('/admin/inventory-items/{inventoryItem}', [InventoryItemController::class, 'update'])->name('admin.inventory-items.update');
     Route::delete('/admin/inventory-items/{inventoryItem}', [InventoryItemController::class, 'destroy'])->name('admin.inventory-items.destroy');
+    Route::post('/admin/inventory-items/{id}/restore', [InventoryItemController::class, 'restore'])->name('admin.inventory-items.restore');
 
     Route::get('/admin/inventory-transactions', [InventoryTransactionController::class, 'index'])->name('admin.inventory-transactions.index');
     Route::post('/admin/inventory-transactions/stock-out', [InventoryTransactionController::class, 'stockOut'])->name('admin.inventory-transactions.stock-out');
@@ -102,8 +108,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/settings', [SettingsController::class, 'index'])->name('admin.settings');
 });
 
-Route::get('/pos/login', [PosAuthController::class, 'create'])->name('pos.login');
-Route::post('/pos/login', [PosAuthController::class, 'store'])->name('pos.login.store');
+Route::get('/pos/login', [PosAuthController::class, 'create'])->middleware('lock.dashboard')->name('pos.login');
+Route::post('/pos/login', [PosAuthController::class, 'store'])->middleware('lock.dashboard')->name('pos.login.store');
 Route::post('/pos/logout', [PosAuthController::class, 'destroy'])->name('pos.logout');
 
 Route::get('/pos/terminal', [TerminalController::class, 'index'])->name('pos.terminal');

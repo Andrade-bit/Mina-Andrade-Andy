@@ -40,8 +40,9 @@ class AdminAuthController extends Controller
         }
 
         $request->session()->regenerate();
+        $request->session()->forget('dashboard_locked');
 
-        return redirect()->route('admin.users');
+        return redirect()->route('admin.dashboard');
     }
 
     /**

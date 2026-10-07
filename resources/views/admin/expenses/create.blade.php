@@ -47,9 +47,6 @@
 
   <main class="max-w-2xl mx-auto p-5 md:p-8">
 
-    @if ($errors->any())
-      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ $errors->first() }}</div>
-    @endif
 
     <form id="expenseForm" method="POST" action="{{ route('admin.expenses.store') }}" class="space-y-6">
       @csrf
@@ -108,6 +105,9 @@
       </div>
     </form>
   </main>
+
+  @include('admin.partials.card-strokes')
+  @include('admin.partials.toasts')
 
 </body>
 </html>

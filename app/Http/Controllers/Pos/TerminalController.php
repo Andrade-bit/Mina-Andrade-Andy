@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Pos;
 use App\Http\Controllers\Controller;
 use App\Models\Credential;
 use App\Models\CupSize;
+use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\Promo;
@@ -17,9 +18,58 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class TerminalController extends Controller
 {
+    /**
+     * Stop a sale the stock on hand cannot cover. Every line of the order counts together, since drinks share
+     * ingredients, and stock is read under a lock so two terminals can't both take the last of it.
+     *
+     * @param  array<int, array{product_id: int, cup_size_id: int, quantity: int}>  $items
+     *
+     * @throws ValidationException
+     */
+    private function assertIngredientsInStock(array $items, ?CupSize $recipeSize): void
+    {
+        $products = Product::withTrashed()->with('ingredients.inventoryItem', 'ingredientSizeAmounts')
+            ->whereIn('id', array_column($items, 'product_id'))->get()->keyBy('id');
+        $cupSizes = CupSize::withTrashed()->whereIn('id', array_column($items, 'cup_size_id'))->get()->keyBy('id');
+
+        $needed = [];
+
+        foreach ($items as $line) {
+            $product = $products[$line['product_id']];
+            $cupSize = $cupSizes[$line['cup_size_id']];
+
+            foreach ($product->ingredients as $ingredient) {
+                $stockItem = $ingredient->inventoryItem;
+                $amount = $product->amountFor($ingredient, $cupSize, $recipeSize) * $line['quantity'];
+
+                if (! $stockItem || $amount <= 0) {
+                    continue;
+                }
+
+                $needed[$stockItem->id]['amount'] = ($needed[$stockItem->id]['amount'] ?? 0) + $amount;
+                $needed[$stockItem->id]['for'] ??= $product->product_name;
+            }
+        }
+
+        if ($needed === []) {
+            return;
+        }
+
+        $onHand = InventoryItem::whereIn('id', array_keys($needed))->lockForUpdate()->get()->keyBy('id');
+
+        foreach ($needed as $stockItemId => $need) {
+            if (round($need['amount'], 2) > (float) $onHand[$stockItemId]->current_quantity) {
+                throw ValidationException::withMessages([
+                    'items' => "Not enough {$onHand[$stockItemId]->name} to make {$need['for']}. Ask an admin to restock it.",
+                ]);
+            }
+        }
+    }
+
     /**
      * Show the POS terminal for whoever unlocked it with their passcode.
      */
@@ -33,35 +83,24 @@ class TerminalController extends Controller
 
         $credential = Credential::findOrFail($credentialId);
 
-        $imagesByKeyword = [
-            'blue lemonade' => 'blue-lemonade.jpg',
-            'lemonade' => 'lemonade.jpg',
-            'americano' => 'americano.jpg',
-            'cafe latte' => 'cafe-latte.jpg',
-            'cappuccino' => 'cappuccino.jpg',
-            'spanish latte' => 'spanish-latte.jpg',
-            'caramel macchiato' => 'caramel-macchiato.jpg',
-            'matcha' => 'matcha-latte.jpg',
-            'chocolate' => 'chocolate.jpg',
-            'strawberry' => 'strawberry-milk.jpg',
-            'mango' => 'mango-juice.jpg',
-        ];
+        if ($credential->role !== 'admin' && $request->user()) {
+            $request->session()->put('dashboard_locked', true);
+        }
 
-        $products = Product::with('productCategory', 'cupSizePrices')->orderBy('product_name')->get()->each(function (Product $product) use ($imagesByKeyword) {
-            if ($product->image) {
-                $product->display_image = $product->imageUrl();
-            } else {
-                $name = strtolower($product->product_name);
-                $match = collect($imagesByKeyword)->first(fn ($file, $keyword) => str_contains($name, $keyword));
-                $product->display_image = asset('images/products/'.($match ?? 'placeholder.jpg'));
-            }
-            $product->sizes = $product->effectiveCupSizes();
+        $cupSizes = CupSize::orderBy('price')->get();
+
+        $recipeSize = $cupSizes->firstWhere('is_recipe_size', true);
+
+        $products = Product::with('productCategory', 'cupSizePrices', 'ingredients.inventoryItem', 'ingredientSizeAmounts')->orderBy('product_name')->get()->each(function (Product $product) use ($cupSizes, $recipeSize) {
+            $product->display_image = $product->displayImageUrl() ?? asset('images/products/placeholder.jpg');
+            $product->sizes = $product->sizesWithStock($cupSizes, $recipeSize);
+            $product->blocked_by = $product->blockedBy($product->sizes, $cupSizes, $recipeSize)->pluck('name');
         });
 
         return view('pos.terminal', [
             'credential' => $credential,
             'products' => $products,
-            'cupSizes' => CupSize::orderBy('price')->get(),
+            'cupSizes' => $cupSizes,
         ]);
     }
 
@@ -98,7 +137,11 @@ class TerminalController extends Controller
             }
         }
 
-        $transaction = DB::transaction(function () use ($validated, $credentialId, $promo) {
+        $recipeSize = CupSize::recipeSize();
+
+        $transaction = DB::transaction(function () use ($validated, $credentialId, $promo, $recipeSize) {
+            $this->assertIngredientsInStock($validated['items'], $recipeSize);
+
             $itemsTotal = 0;
 
             foreach ($validated['items'] as $item) {
@@ -118,7 +161,7 @@ class TerminalController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
-                $product = Product::withTrashed()->with('ingredients.inventoryItem')->findOrFail($item['product_id']);
+                $product = Product::withTrashed()->with('ingredients.inventoryItem', 'ingredientSizeAmounts')->findOrFail($item['product_id']);
                 $cupSize = CupSize::withTrashed()->findOrFail($item['cup_size_id']);
                 $subtotal = $item['quantity'] * $item['price_at_order'];
 
@@ -130,7 +173,7 @@ class TerminalController extends Controller
                     'subtotal' => $subtotal,
                 ]);
 
-                // Deduct each ingredient this product needs, scaled by quantity sold.
+                // Deduct each ingredient this drink needs in this cup size, times the quantity sold.
                 foreach ($product->ingredients as $ingredient) {
                     $inventoryItem = $ingredient->inventoryItem;
 
@@ -138,7 +181,7 @@ class TerminalController extends Controller
                         continue;
                     }
 
-                    $consumed = $ingredient->pivot->quantity_required * $item['quantity'];
+                    $consumed = round($product->amountFor($ingredient, $cupSize, $recipeSize) * $item['quantity'], 2);
 
                     $inventoryItem = $inventoryItem->newQuery()->lockForUpdate()->find($inventoryItem->id);
                     $inventoryItem->decrement('current_quantity', $consumed);
@@ -153,8 +196,9 @@ class TerminalController extends Controller
                 }
 
                 // Deduct the cup stock for this cup size, if it is tracked in inventory.
-                if ($cupSize->inventory_item_id) {
-                    $cupStock = $cupSize->inventoryItem()->lockForUpdate()->first();
+                $cupStock = $cupSize->inventory_item_id ? $cupSize->inventoryItem()->lockForUpdate()->first() : null;
+
+                if ($cupStock) {
                     $cupStock->decrement('current_quantity', $item['quantity']);
 
                     InventoryTransaction::create([

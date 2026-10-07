@@ -51,5 +51,7 @@
     </div>
   </main>
 
+  @include('admin.partials.toasts')
+
 </body>
 </html>

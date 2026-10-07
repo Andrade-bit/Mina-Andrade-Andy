@@ -24,7 +24,7 @@ class SalesReportController extends Controller
      */
     public function index(Request $request): View|RedirectResponse
     {
-        if (! Auth::check()) {
+        if (! Auth::check() || $request->session()->get('dashboard_locked')) {
             $credentialId = $request->session()->get('pos_credential_id');
             $credential = $credentialId ? Credential::find($credentialId) : null;
 
@@ -63,6 +63,14 @@ class SalesReportController extends Controller
             $query->where('credential_id', $request->integer('credential_id'));
         }
 
+        if (in_array($request->query('status'), ['completed', 'voided'], true)) {
+            $query->where('status', $request->query('status'));
+        }
+
+        if (in_array($request->query('role'), ['admin', 'assistant'], true)) {
+            $query->whereHas('credential', fn ($q) => $q->where('role', $request->query('role')));
+        }
+
         $transactions = $query->latest('transaction_date')->paginate(15)->withQueryString();
 
         return view('pos.transactions', [
@@ -83,7 +91,7 @@ class SalesReportController extends Controller
      */
     public function void(Request $request, SalesTransaction $salesTransaction): RedirectResponse
     {
-        if (! Auth::check()) {
+        if (! Auth::check() || $request->session()->get('dashboard_locked')) {
             $credentialId = $request->session()->get('pos_credential_id');
             $credential = $credentialId ? Credential::find($credentialId) : null;
 

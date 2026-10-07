@@ -27,6 +27,10 @@ class DashboardController extends Controller
 
         [$topSellers, $slowMovers] = $this->productPerformance();
 
+        $lacking = Product::unavailableNow();
+        $unavailableProducts = Product::whereIn('id', $lacking->keys())->orderBy('product_name')->get()
+            ->map(fn (Product $product) => (object) ['product' => $product, 'lacking' => $lacking[$product->id]]);
+
         return view('admin.dashboard', [
             'todaysSales' => $todaysSales,
             'todaysTransactionCount' => $todaysTransactionCount,
@@ -36,6 +40,7 @@ class DashboardController extends Controller
             'recentTransactions' => $recentTransactions,
             'topSellers' => $topSellers,
             'slowMovers' => $slowMovers,
+            'unavailableProducts' => $unavailableProducts,
         ]);
     }
 

@@ -5,6 +5,15 @@
       : 'flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-stamp-500 hover:bg-cream-100 transition-colors';
 @endphp
 
+@include('admin.partials.card-strokes')
+
+<style>
+  /* One content width on every sidebar page, centered, so wide screens don't spread cards far apart */
+  body > main { min-width: 0; }
+  body > main > * { max-width: 78rem; margin-left: auto; margin-right: auto; }
+  body > main[data-narrow] > * { max-width: 48rem; }
+</style>
+
 <!-- Mobile top bar -->
 <div class="md:hidden fixed top-0 inset-x-0 z-30 bg-white shadow-soft-sm px-4 py-3 flex items-center gap-3">
   <button onclick="openSidebar()" class="w-10 h-10 rounded-xl bg-cream-100 flex items-center justify-center text-stamp-600 shrink-0">

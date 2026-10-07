@@ -10,12 +10,15 @@ use App\Models\InventoryItem;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductCupSize;
+use App\Models\ProductIngredientSize;
 use App\Models\SalesTransactionItem;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
@@ -42,6 +45,12 @@ class ProductController extends Controller
             $query->where('product_category_id', $request->integer('category'));
         }
 
+        $unavailable = Product::unavailableNow();
+
+        if ($request->query('availability') === 'unavailable') {
+            $query->whereIn('id', $unavailable->keys());
+        }
+
         $soldCounts = [];
 
         if ($request->filled('performance')) {
@@ -55,7 +64,27 @@ class ProductController extends Controller
             'products' => $products,
             'categories' => ProductCategory::orderBy('category_name')->get(),
             'soldCounts' => $soldCounts,
+            'unavailable' => $unavailable,
         ]);
+    }
+
+    /**
+     * A product is only worth selling if the system knows what it uses up, so saving needs at least one
+     * ingredient with an amount.
+     *
+     * @param  array<int, array<int, mixed>>  $ingredients  [inventory_item_id => [cup_size_id => amount]]
+     *
+     * @throws ValidationException
+     */
+    private function requireIngredients(array $ingredients): void
+    {
+        $hasOne = collect($ingredients)->flatten()->contains(fn ($amount) => is_numeric($amount) && (float) $amount > 0);
+
+        if (! $hasOne) {
+            throw ValidationException::withMessages([
+                'ingredients' => 'Add at least one ingredient, with an amount above 0, before saving this product.',
+            ]);
+        }
     }
 
     /**
@@ -108,6 +137,7 @@ class ProductController extends Controller
             'cupSizes' => $cupSizes,
             'inventoryItems' => $inventoryItems,
             'productIngredients' => collect(),
+            'sizeAmounts' => [],
         ]);
     }
 
@@ -126,8 +156,11 @@ class ProductController extends Controller
             'sizes.*.is_available' => ['nullable', 'boolean'],
             'sizes.*.price' => ['nullable', 'numeric', 'min:0'],
             'ingredients' => ['nullable', 'array'],
-            'ingredients.*' => ['nullable', 'numeric', 'min:0'],
+            'ingredients.*' => ['nullable', 'array'],
+            'ingredients.*.*' => ['nullable', 'numeric', 'min:0'],
         ]);
+
+        $this->requireIngredients($validated['ingredients'] ?? []);
 
         $product = Product::create([
             'product_category_id' => $validated['product_category_id'],
@@ -151,25 +184,79 @@ class ProductController extends Controller
     }
 
     /**
-     * Attach/update/detach a product's ingredients from a flat
-     * [inventory_item_id => quantity_required] map, skipping blank quantities.
+     * Save a product's ingredients from ingredients[inventory_item_id][cup_size_id] = amount, skipping blank
+     * amounts. Each typed amount is kept for its cup size; the ingredient's base amount (the fallback for a
+     * size left blank) is the recipe size's amount, or the smallest one typed.
      *
-     * @param  array<int, mixed>  $ingredients
+     * @param  array<int, array<int, mixed>>  $ingredients
      */
     private function syncIngredients(Product $product, array $ingredients): void
     {
-        $syncData = [];
+        $cupSizeIds = CupSize::pluck('id')->all();
+        $recipeSizeId = CupSize::recipeSize()?->id;
+        $base = [];
+        $sizeRows = [];
 
-        foreach ($ingredients as $inventoryItemId => $quantity) {
-            if ($quantity === null || $quantity === '' || (float) $quantity <= 0) {
+        foreach ($ingredients as $inventoryItemId => $bySize) {
+            $typed = collect($bySize)->filter(fn ($amount, $cupSizeId) => in_array((int) $cupSizeId, $cupSizeIds, true) && is_numeric($amount) && (float) $amount > 0);
+
+            if ($typed->isEmpty()) {
                 continue;
             }
 
             $ingredient = Ingredient::firstOrCreate(['inventory_item_id' => $inventoryItemId]);
-            $syncData[$ingredient->id] = ['quantity_required' => $quantity];
+            $base[$ingredient->id] = ['quantity_required' => $typed->get($recipeSizeId) ?? $typed->min()];
+
+            foreach ($typed as $cupSizeId => $amount) {
+                $sizeRows[] = [
+                    'product_id' => $product->id,
+                    'ingredient_id' => $ingredient->id,
+                    'cup_size_id' => (int) $cupSizeId,
+                    'quantity_required' => $amount,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
         }
 
-        $product->ingredients()->sync($syncData);
+        DB::transaction(function () use ($product, $base, $sizeRows) {
+            $product->ingredients()->sync($base);
+            $product->ingredientSizeAmounts()->delete();
+            ProductIngredientSize::insert($sizeRows);
+        });
+    }
+
+    /**
+     * What to show in the ingredient grid: the amount typed for each size. A product saved before sizes had
+     * their own amounts has one base amount, shown under the recipe size (or under every size when none is set).
+     *
+     * @param  Collection<int, Ingredient>  $productIngredients  keyed by inventory item id
+     * @param  Collection<int, CupSize>  $cupSizes
+     * @return array<int, array<int, string>> [inventory_item_id => [cup_size_id => amount]]
+     */
+    private function sizeAmountsFor(Product $product, Collection $productIngredients, Collection $cupSizes): array
+    {
+        $recipeSize = $cupSizes->firstWhere('is_recipe_size', true);
+        $typed = $product->ingredientSizeAmounts()->get()->groupBy('ingredient_id');
+        $amounts = [];
+
+        foreach ($productIngredients as $inventoryItemId => $ingredient) {
+            if ($typed->has($ingredient->id)) {
+                foreach ($typed[$ingredient->id] as $row) {
+                    $amounts[$inventoryItemId][$row->cup_size_id] = $row->quantity_required;
+                }
+
+                continue;
+            }
+
+            foreach ($cupSizes as $size) {
+                if (! $recipeSize || $size->id === $recipeSize->id) {
+                    $amounts[$inventoryItemId][$size->id] = $ingredient->pivot->quantity_required;
+                }
+            }
+        }
+
+        return $amounts;
     }
 
     /**
@@ -182,6 +269,7 @@ class ProductController extends Controller
         $overrides = $product->cupSizePrices()->get()->keyBy('cup_size_id');
         $inventoryItems = InventoryItem::where('type', 'ingredient')->orderBy('name')->get();
         $productIngredients = $product->ingredients()->get()->keyBy('inventory_item_id');
+        $sizeAmounts = $this->sizeAmountsFor($product, $productIngredients, $cupSizes);
 
         return view('admin.products.edit', [
             'product' => $product,
@@ -190,6 +278,7 @@ class ProductController extends Controller
             'overrides' => $overrides,
             'inventoryItems' => $inventoryItems,
             'productIngredients' => $productIngredients,
+            'sizeAmounts' => $sizeAmounts,
         ]);
     }
 
@@ -212,8 +301,11 @@ class ProductController extends Controller
             'sizes.*.is_available' => ['nullable', 'boolean'],
             'sizes.*.price' => ['nullable', 'numeric', 'min:0'],
             'ingredients' => ['nullable', 'array'],
-            'ingredients.*' => ['nullable', 'numeric', 'min:0'],
+            'ingredients.*' => ['nullable', 'array'],
+            'ingredients.*.*' => ['nullable', 'numeric', 'min:0'],
         ]);
+
+        $this->requireIngredients($validated['ingredients'] ?? []);
 
         $imagePath = $product->image;
 

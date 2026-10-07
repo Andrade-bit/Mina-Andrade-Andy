@@ -58,15 +58,6 @@
       @endif
     </div>
 
-    @if (session('error'))
-      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('error') }}</div>
-    @endif
-    @if (session('status'))
-      <div class="mb-5 bg-mint-50 text-mint-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('status') }}</div>
-    @endif
-    @if ($errors->any())
-      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ $errors->first() }}</div>
-    @endif
 
     <div class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6">
       <div class="grid gap-3">
@@ -170,6 +161,8 @@
       document.getElementById('createModal').classList.remove('hidden');
     @endif
   </script>
+
+  @include('admin.partials.toasts')
 
 </body>
 </html>

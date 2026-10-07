@@ -1,3 +1,8 @@
+@php
+  // An admin signed in to the dashboard sees Orders inside the admin layout. Anyone else (an admin PIN holder
+  // on the POS) keeps the standalone POS-style page.
+  $inAdmin = auth()->check() && ! session('dashboard_locked');
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,12 +37,15 @@
   }
 </script>
 </head>
-<body class="min-h-screen bg-cream-50 font-body text-stamp-700">
+<body class="min-h-screen bg-cream-50 font-body text-stamp-700 {{ $inAdmin ? 'flex' : '' }}">
 
   @php
     $fromTerminal = request('back') === 'terminal';
   @endphp
 
+  @if ($inAdmin)
+    @include('admin.partials.sidebar', ['active' => 'orders'])
+  @else
   <header class="bg-white shadow-soft-sm px-5 py-3 flex items-center justify-between flex-wrap gap-3">
     <div class="flex items-center gap-3">
       <a href="{{ $fromTerminal ? route('pos.terminal') : (auth()->check() ? route('admin.dashboard') : route('pos.terminal')) }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="{{ $fromTerminal || ! auth()->check() ? 'Back to POS' : 'Back to Dashboard' }}">
@@ -48,40 +56,62 @@
         <p class="text-[11px] text-stamp-300 font-bold">Owner/Admin view</p>
       </div>
     </div>
-    <a href="{{ route('admin.users') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Admin dashboard">
+    <a href="{{ route('admin.dashboard') }}" class="w-10 h-10 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors" title="Admin dashboard">
       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
     </a>
   </header>
+  @endif
 
-  <main class="p-5 md:p-8 max-w-6xl mx-auto">
+  <main class="{{ $inAdmin ? 'flex-1 min-w-0 p-5 pt-20 md:p-8 overflow-y-auto' : 'p-5 md:p-8 max-w-6xl mx-auto' }}">
 
-    @if (session('status'))
-      <div class="mb-5 bg-mint-50 text-mint-600 text-sm font-bold rounded-2xl px-4 py-3">{{ session('status') }}</div>
+    @if ($inAdmin)
+      <div class="mb-6">
+        <h2 class="font-display font-bold text-2xl md:text-3xl text-stamp-700">Orders</h2>
+        <p class="text-stamp-500 text-sm font-semibold mt-1">Every sale made at the terminal. Void one here if it was a mistake.</p>
+      </div>
     @endif
-    @if ($errors->has('void_reason') || $errors->has('admin_pin'))
-      <div class="mb-5 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ $errors->first('void_reason') ?: $errors->first('admin_pin') }} Please click Void on the sale again to retry.</div>
-    @endif
 
+
+    @php
+      $keepBack = $fromTerminal ? ['back' => 'terminal'] : [];
+      $todayFilter = [...$keepBack, 'from' => today()->toDateString(), 'to' => today()->toDateString()];
+    @endphp
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white rounded-3xl shadow-soft p-5">
+      <a href="{{ route('pos.transactions', $todayFilter) }}" class="bg-white rounded-3xl shadow-soft p-5 hover:-translate-y-0.5 transition-transform outline-none focus-visible:ring-2 focus-visible:ring-stamp-300">
         <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mb-1">Today's Sales</p>
         <p class="font-display font-bold text-2xl text-stamp-700">₱{{ number_format($todaysSales, 2) }}</p>
-      </div>
-      <div class="bg-white rounded-3xl shadow-soft p-5">
+      </a>
+      <a href="{{ route('pos.transactions', $todayFilter) }}" class="bg-white rounded-3xl shadow-soft p-5 hover:-translate-y-0.5 transition-transform outline-none focus-visible:ring-2 focus-visible:ring-stamp-300">
         <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mb-1">Transactions</p>
         <p class="font-display font-bold text-2xl text-stamp-700">{{ $todaysCount }}</p>
-      </div>
-      <div class="bg-white rounded-3xl shadow-soft p-5">
+      </a>
+      <a href="{{ route('pos.transactions', [...$keepBack, 'role' => 'admin']) }}" class="bg-white rounded-3xl shadow-soft p-5 hover:-translate-y-0.5 transition-transform outline-none focus-visible:ring-2 focus-visible:ring-stamp-300">
         <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mb-1">By Admin</p>
         <p class="font-display font-bold text-2xl text-stamp-700">{{ $byOwnerCount }}</p>
-      </div>
-      <div class="bg-white rounded-3xl shadow-soft p-5">
+      </a>
+      <a href="{{ route('pos.transactions', [...$keepBack, 'role' => 'assistant']) }}" class="bg-white rounded-3xl shadow-soft p-5 hover:-translate-y-0.5 transition-transform outline-none focus-visible:ring-2 focus-visible:ring-stamp-300">
         <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mb-1">By Staff</p>
         <p class="font-display font-bold text-2xl text-stamp-700">{{ $byStaffCount }}</p>
-      </div>
+      </a>
     </div>
 
+    @if (request()->anyFilled(['status', 'role']))
+      <div class="mb-4 flex items-center justify-between gap-3 flex-wrap rounded-2xl bg-stamp-50 px-4 py-3 text-sm font-bold text-stamp-600">
+        <span>
+          Showing
+          @if (request('status') === 'voided') voided sales @elseif (request('status') === 'completed') completed sales @else all sales @endif
+          @if (request('role') === 'admin') made by admins @elseif (request('role') === 'assistant') made by staff @endif
+        </span>
+        <a href="{{ route('pos.transactions', $keepBack) }}" class="underline">Clear</a>
+      </div>
+    @endif
+
     <form method="GET" action="{{ route('pos.transactions') }}" class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6 mb-4 space-y-3">
+      @foreach (['status', 'role'] as $kept)
+        @if (request()->filled($kept))
+          <input type="hidden" name="{{ $kept }}" value="{{ request($kept) }}">
+        @endif
+      @endforeach
       @if ($fromTerminal)
         <input type="hidden" name="back" value="terminal">
       @endif
@@ -210,9 +240,6 @@
         <h3 class="font-display font-bold text-xl text-stamp-700">Void Sale</h3>
         <p id="voidModalLabel" class="text-xs text-stamp-400 font-semibold mt-1">Voiding —</p>
       </div>
-      @if ($errors->has('void_reason') || $errors->has('admin_pin'))
-        <div class="mb-4 bg-coral-500/10 text-coral-600 text-sm font-bold rounded-2xl px-4 py-3">{{ $errors->first('void_reason') ?: $errors->first('admin_pin') }}</div>
-      @endif
       <form id="voidForm" method="POST" action="" class="space-y-4">
         @csrf
         <div>
@@ -245,6 +272,8 @@
     function closeVoidModal(){ document.getElementById('voidModal').classList.add('hidden'); }
 
   </script>
+
+  @include('admin.partials.toasts')
 
 </body>
 </html>

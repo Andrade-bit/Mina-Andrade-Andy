@@ -8,6 +8,8 @@ use App\Models\InventoryItem;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class CupSizeController extends Controller
 {
@@ -25,17 +27,42 @@ class CupSizeController extends Controller
     }
 
     /**
-     * Create a new cup size, optionally linked to its cup stock item.
+     * Fields shared by create and update. Only one size can be the one recipes are written for, and that
+     * size needs a volume so the others can be scaled from it.
+     *
+     * @return array<string, mixed>
      */
-    public function store(Request $request): RedirectResponse
+    private function validated(Request $request): array
     {
         $validated = $request->validate([
             'size_name' => ['required', 'string', 'max:255'],
             'inventory_item_id' => ['nullable', 'exists:inventory_items,id'],
             'price' => ['required', 'numeric', 'min:0'],
+            'volume_ml' => [Rule::requiredIf($request->boolean('is_recipe_size')), 'nullable', 'numeric', 'min:1', 'max:5000'],
+            'is_recipe_size' => ['nullable', 'boolean'],
+        ], [
+            'volume_ml.required' => 'Enter the volume in ml: this is the size recipes are written for.',
         ]);
 
-        CupSize::create($validated);
+        $validated['is_recipe_size'] = $request->boolean('is_recipe_size');
+
+        return $validated;
+    }
+
+    /**
+     * Create a new cup size, optionally linked to its cup stock item.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $this->validated($request);
+
+        DB::transaction(function () use ($validated) {
+            if ($validated['is_recipe_size']) {
+                CupSize::query()->update(['is_recipe_size' => false]);
+            }
+
+            CupSize::create($validated);
+        });
 
         return redirect()->route('admin.cup-sizes.index')->with('status', 'Cup size created.');
     }
@@ -45,13 +72,15 @@ class CupSizeController extends Controller
      */
     public function update(Request $request, CupSize $cupSize): RedirectResponse
     {
-        $validated = $request->validate([
-            'size_name' => ['required', 'string', 'max:255'],
-            'inventory_item_id' => ['nullable', 'exists:inventory_items,id'],
-            'price' => ['required', 'numeric', 'min:0'],
-        ]);
+        $validated = $this->validated($request);
 
-        $cupSize->update($validated);
+        DB::transaction(function () use ($validated, $cupSize) {
+            if ($validated['is_recipe_size']) {
+                CupSize::whereKeyNot($cupSize->id)->update(['is_recipe_size' => false]);
+            }
+
+            $cupSize->update($validated);
+        });
 
         return redirect()->route('admin.cup-sizes.index')->with('status', 'Cup size updated.');
     }
