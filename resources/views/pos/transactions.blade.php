@@ -1,7 +1,7 @@
 @php
   // An admin signed in to the dashboard sees Orders inside the admin layout. Anyone else (an admin PIN holder
   // on the POS) keeps the standalone POS-style page.
-  $inAdmin = auth()->check() && ! session('dashboard_locked');
+  $inAdmin = auth()->check();
 @endphp
 <!DOCTYPE html>
 <html lang="en">

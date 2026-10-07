@@ -83,10 +83,6 @@ class TerminalController extends Controller
 
         $credential = Credential::findOrFail($credentialId);
 
-        if ($credential->role !== 'admin' && $request->user()) {
-            $request->session()->put('dashboard_locked', true);
-        }
-
         $cupSizes = CupSize::orderBy('price')->get();
 
         $recipeSize = $cupSizes->firstWhere('is_recipe_size', true);

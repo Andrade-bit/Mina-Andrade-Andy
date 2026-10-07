@@ -16,7 +16,6 @@ use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SupplyPurchaseController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AdminAuthController;
-use App\Http\Controllers\Auth\DashboardLockController;
 use App\Http\Controllers\Auth\PosAuthController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Pos\TerminalController;
@@ -28,13 +27,7 @@ Route::get('/admin/login', [AdminAuthController::class, 'create'])->name('admin.
 Route::post('/admin/login', [AdminAuthController::class, 'store'])->name('admin.login.store');
 Route::post('/admin/logout', [AdminAuthController::class, 'destroy'])->name('admin.logout');
 
-// Signed-in admins land here when the dashboard was locked by opening the POS on this device.
 Route::middleware('auth')->group(function () {
-    Route::get('/admin/unlock', [DashboardLockController::class, 'show'])->name('admin.unlock');
-    Route::post('/admin/unlock', [DashboardLockController::class, 'store'])->middleware('throttle:5,1')->name('admin.unlock.store');
-});
-
-Route::middleware(['auth', 'dashboard.unlocked'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
@@ -108,8 +101,8 @@ Route::middleware(['auth', 'dashboard.unlocked'])->group(function () {
     Route::get('/admin/settings', [SettingsController::class, 'index'])->name('admin.settings');
 });
 
-Route::get('/pos/login', [PosAuthController::class, 'create'])->middleware('lock.dashboard')->name('pos.login');
-Route::post('/pos/login', [PosAuthController::class, 'store'])->middleware('lock.dashboard')->name('pos.login.store');
+Route::get('/pos/login', [PosAuthController::class, 'create'])->name('pos.login');
+Route::post('/pos/login', [PosAuthController::class, 'store'])->name('pos.login.store');
 Route::post('/pos/logout', [PosAuthController::class, 'destroy'])->name('pos.logout');
 
 Route::get('/pos/terminal', [TerminalController::class, 'index'])->name('pos.terminal');

@@ -24,7 +24,7 @@ class SalesReportController extends Controller
      */
     public function index(Request $request): View|RedirectResponse
     {
-        if (! Auth::check() || $request->session()->get('dashboard_locked')) {
+        if (! Auth::check()) {
             $credentialId = $request->session()->get('pos_credential_id');
             $credential = $credentialId ? Credential::find($credentialId) : null;
 
@@ -91,7 +91,7 @@ class SalesReportController extends Controller
      */
     public function void(Request $request, SalesTransaction $salesTransaction): RedirectResponse
     {
-        if (! Auth::check() || $request->session()->get('dashboard_locked')) {
+        if (! Auth::check()) {
             $credentialId = $request->session()->get('pos_credential_id');
             $credential = $credentialId ? Credential::find($credentialId) : null;
 
