@@ -49,6 +49,12 @@ if (getenv('VERCEL')) {
         }
     }
 
+    // TEMPORARY, remove once the site works: a request carrying this code shows the real error instead of a bare 500.
+    if (($_GET['diag'] ?? '') === '20a087c2d94fd3408f44f59d') {
+        putenv('APP_DEBUG=true');
+        $_ENV['APP_DEBUG'] = $_SERVER['APP_DEBUG'] = 'true';
+    }
+
     // Say what is wrong, in plain words, instead of a bare 500 when a required setting is missing or malformed.
     // Only the names are shown, never the values.
     $problems = [];
