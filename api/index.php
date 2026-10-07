@@ -48,6 +48,38 @@ if (getenv('VERCEL')) {
             $_ENV[$key] = $_SERVER[$key] = $value;
         }
     }
+
+    // Say what is wrong, in plain words, instead of a bare 500 when a required setting is missing or malformed.
+    // Only the names are shown, never the values.
+    $problems = [];
+
+    foreach (['APP_KEY', 'DB_HOST', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD'] as $name) {
+        if ((string) getenv($name) === '') {
+            $problems[] = "{$name} is not set.";
+        }
+    }
+
+    $appKey = (string) getenv('APP_KEY');
+
+    if ($appKey !== '') {
+        $rawKey = str_starts_with($appKey, 'base64:') ? base64_decode(substr($appKey, 7), true) : $appKey;
+
+        if ($rawKey === false || strlen($rawKey) !== 32) {
+            $problems[] = 'APP_KEY is not valid. Use the whole line printed by "php artisan key:generate --show", starting with base64:, and nothing else.';
+        }
+    }
+
+    if ($problems !== [] && ($_SERVER['REQUEST_URI'] ?? '') !== '/up') {
+        http_response_code(500);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo "Catbrews cannot start yet. Fix these in Vercel > Settings > Environment Variables, then redeploy:\n";
+
+        foreach ($problems as $problem) {
+            echo " - {$problem}\n";
+        }
+
+        exit;
+    }
 }
 
 require __DIR__.'/../vendor/autoload.php';
