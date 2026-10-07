@@ -24,6 +24,7 @@ class UserController extends Controller
             'staff' => (clone $accounts)->when($role, fn ($q) => $q->where('role', $role))->withCount('salesTransactions')->orderBy('first_name')->get(),
             'counts' => (clone $accounts)->selectRaw('role, COUNT(*) as total')->groupBy('role')->pluck('total', 'role'),
             'role' => $role,
+            'admin' => $request->user(),
         ]);
     }
 

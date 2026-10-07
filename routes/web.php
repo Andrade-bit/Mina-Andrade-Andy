@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminAccountController;
 use App\Http\Controllers\Admin\CupSizeController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExpenseCategoryController;
@@ -35,6 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/admin/users/{credential}', [UserController::class, 'update'])->name('admin.users.update');
     Route::delete('/admin/users/{credential}', [UserController::class, 'destroy'])->name('admin.users.destroy');
     Route::post('/admin/users/{id}/restore', [UserController::class, 'restore'])->name('admin.users.restore');
+    Route::put('/admin/account', [AdminAccountController::class, 'update'])->name('admin.account.update');
 
     Route::get('/admin/inventory', [InventoryItemController::class, 'index'])->name('admin.inventory');
     Route::get('/admin/inventory-items', [InventoryItemController::class, 'index'])->name('admin.inventory-items.index');

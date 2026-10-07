@@ -44,10 +44,26 @@
         <h2 class="font-display font-bold text-2xl md:text-3xl text-stamp-700">User Management</h2>
         <p class="text-stamp-500 text-sm font-semibold mt-1">Create and manage staff accounts for Catbrews</p>
       </div>
-      <button onclick="document.getElementById('createModal').classList.remove('hidden')" class="bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold px-6 py-3.5 rounded-2xl shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center gap-2 text-sm">
+      <button onclick="openModal('createModal')" class="bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold px-6 py-3.5 rounded-2xl shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center gap-2 text-sm">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
         Create Staff Account
       </button>
+    </div>
+
+    <!-- Admin login -->
+    <div class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6 mb-6">
+      <h3 class="font-display font-bold text-stamp-700 text-lg mb-4">Admin Login</h3>
+      <div class="bg-cream-50 rounded-2xl shadow-soft-sm p-4 flex items-center gap-4 flex-wrap">
+        <div class="w-12 h-12 rounded-full bg-stamp-700 flex items-center justify-center text-cream-50 shrink-0">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <div class="flex-1 min-w-[140px]">
+          <p class="font-extrabold text-stamp-700">{{ $admin->name }}</p>
+          <p class="text-xs text-stamp-400 font-semibold">Password &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</p>
+        </div>
+        <span class="bg-cream-100 text-stamp-600 text-xs font-extrabold px-3 py-1.5 rounded-full">Dashboard login</span>
+        <button type="button" onclick="openAccountModal()" title="Edit admin login" aria-label="Edit admin login" class="w-9 h-9 rounded-xl bg-cream-100 hover:bg-stamp-100 flex items-center justify-center text-stamp-500 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+      </div>
     </div>
 
     <div class="flex justify-end mb-3">
@@ -172,10 +188,7 @@
 
         <div>
           <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">POS PIN (4-digit)</label>
-          <div class="bg-cream-100 rounded-2xl shadow-soft-inset flex items-center gap-2 px-3.5 py-2.5">
-            <svg class="w-4 h-4 text-stamp-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            <input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" name="passcode" value="{{ old('passcode') }}" placeholder="1234" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
-          </div>
+          @include('admin.partials.password-field', ['name' => 'passcode', 'pin' => true, 'placeholder' => '1234', 'required' => true, 'value' => old('passcode')])
           <p class="text-[11px] text-stamp-300 font-semibold mt-1.5 ml-1">This is the only credential this account uses &mdash; it unlocks the POS terminal.</p>
         </div>
 
@@ -238,10 +251,7 @@
 
         <div>
           <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">POS PIN (4-digit)</label>
-          <div class="bg-cream-100 rounded-2xl shadow-soft-inset flex items-center gap-2 px-3.5 py-2.5">
-            <svg class="w-4 h-4 text-stamp-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            <input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" name="passcode" id="edit_passcode" required class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm">
-          </div>
+          @include('admin.partials.password-field', ['name' => 'passcode', 'id' => 'edit_passcode', 'pin' => true, 'required' => true])
         </div>
 
         <div class="flex gap-3 pt-3">
@@ -255,7 +265,86 @@
     </div>
   </div>
 
+  <!-- Edit Admin Login Modal -->
+  <div id="accountModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-lg p-7 relative max-h-[90vh] overflow-y-auto">
+
+      <button type="button" onclick="document.getElementById('accountModal').classList.add('hidden')" class="absolute top-6 right-6 text-stamp-300 hover:text-stamp-600">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 rounded-2xl bg-cream-100 shadow-soft-inset mx-auto flex items-center justify-center text-stamp-600 mb-3">
+          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-xl text-stamp-700">Edit Admin Login</h3>
+        <p class="text-xs text-stamp-400 font-semibold mt-1">The username and password used to sign in to this dashboard</p>
+      </div>
+
+      <form id="accountForm" method="POST" action="{{ route('admin.account.update') }}" class="space-y-4">
+        @csrf
+        @method('PUT')
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Username</label>
+          <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5"><input type="text" name="username" value="{{ $admin->name }}" required autocomplete="username" class="w-full bg-transparent outline-none text-stamp-700 placeholder-stamp-300 font-semibold text-sm"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">New Password <span class="normal-case font-semibold text-stamp-300">(leave blank to keep the current one)</span></label>
+          @include('admin.partials.password-field', ['name' => 'password', 'placeholder' => 'At least 8 characters', 'autocomplete' => 'new-password'])
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Current Password</label>
+          @include('admin.partials.password-field', ['name' => 'current_password', 'placeholder' => 'Needed to save any change', 'required' => true, 'autocomplete' => 'current-password'])
+          <p class="text-[11px] text-stamp-300 font-semibold mt-1.5 ml-1">Your current password is stored scrambled, so it can't be shown. Type it to confirm it's you.</p>
+        </div>
+
+        <div class="flex gap-3 pt-3">
+          <button type="button" onclick="document.getElementById('accountModal').classList.add('hidden')" class="flex-1 py-3.5 rounded-2xl bg-cream-100 text-stamp-600 font-display font-bold text-sm hover:bg-cream-200 transition-colors">Cancel</button>
+          <button type="submit" class="flex-1 py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150 flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
+    function setPasswordVisible(box, visible){
+      const input = box.querySelector('input');
+      const eye = box.querySelector('[data-eye]');
+      input.type = visible ? 'text' : 'password';
+      eye.setAttribute('aria-pressed', visible ? 'true' : 'false');
+      eye.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
+      eye.querySelector('.eye-show').classList.toggle('hidden', visible);
+      eye.querySelector('.eye-hide').classList.toggle('hidden', !visible);
+    }
+
+    // Every modal opens with its passwords and PINs hidden again.
+    function openModal(id){
+      const modal = document.getElementById(id);
+      modal.querySelectorAll('[data-eye]').forEach(function (eye) { setPasswordVisible(eye.parentElement, false); });
+      modal.classList.remove('hidden');
+    }
+
+    // The eye button keeps the field focused (mousedown) and flips between dots and the typed text (click).
+    document.addEventListener('mousedown', function (e) {
+      if (e.target.closest('[data-eye]')) { e.preventDefault(); }
+    });
+    document.addEventListener('click', function (e) {
+      const eye = e.target.closest('[data-eye]');
+      if (eye) { setPasswordVisible(eye.parentElement, eye.parentElement.querySelector('input').type === 'password'); }
+    });
+
+    function openAccountModal(){
+      const form = document.getElementById('accountForm');
+      form.reset();
+      form.querySelectorAll('.cbt-invalid').forEach(function (el) { el.classList.remove('cbt-invalid'); });
+      openModal('accountModal');
+    }
+
     function openEditModal(credential){
       document.getElementById('editForm').action = "{{ route('admin.users.update', ':id') }}".replace(':id', credential.id);
       document.getElementById('edit_editing_id').value = credential.id;
@@ -264,7 +353,7 @@
       document.getElementById('edit_last_name').value = credential.last_name || '';
       document.getElementById('edit_role').value = credential.role || 'assistant';
       document.getElementById('edit_passcode').value = credential.passcode || '';
-      document.getElementById('editModal').classList.remove('hidden');
+      openModal('editModal');
     }
 
     document.getElementById('staffSearch').addEventListener('input', function (e) {
