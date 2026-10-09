@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
 use Illuminate\Contracts\View\View;
@@ -20,18 +21,26 @@ class InventoryItemController extends Controller
      */
     public function index(Request $request): View
     {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:120'],
+            'tab' => ['nullable', Rule::in(['procurement', 'supplier', 'archived'])],
+        ]);
+        $search = trim($validated['search'] ?? '');
+        $activeTab = $validated['tab'] ?? 'procurement';
         $onlyLow = $request->query('stock') === 'low';
 
         $lowStockFirst = fn ($query) => $query
             ->when($onlyLow, fn ($q) => $q->whereColumn('current_quantity', '<=', 'reorder_level'))
             ->orderByRaw('current_quantity <= reorder_level DESC')
-            ->orderBy('name');
+            ->orderBy('name')->orderBy('id');
 
-        $withUsage = fn ($query) => $query->withCount('cupSizes')->with('ingredients.products:id');
+        $withUsage = fn ($query) => $query->withCount('cupSizes')->with('ingredients.products:id', 'batches');
 
-        $procurement = $lowStockFirst($withUsage(InventoryItem::where('type', 'ingredient')))->get();
-        $supplier = $lowStockFirst($withUsage(InventoryItem::where('type', 'supply')))->get();
-        $archived = InventoryItem::onlyTrashed()->orderBy('name')->get();
+        $query = $activeTab === 'archived'
+            ? InventoryItem::onlyTrashed()
+            : InventoryItem::where('type', $activeTab === 'supplier' ? 'supply' : 'ingredient');
+        $query->when($search !== '', fn ($q) => $q->where('name', 'like', '%'.$search.'%'));
+        $items = $lowStockFirst($withUsage($query))->paginate(6)->withQueryString()->fragment('items');
 
         $recentTransactions = InventoryTransaction::with('inventoryItem')
             ->latest('inventory_transaction_date')
@@ -40,9 +49,11 @@ class InventoryItemController extends Controller
             ->get();
 
         return view('admin.inventory', [
-            'procurement' => $procurement,
-            'supplier' => $supplier,
-            'archived' => $archived,
+            'expiryAlerts' => InventoryBatch::alerts()->get(),
+            'items' => $items,
+            'search' => $search,
+            'activeTab' => $activeTab,
+            'archivedCount' => InventoryItem::onlyTrashed()->count(),
             'lowStockCount' => InventoryItem::whereColumn('current_quantity', '<=', 'reorder_level')->count(),
             'recentTransactions' => $recentTransactions,
             'onlyLow' => $onlyLow,

@@ -32,7 +32,7 @@ class TerminalController extends Controller
      */
     private function assertIngredientsInStock(array $items, ?CupSize $recipeSize): void
     {
-        $products = Product::withTrashed()->with('ingredients.inventoryItem', 'ingredientSizeAmounts')
+        $products = Product::withTrashed()->with('ingredients.inventoryItem.batches', 'ingredientSizeAmounts')
             ->whereIn('id', array_column($items, 'product_id'))->get()->keyBy('id');
         $cupSizes = CupSize::withTrashed()->whereIn('id', array_column($items, 'cup_size_id'))->get()->keyBy('id');
 
@@ -53,6 +53,10 @@ class TerminalController extends Controller
                 $needed[$stockItem->id]['amount'] = ($needed[$stockItem->id]['amount'] ?? 0) + $amount;
                 $needed[$stockItem->id]['for'] ??= $product->product_name;
             }
+            if ($cupSize->inventory_item_id) {
+                $needed[$cupSize->inventory_item_id]['amount'] = ($needed[$cupSize->inventory_item_id]['amount'] ?? 0) + $line['quantity'];
+                $needed[$cupSize->inventory_item_id]['for'] ??= $product->product_name;
+            }
         }
 
         if ($needed === []) {
@@ -62,9 +66,9 @@ class TerminalController extends Controller
         $onHand = InventoryItem::whereIn('id', array_keys($needed))->lockForUpdate()->get()->keyBy('id');
 
         foreach ($needed as $stockItemId => $need) {
-            if (round($need['amount'], 2) > (float) $onHand[$stockItemId]->current_quantity) {
+            if (! isset($onHand[$stockItemId]) || round($need['amount'], 2) > $onHand[$stockItemId]->usableQuantity()) {
                 throw ValidationException::withMessages([
-                    'items' => "Not enough {$onHand[$stockItemId]->name} to make {$need['for']}. Ask an admin to restock it.",
+                    'items' => "Not enough usable stock to make {$need['for']}. Ask an admin to check stock and expiry dates.",
                 ]);
             }
         }
@@ -87,7 +91,7 @@ class TerminalController extends Controller
 
         $recipeSize = $cupSizes->firstWhere('is_recipe_size', true);
 
-        $products = Product::with('productCategory', 'cupSizePrices', 'ingredients.inventoryItem', 'ingredientSizeAmounts')->orderBy('product_name')->get()->each(function (Product $product) use ($cupSizes, $recipeSize) {
+        $products = Product::with('productCategory', 'cupSizePrices', 'ingredients.inventoryItem.batches', 'ingredientSizeAmounts')->orderBy('product_name')->get()->each(function (Product $product) use ($cupSizes, $recipeSize) {
             $product->display_image = $product->displayImageUrl() ?? asset('images/products/placeholder.jpg');
             $product->sizes = $product->sizesWithStock($cupSizes, $recipeSize);
             $product->blocked_by = $product->blockedBy($product->sizes, $cupSizes, $recipeSize)->pluck('name');
@@ -157,7 +161,7 @@ class TerminalController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
-                $product = Product::withTrashed()->with('ingredients.inventoryItem', 'ingredientSizeAmounts')->findOrFail($item['product_id']);
+                $product = Product::withTrashed()->with('ingredients.inventoryItem.batches', 'ingredientSizeAmounts')->findOrFail($item['product_id']);
                 $cupSize = CupSize::withTrashed()->findOrFail($item['cup_size_id']);
                 $subtotal = $item['quantity'] * $item['price_at_order'];
 
@@ -180,7 +184,7 @@ class TerminalController extends Controller
                     $consumed = round($product->amountFor($ingredient, $cupSize, $recipeSize) * $item['quantity'], 2);
 
                     $inventoryItem = $inventoryItem->newQuery()->lockForUpdate()->find($inventoryItem->id);
-                    $inventoryItem->decrement('current_quantity', $consumed);
+                    $inventoryItem->consumeStock($consumed, forSale: true);
 
                     InventoryTransaction::create([
                         'inventory_item_id' => $inventoryItem->id,
@@ -195,7 +199,7 @@ class TerminalController extends Controller
                 $cupStock = $cupSize->inventory_item_id ? $cupSize->inventoryItem()->lockForUpdate()->first() : null;
 
                 if ($cupStock) {
-                    $cupStock->decrement('current_quantity', $item['quantity']);
+                    $cupStock->consumeStock((float) $item['quantity'], forSale: true);
 
                     InventoryTransaction::create([
                         'inventory_item_id' => $cupStock->id,

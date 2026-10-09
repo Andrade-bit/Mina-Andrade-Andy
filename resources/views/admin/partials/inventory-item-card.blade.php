@@ -40,6 +40,19 @@
       </form>
     </div>
   @else
+  @if ($item->batches->where('remaining_quantity', '>', 0)->isNotEmpty())
+    <details class="mb-4 text-xs font-semibold text-stamp-500">
+      <summary class="cursor-pointer font-extrabold">Stock batches &amp; expiry dates</summary>
+      <ul class="mt-2 space-y-2">
+        @foreach ($item->batches->where('remaining_quantity', '>', 0)->sortBy('expires_at') as $batch)
+          <li class="{{ $batch->daysUntilExpiry() !== null && $batch->daysUntilExpiry() < 0 ? 'text-red-700' : ($batch->daysUntilExpiry() !== null && $batch->daysUntilExpiry() <= 7 ? 'text-amber-800' : 'text-stamp-500') }}">
+            Batch #{{ $batch->id }} · {{ number_format($batch->remaining_quantity, 2) }} {{ $item->unit }}<br>
+            {{ $batch->expires_at?->format('M j, Y') }} · {{ $batch->expiryLabel() }}
+          </li>
+        @endforeach
+      </ul>
+    </details>
+  @endif
   <div class="flex gap-2">
     <a href="{{ route('admin.supply-purchases.index', ['restock' => $item->id]) }}" title="Buy more of this in Supply Purchases" class="flex-1 py-2.5 rounded-xl bg-mint-50 hover:bg-mint-500 hover:text-cream-50 text-mint-600 font-extrabold text-xs transition-colors flex items-center justify-center gap-1.5">
       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>

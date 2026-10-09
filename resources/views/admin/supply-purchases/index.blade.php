@@ -51,6 +51,24 @@
     </div>
 
 
+    <form method="GET" action="{{ route('admin.supply-purchases.index') }}" class="bg-white rounded-3xl shadow-soft p-4 mb-5 flex flex-wrap items-end gap-3">
+      <label for="purchase-search" class="flex-1 min-w-[180px] text-xs font-extrabold text-stamp-500">Search purchases
+        <input id="purchase-search" name="search" type="search" maxlength="120" value="{{ $search }}" placeholder="Ref #, supplier, store or item…" class="mt-1.5 block w-full bg-cream-100 rounded-xl px-3 py-2.5 text-sm font-semibold text-stamp-700 placeholder-stamp-300">
+      </label>
+      <label for="purchase-sort" class="text-xs font-extrabold text-stamp-500">Sort by
+        <select id="purchase-sort" name="sort" class="mt-1.5 block w-full bg-cream-100 rounded-xl px-3 py-2.5 text-sm font-semibold text-stamp-700">
+          <option value="newest" @selected($sort === 'newest')>Newest first</option>
+          <option value="oldest" @selected($sort === 'oldest')>Oldest first</option>
+          <option value="highest" @selected($sort === 'highest')>Highest total</option>
+          <option value="lowest" @selected($sort === 'lowest')>Lowest total</option>
+        </select>
+      </label>
+      @if (request()->filled('payment_method'))<input type="hidden" name="payment_method" value="{{ request('payment_method') }}">@endif
+      <button type="submit" class="bg-stamp-500 hover:bg-stamp-600 text-cream-50 rounded-xl px-4 py-2.5 text-sm font-extrabold">Apply</button>
+      <a href="{{ route('admin.supply-purchases.index') }}" class="text-sm font-extrabold text-stamp-500 px-2 py-2.5 hover:underline">Clear</a>
+      <p class="w-full text-xs font-semibold text-stamp-500">{{ $purchases->total() }} {{ Str::plural('purchase', $purchases->total()) }}{{ $search !== '' ? ' matching “'.$search.'”' : '' }}</p>
+    </form>
+
     <div class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6 overflow-x-auto">
       <table class="w-full min-w-[720px] text-left border-collapse">
         <thead>
@@ -78,7 +96,7 @@
               </td>
             </tr>
           @empty
-            <tr><td colspan="7" class="py-10 text-center text-sm font-semibold text-stamp-300">No purchases recorded yet. Click "Record Purchase" to log one.</td></tr>
+            <tr><td colspan="7" class="py-10 text-center text-sm font-semibold text-stamp-300">{{ $search !== '' || request()->filled('payment_method') ? 'No purchases match your filters. Try another search or clear the filters.' : 'No purchases recorded yet. Click "Record Purchase" to log one.' }}</td></tr>
           @endforelse
         </tbody>
       </table>
@@ -195,6 +213,7 @@
 
   <script>
     const INVENTORY_ITEMS = @json($itemOptions);
+    const OLD_PURCHASE_ITEMS = @json(old('items', []));
 
     let stockInRowCount = 0;
 
@@ -250,8 +269,34 @@
             <span class="stock-in-size-note text-[11px] font-bold text-stamp-400"></span>
           </div>
           <p class="stock-in-conversion hidden col-span-12 text-[11px] font-bold text-mint-600 pl-1"></p>
+          <div class="col-span-12 border-t border-cream-200 pt-3 mt-1 flex flex-wrap items-center gap-3">
+            <label class="flex items-center gap-2 text-xs font-bold text-stamp-700">
+              <input type="checkbox" name="items[${index}][has_expiry]" value="1" onchange="toggleStockInExpiry(this)" class="accent-mint-600 w-4 h-4">
+              Has expiry date
+            </label>
+            <label class="stock-in-expiry hidden flex-1 min-w-[160px] text-xs font-extrabold text-stamp-500" for="expiry-${index}">
+              Expiry date
+              <input id="expiry-${index}" type="date" name="items[${index}][expires_at]" disabled class="mt-1 w-full bg-cream-50 rounded-xl px-3 py-2 text-sm font-semibold text-stamp-700">
+            </label>
+            <p class="w-full text-xs font-semibold text-stamp-500">Use the date printed on the packaging. Different expiry? Add a separate line.</p>
+          </div>
         </div>`;
     }
+
+    function toggleStockInExpiry(checkbox) {
+      const row = checkbox.closest('.stock-in-row');
+      const label = row.querySelector('.stock-in-expiry');
+      const date = label.querySelector('input');
+      label.classList.toggle('hidden', !checkbox.checked);
+      date.disabled = !checkbox.checked;
+      date.required = checkbox.checked;
+      date.min = document.querySelector('[name="purchase_date"]').value;
+      if (!checkbox.checked) { date.value = ''; }
+    }
+
+    document.querySelector('[name="purchase_date"]').addEventListener('change', function () {
+      document.querySelectorAll('.stock-in-expiry input').forEach(input => { input.min = this.value; });
+    });
 
     // For bottles, cans and boxes: lets this purchase say how big each one is (brands differ) and shows
     // what the line adds to stock, e.g. "2 bottle = 1,500 ml added to stock".
@@ -388,9 +433,41 @@
       openModal('stockInModal');
     }
 
+    function restorePurchaseRows(items) {
+      document.getElementById('stockInRows').innerHTML = '';
+      stockInRowCount = 0;
+      Object.values(items).forEach(item => {
+        addStockInRow();
+        const row = document.querySelector('#stockInRows .stock-in-row:last-child');
+        const field = key => row.querySelector('[name$="[' + key + ']"]');
+        field('inventory_item_id').value = item.inventory_item_id || '';
+        onStockInItemChange(field('inventory_item_id'));
+        if (item.inventory_item_id === 'new' && item.new_item) {
+          Object.entries(item.new_item).forEach(([key, value]) => {
+            const input = row.querySelector('[name$="[new_item][' + key + ']"]');
+            if (input) {
+              input.value = value ?? '';
+              if (key === 'unit' || key === 'secondary_unit') { onNewItemChange(input); }
+            }
+          });
+          refreshUnitSelect(row, false);
+        }
+        ['quantity', 'unit_cost', 'quantity_unit', 'unit_size'].forEach(key => { field(key).value = item[key] ?? (key === 'quantity_unit' ? 'base' : ''); });
+        const checkbox = field('has_expiry');
+        checkbox.checked = String(item.has_expiry) === '1';
+        toggleStockInExpiry(checkbox);
+        if (checkbox.checked) { field('expires_at').value = item.expires_at || ''; }
+        updateStockInConversion(row);
+      });
+      recalcStockInTotals();
+      openModal('stockInModal');
+    }
+
     addStockInRow();
 
-    @if ($restockItemId)
+    @if (old('items'))
+      restorePurchaseRows(OLD_PURCHASE_ITEMS);
+    @elseif ($restockItemId)
       openStockIn({{ $restockItemId }});
     @elseif ($openForm)
       openStockIn();

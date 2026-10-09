@@ -125,7 +125,7 @@ class Product extends Model
 
                 return $ingredient->inventoryItem
                     && $needed > 0
-                    && $needed > (float) $ingredient->inventoryItem->current_quantity;
+                    && $needed > $ingredient->inventoryItem->usableQuantity();
             })
             ->map(fn (Ingredient $ingredient) => $ingredient->inventoryItem)
             ->unique('id')
@@ -178,7 +178,7 @@ class Product extends Model
         $cupSizes = CupSize::orderBy('price')->get();
         $recipeSize = $cupSizes->firstWhere('is_recipe_size', true);
 
-        return static::with('cupSizePrices', 'ingredients.inventoryItem', 'ingredientSizeAmounts')->get()
+        return static::with('cupSizePrices', 'ingredients.inventoryItem.batches', 'ingredientSizeAmounts')->get()
             ->mapWithKeys(fn (Product $product) => [$product->id => $product->blockedBy($product->sizesWithStock($cupSizes, $recipeSize), $cupSizes, $recipeSize)])
             ->filter(fn (Collection $lacking) => $lacking->isNotEmpty());
     }

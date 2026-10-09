@@ -82,7 +82,12 @@
         <tbody>
           @foreach ($purchase->items as $item)
             <tr class="border-b border-cream-200 last:border-0">
-              <td class="py-3 px-3 font-bold text-stamp-700 text-sm">{{ $item->name }}</td>
+              <td class="py-3 px-3 font-bold text-stamp-700 text-sm">
+                {{ $item->name }}
+                @foreach ($purchase->batches->where('inventory_item_id', $item->id) as $batch)
+                  <p class="mt-1 text-xs font-semibold text-stamp-500">Batch #{{ $batch->id }} · {{ number_format($batch->quantity, 2) }} {{ $item->unit }} · {{ $batch->expires_at ? 'Expiry: '.$batch->expires_at->format('M j, Y') : 'No expiry recorded' }}</p>
+                @endforeach
+              </td>
               <td class="py-3 px-3 text-stamp-500 text-sm">{{ rtrim(rtrim(number_format($item->pivot->quantity, 2), '0'), '.') }} {{ $item->unit }}</td>
               <td class="py-3 px-3 text-stamp-500 text-sm">₱{{ number_format($item->pivot->unit_cost, $item->pivot->unit_cost < 1 ? 4 : 2) }}</td>
               <td class="py-3 px-3 font-display font-bold text-stamp-700">₱{{ number_format($item->pivot->subtotal, 2) }}</td>

@@ -52,6 +52,8 @@
       </a>
     </div>
 
+    @include('admin.partials.expiry-alerts')
+
     <!-- Stat cards: each one opens the list behind its number -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <a href="{{ route('admin.inventory') }}#items" class="bg-white rounded-3xl shadow-soft p-5 flex items-center gap-4 hover:-translate-y-0.5 transition-transform focus-visible:ring-2 focus-visible:ring-stamp-300 outline-none">
@@ -88,35 +90,33 @@
         <a href="{{ route('admin.inventory') }}#items" class="underline">Show all items</a>
       </div>
     @endif
-    <div class="flex items-center gap-2 mb-5 flex-wrap">
-      <button id="tab-procurement" onclick="showCategory('procurement')" class="px-5 py-2.5 rounded-2xl text-sm font-extrabold transition-all bg-stamp-500 text-cream-50 shadow-soft-btn">📦 Ingredients</button>
-      <button id="tab-supplier" onclick="showCategory('supplier')" class="px-5 py-2.5 rounded-2xl text-sm font-extrabold transition-all bg-cream-100 text-stamp-600">🥤 Cups &amp; Straws</button>
-      <button id="tab-archived" onclick="showCategory('archived')" class="px-5 py-2.5 rounded-2xl text-sm font-extrabold transition-all bg-cream-100 text-stamp-600">🗄️ Archived ({{ $archived->count() }})</button>
+    <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+      <nav aria-label="Inventory categories" class="flex items-center gap-2 flex-wrap">
+        @foreach (['procurement' => 'Ingredients', 'supplier' => 'Cups & Straws', 'archived' => 'Archived ('.$archivedCount.')'] as $tab => $label)
+          <a href="{{ route('admin.inventory', array_merge(request()->only(['search', 'stock']), ['tab' => $tab])) }}#items" @if ($activeTab === $tab) aria-current="page" @endif class="px-4 py-2.5 rounded-2xl text-sm font-extrabold transition-all {{ $activeTab === $tab ? 'bg-stamp-500 text-cream-50 shadow-soft-btn' : 'bg-cream-100 text-stamp-600 hover:bg-stamp-100' }}">{{ $label }}</a>
+        @endforeach
+      </nav>
+      <form method="GET" action="{{ route('admin.inventory') }}#items" class="flex items-center gap-2 max-w-full" role="search">
+        <input type="hidden" name="tab" value="{{ $activeTab }}">
+        @if ($onlyLow)<input type="hidden" name="stock" value="low">@endif
+        <label for="inventory-search" class="sr-only">Search inventory</label>
+        <input id="inventory-search" name="search" type="search" value="{{ $search }}" maxlength="120" placeholder="Search inventory…" class="w-44 sm:w-52 min-w-0 bg-cream-100 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-stamp-300">
+        <button type="submit" class="bg-stamp-500 text-white rounded-xl px-3 py-2 text-sm font-bold">Search</button>
+        @if ($search !== '')
+          <a href="{{ route('admin.inventory', array_merge(request()->only('stock'), ['tab' => $activeTab])) }}#items" class="text-xs font-bold text-stamp-500">Clear</a>
+        @endif
+      </form>
     </div>
-    <p id="categoryHint" class="text-[11px] text-stamp-300 font-semibold mb-4">Ingredients and general supplies you keep in stock. Use Restock on a card, or Supply Purchases, to buy more.</p>
-
-    <!-- Item grids -->
-    <div id="grid-procurement" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
-      @forelse ($procurement as $item)
+    <p class="text-[11px] text-stamp-300 font-semibold mb-4">{{ $activeTab === 'archived' ? 'Unused items stay here so you can restore them whenever needed.' : 'Search this category or use Restock on a card to buy more.' }}</p>
+    <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      @forelse ($items as $item)
         @include('admin.partials.inventory-item-card', ['item' => $item])
       @empty
-        <p class="text-sm font-semibold text-stamp-300 py-6 col-span-full">{{ $onlyLow ? "No ingredients are low on stock." : "No ingredients yet. Record a purchase to add one." }}</p>
+        <p class="text-sm font-semibold text-stamp-300 py-6 col-span-full">{{ $search !== '' ? 'No items match your search in this category.' : ($onlyLow ? 'No low-stock items in this category.' : 'No items in this category yet.') }}</p>
       @endforelse
     </div>
-    <div id="grid-supplier" class="hidden grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
-      @forelse ($supplier as $item)
-        @include('admin.partials.inventory-item-card', ['item' => $item])
-      @empty
-        <p class="text-sm font-semibold text-stamp-300 py-6 col-span-full">{{ $onlyLow ? "No cups or straws are low on stock." : "No cups or straws yet. Record a purchase to add one." }}</p>
-      @endforelse
-    </div>
-
-    <div id="grid-archived" class="hidden grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
-      @forelse ($archived as $item)
-        @include('admin.partials.inventory-item-card', ['item' => $item])
-      @empty
-        <p class="text-sm font-semibold text-stamp-300 py-6 col-span-full">Nothing archived. Items you mark as unused show up here so you can restore them.</p>
-      @endforelse
+    <div class="mb-8">
+      @include('admin.partials.pagination', ['paginator' => $items])
     </div>
 
     <!-- Activity log -->
@@ -210,25 +210,6 @@
 
   <script>
     const INVENTORY_ITEMS = @json($itemOptions);
-
-    const CATEGORY_HINTS = {
-      procurement: 'Ingredients and general supplies you keep in stock. Use Restock on a card, or Supply Purchases, to buy more.',
-      supplier: 'Cups and straws. Buy more through Supply Purchases.',
-      archived: 'Unused items. They are hidden from Stock In, recipes and low-stock alerts, and keep their history.',
-    };
-
-    function showCategory(cat){
-      ['procurement', 'supplier', 'archived'].forEach(c => {
-        const tab = document.getElementById('tab-' + c);
-        tab.classList.toggle('bg-stamp-500', c === cat);
-        tab.classList.toggle('text-cream-50', c === cat);
-        tab.classList.toggle('shadow-soft-btn', c === cat);
-        tab.classList.toggle('bg-cream-100', c !== cat);
-        tab.classList.toggle('text-stamp-600', c !== cat);
-        document.getElementById('grid-' + c).classList.toggle('hidden', c !== cat);
-      });
-      document.getElementById('categoryHint').textContent = CATEGORY_HINTS[cat];
-    }
 
     function openModal(id){ document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id){ document.getElementById(id).classList.add('hidden'); }

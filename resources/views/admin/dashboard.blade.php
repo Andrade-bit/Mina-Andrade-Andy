@@ -38,33 +38,47 @@
 
   <!-- Main content -->
   <main class="flex-1 p-5 pt-20 md:p-8 overflow-y-auto">
+    @include('admin.partials.expiry-alerts', ['compact' => true])
 
     @php
       $hour = now()->hour;
       $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
     @endphp
 
-    <div class="mb-6">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-4">
+      <div>
       <h2 class="font-display font-bold text-2xl md:text-3xl text-stamp-700">{{ $greeting }}, {{ auth()->user()->name }} 🐾</h2>
-      <p class="text-stamp-500 text-sm font-semibold mt-1">Here's how Catbrews is doing today.</p>
+      <p class="text-stamp-500 text-sm font-semibold mt-1">Here's how Catbrews is doing · {{ $periodLabel }}.</p>
+      </div>
+      <form method="GET" action="{{ route('admin.dashboard') }}" aria-label="Filter dashboard dates" class="flex max-w-full flex-wrap items-center gap-2">
+        <div class="flex max-w-full items-center gap-2">
+          <label class="sr-only" for="dashboard-from">From date</label>
+          <input id="dashboard-from" type="date" name="from" value="{{ $from }}" required class="w-[136px] min-w-0 bg-cream-100 rounded-xl px-2 py-2 text-xs font-semibold text-stamp-700">
+          <span aria-hidden="true" class="text-stamp-300">–</span>
+          <label class="sr-only" for="dashboard-to">To date</label>
+          <input id="dashboard-to" type="date" name="to" value="{{ $to }}" required class="w-[136px] min-w-0 bg-cream-100 rounded-xl px-2 py-2 text-xs font-semibold text-stamp-700">
+        </div>
+        <button type="submit" class="bg-stamp-500 hover:bg-stamp-600 text-cream-50 rounded-xl px-3 py-2 text-xs font-extrabold">Apply</button>
+        <a href="{{ route('admin.dashboard') }}" class="text-xs font-extrabold text-stamp-500 px-2 py-2 hover:underline">Today</a>
+      </form>
     </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(150px,auto)]">
 
-      <!-- Hero: Today's Sales -->
+      <!-- Hero: Sales in selected period -->
       <div class="col-span-2 row-span-1 lg:row-span-2 bg-gradient-to-br from-stamp-500 to-stamp-700 rounded-[2rem] shadow-soft p-6 md:p-7 text-cream-50 flex flex-col justify-between relative overflow-hidden hover:-translate-y-0.5 transition-transform">
-        <a href="{{ route('admin.reports.index', ['range' => 'today', 'type' => 'sales']) }}" aria-label="Open today's sales report" class="absolute inset-0 z-10 rounded-[2rem] outline-none focus-visible:ring-4 focus-visible:ring-white/60"></a>
+        <a href="{{ route('admin.reports.index', ['range' => 'custom', 'from' => $from, 'to' => $to, 'type' => 'sales']) }}" aria-label="Open sales report for selected dates" class="absolute inset-0 z-10 rounded-[2rem] outline-none focus-visible:ring-4 focus-visible:ring-white/60"></a>
         <div class="absolute -bottom-8 -right-8 w-40 h-40 rounded-full bg-white/10"></div>
         <div class="absolute -top-10 -right-16 w-32 h-32 rounded-full bg-white/5"></div>
         <div class="relative flex items-center justify-between">
-          <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-cream-50/70">Today's Sales</p>
+          <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-cream-50/70">Sales in selected period</p>
           <div class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 12v-2m9-4a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           </div>
         </div>
         <div class="relative">
-          <p class="font-display font-bold text-4xl md:text-5xl mt-4">₱{{ number_format($todaysSales, 2) }}</p>
-          <p class="text-sm font-bold text-cream-50/80 mt-2">{{ $todaysTransactionCount }} {{ Str::plural('transaction', $todaysTransactionCount) }} so far</p>
+          <p class="font-display font-bold text-4xl md:text-5xl mt-4">₱{{ number_format($periodSales, 2) }}</p>
+          <p class="text-sm font-bold text-cream-50/80 mt-2">{{ $periodTransactionCount }} {{ Str::plural('transaction', $periodTransactionCount) }} in this period</p>
         </div>
         <a href="{{ route('pos.terminal') }}" class="relative z-20 mt-5 inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 transition-colors rounded-2xl px-4 py-2.5 text-sm font-bold w-fit">
           Open POS Terminal
@@ -73,13 +87,13 @@
       </div>
 
       <!-- Transactions today -->
-      <a href="{{ route('pos.transactions', ['from' => today()->toDateString(), 'to' => today()->toDateString()]) }}" class="bg-white rounded-3xl shadow-soft p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
+      <a href="{{ route('pos.transactions', ['from' => $from, 'to' => $to]) }}" class="bg-white rounded-3xl shadow-soft p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
         <div class="w-11 h-11 rounded-2xl bg-mint-50 flex items-center justify-center text-mint-600">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
         </div>
         <div>
-          <p class="font-display font-bold text-2xl text-stamp-700">{{ $todaysTransactionCount }}</p>
-          <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mt-0.5">Sales Today</p>
+          <p class="font-display font-bold text-2xl text-stamp-700">{{ $periodTransactionCount }}</p>
+          <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mt-0.5">Transactions in period</p>
         </div>
       </a>
 
@@ -179,7 +193,7 @@
             </div>
             <h3 class="font-display font-bold text-stamp-700">Top Sellers</h3>
           </div>
-          <span class="text-[10px] font-extrabold uppercase tracking-wide text-stamp-300">Last 30 days</span>
+          <span class="text-[10px] font-extrabold uppercase tracking-wide text-stamp-300">Selected period</span>
         </div>
         @forelse ($topSellers as $row)
           <a href="{{ route('admin.products.edit', $row->product) }}" class="flex items-center justify-between py-2 hover:bg-cream-50 -mx-2 px-2 rounded-xl transition-colors {{ ! $loop->last ? 'border-b border-cream-100' : '' }}">
@@ -190,7 +204,7 @@
             <p class="text-xs font-bold text-mint-600 shrink-0">{{ $row->sold }} sold</p>
           </a>
         @empty
-          <p class="text-sm font-semibold text-stamp-300 py-4">No sales in the last 30 days yet.</p>
+          <p class="text-sm font-semibold text-stamp-300 py-4">No product sales in this period.</p>
         @endforelse
       </div>
       </div>
@@ -199,10 +213,10 @@
       <div class="bg-white rounded-3xl shadow-soft p-5 md:p-6">
         <div class="flex items-center justify-between mb-4">
           <h3 class="font-display font-bold text-stamp-700">Recent Sales</h3>
-          <a href="{{ route('pos.transactions') }}" class="text-xs font-extrabold text-stamp-500 hover:text-stamp-700">View all &rarr;</a>
+          <a href="{{ route('pos.transactions', ['from' => $from, 'to' => $to]) }}" class="text-xs font-extrabold text-stamp-500 hover:text-stamp-700">View all &rarr;</a>
         </div>
         @forelse ($recentTransactions as $transaction)
-          <a href="{{ route('pos.transactions') }}" class="flex items-center justify-between py-2 hover:bg-cream-50 -mx-2 px-2 rounded-xl transition-colors {{ ! $loop->last ? 'border-b border-cream-100' : '' }}">
+          <a href="{{ route('pos.transactions', ['from' => $from, 'to' => $to]) }}" class="flex items-center justify-between py-2 hover:bg-cream-50 -mx-2 px-2 rounded-xl transition-colors {{ ! $loop->last ? 'border-b border-cream-100' : '' }}">
             <div>
               <p class="font-bold text-stamp-700 text-sm">CB-{{ str_pad($transaction->id, 5, '0', STR_PAD_LEFT) }}</p>
               <p class="text-[11px] text-stamp-300 font-semibold">{{ $transaction->credential?->first_name ?? 'Unknown' }} &middot; {{ $transaction->transaction_date->diffForHumans() }}</p>
@@ -210,7 +224,7 @@
             <p class="font-display font-bold text-stamp-700 text-sm">₱{{ number_format($transaction->total_amount, 2) }}</p>
           </a>
         @empty
-          <p class="text-sm font-semibold text-stamp-300 py-4">No sales recorded yet today.</p>
+          <p class="text-sm font-semibold text-stamp-300 py-4">No sales recorded in this period.</p>
         @endforelse
       </div>
       <!-- Slow Movers -->
@@ -222,7 +236,7 @@
             </div>
             <h3 class="font-display font-bold text-stamp-700">Slow Movers</h3>
           </div>
-          <span class="text-[10px] font-extrabold uppercase tracking-wide text-stamp-300">Below avg, 30 days</span>
+          <span class="text-[10px] font-extrabold uppercase tracking-wide text-stamp-300">Below average in period</span>
         </div>
         @forelse ($slowMovers as $row)
           <a href="{{ route('admin.products.edit', $row->product) }}" class="flex items-center justify-between py-2 hover:bg-cream-50 -mx-2 px-2 rounded-xl transition-colors {{ ! $loop->last ? 'border-b border-cream-100' : '' }}">

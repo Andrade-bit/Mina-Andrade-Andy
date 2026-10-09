@@ -46,6 +46,7 @@ class InventoryTransactionController extends Controller
             'transaction_type' => ['required', Rule::in(['Waste', 'Adjustment'])],
             'inventory_transaction_date' => ['required', 'date'],
             'reason' => ['nullable', 'string', 'max:255'],
+            'batch_id' => ['nullable', 'integer', 'exists:inventory_batches,id'],
         ]);
 
         DB::transaction(function () use ($validated) {
@@ -60,7 +61,7 @@ class InventoryTransactionController extends Controller
                 throw ValidationException::withMessages(['quantity' => 'Quantity exceeds available stock.']);
             }
 
-            $item->decrement('current_quantity', $quantity);
+            $item->consumeStock((float) $quantity, batchId: $validated['batch_id'] ?? null);
 
             InventoryTransaction::create([
                 'inventory_item_id' => $item->id,

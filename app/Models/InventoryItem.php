@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class InventoryItem extends Model
 {
@@ -118,6 +119,11 @@ class InventoryItem extends Model
         $this->reorder_level = round((float) $this->reorder_level * $factor, 2);
         $this->save();
 
+        $this->batches()->update([
+            'quantity' => DB::raw("quantity * {$factorSql}"),
+            'remaining_quantity' => DB::raw("remaining_quantity * {$factorSql}"),
+        ]);
+
         InventoryTransaction::where('inventory_item_id', $this->id)
             ->update(['quantity' => DB::raw("quantity * {$factorSql}")]);
 
@@ -185,6 +191,56 @@ class InventoryItem extends Model
     public function ingredients(): HasMany
     {
         return $this->hasMany(Ingredient::class);
+    }
+
+    public function batches(): HasMany
+    {
+        return $this->hasMany(InventoryBatch::class);
+    }
+
+    public function usableQuantity(): float
+    {
+        $expired = $this->relationLoaded('batches')
+            ? $this->batches->filter(fn (InventoryBatch $batch) => $batch->daysUntilExpiry() !== null && $batch->daysUntilExpiry() < 0)->sum('remaining_quantity')
+            : $this->batches()->where('expires_at', '<', InventoryBatch::expiryToday()->toDateString())->sum('remaining_quantity');
+
+        return max(0, round((float) $this->current_quantity - (float) $expired, 2));
+    }
+
+    /**
+     * Deduct earliest-expiring stock first. The caller holds this item's row lock inside a transaction.
+     * Undated stock (including stock held before batch tracking) is used after dated stock.
+     */
+    public function consumeStock(float $quantity, bool $forSale = false, ?int $batchId = null): void
+    {
+        $quantity = round($quantity, 2);
+        if ($quantity < 0 || $quantity > ($forSale ? $this->usableQuantity() : (float) $this->current_quantity)) {
+            throw ValidationException::withMessages(['quantity' => "Not enough usable {$this->name}. Check stock and expiry dates."]);
+        }
+
+        $query = $this->batches()->where('remaining_quantity', '>', 0);
+        if ($batchId !== null) {
+            $query->whereKey($batchId);
+        }
+        if ($forSale) {
+            $query->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>=', InventoryBatch::expiryToday()->toDateString()));
+        }
+        $batches = $query->orderByRaw('expires_at IS NULL')->orderBy('expires_at')->orderBy('id')->lockForUpdate()->get();
+        if ($batchId !== null && ($batches->isEmpty() || (float) $batches->first()->remaining_quantity < $quantity)) {
+            throw ValidationException::withMessages(['quantity' => 'Quantity exceeds the remaining stock in this batch.']);
+        }
+
+        $left = $quantity;
+        foreach ($batches as $batch) {
+            $used = min($left, (float) $batch->remaining_quantity);
+            $batch->update(['remaining_quantity' => round((float) $batch->remaining_quantity - $used, 2)]);
+            $left = round($left - $used, 2);
+            if ($left <= 0) {
+                break;
+            }
+        }
+        $this->decrement('current_quantity', $quantity);
+        $this->unsetRelation('batches');
     }
 
     public function cupSizes(): HasMany

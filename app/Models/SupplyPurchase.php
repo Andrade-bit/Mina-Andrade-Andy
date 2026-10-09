@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SupplyPurchase extends Model
@@ -46,5 +47,10 @@ class SupplyPurchase extends Model
     public function expense(): HasOne
     {
         return $this->hasOne(Expense::class);
+    }
+
+    public function batches(): HasMany
+    {
+        return $this->hasMany(InventoryBatch::class);
     }
 }

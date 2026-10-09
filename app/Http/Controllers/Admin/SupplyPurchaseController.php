@@ -25,14 +25,41 @@ class SupplyPurchaseController extends Controller
      */
     public function index(Request $request): View
     {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:120'],
+            'sort' => ['nullable', Rule::in(['newest', 'oldest', 'highest', 'lowest'])],
+        ]);
+        $search = trim($validated['search'] ?? '');
+        $sort = $validated['sort'] ?? 'newest';
+        [$column, $direction] = match ($sort) {
+            'oldest' => ['purchase_date', 'asc'],
+            'highest' => ['total_amount', 'desc'],
+            'lowest' => ['total_amount', 'asc'],
+            default => ['purchase_date', 'desc'],
+        };
         $purchases = SupplyPurchase::with('supplier', 'items')
             ->when($request->filled('payment_method'), fn ($query) => $query->where('payment_method', $request->string('payment_method')))
-            ->latest('purchase_date')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $pattern = '%'.$search.'%';
+                    $q->where('invoice_number', 'like', $pattern)
+                        ->orWhere('purchase_source', 'like', $pattern)
+                        ->orWhereHas('supplier', fn ($supplier) => $supplier->where('supplier_name', 'like', $pattern))
+                        ->orWhereHas('items', fn ($items) => $items->where('inventory_items.name', 'like', $pattern));
+                    $reference = ltrim($search, '#');
+                    if (ctype_digit($reference)) {
+                        $q->orWhere('supply_purchases.id', $reference);
+                    }
+                });
+            })
+            ->orderBy($column, $direction)->orderBy('id', $direction)
             ->paginate(20)
             ->withQueryString();
 
         return view('admin.supply-purchases.index', [
             'purchases' => $purchases,
+            'search' => $search,
+            'sort' => $sort,
             'suppliers' => Supplier::orderBy('supplier_name')->get(['id', 'supplier_name', 'payment_terms']),
             'itemOptions' => InventoryItem::orderBy('name')->get()->map->toFormOption()->values(),
             'restockItemId' => $request->integer('restock') ?: null,
@@ -112,7 +139,7 @@ class SupplyPurchaseController extends Controller
      */
     public function show(SupplyPurchase $supplyPurchase): View
     {
-        $supplyPurchase->load('supplier', 'items', 'expense');
+        $supplyPurchase->load('supplier', 'items', 'expense', 'batches');
 
         return view('admin.supply-purchases.show', [
             'purchase' => $supplyPurchase,
@@ -148,10 +175,15 @@ class SupplyPurchaseController extends Controller
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'items.*.quantity_unit' => ['nullable', Rule::in(['base', 'secondary'])],
             'items.*.unit_size' => ['nullable', 'numeric', 'min:0.0001'],
+            'items.*.has_expiry' => ['nullable', 'boolean'],
+            'items.*.expires_at' => ['exclude_unless:items.*.has_expiry,1', 'required', 'date_format:Y-m-d', 'after_or_equal:purchase_date'],
         ], [
             'items.*.inventory_item_id.required' => 'Pick an item (or New item) for every line.',
             'items.*.quantity.required' => 'Enter a quantity for every line.',
             'items.*.unit_cost.required' => 'Enter the cost for every line.',
+            'items.*.expires_at.required' => 'Enter the expiry date or turn off Has expiry date.',
+            'items.*.expires_at.date_format' => 'Enter a valid expiry date.',
+            'items.*.expires_at.after_or_equal' => 'Expiry date cannot be before the purchase date.',
             'items.*.new_item.name.required' => 'Type a name for the new item.',
             'items.*.new_item.type.required' => 'Choose whether the new item is an ingredient or cups and straws.',
             'items.*.new_item.unit.required' => 'Choose a stock unit (ml, g or pcs) for the new item.',
@@ -202,12 +234,20 @@ class SupplyPurchaseController extends Controller
                     }
                 }
 
-                $baseUnitCost = $baseQuantity > 0 ? $lineTotal / $baseQuantity : 0;
+                $previous = $purchase->items()->where('inventory_items.id', $inventoryItem->id)->first()?->pivot;
+                $combinedQuantity = $baseQuantity + (float) ($previous?->quantity ?? 0);
+                $combinedSubtotal = $lineTotal + (float) ($previous?->subtotal ?? 0);
+                $purchase->items()->syncWithoutDetaching([$inventoryItem->id => [
+                    'quantity' => $combinedQuantity,
+                    'unit_cost' => $combinedSubtotal / $combinedQuantity,
+                    'subtotal' => $combinedSubtotal,
+                ]]);
 
-                $purchase->items()->attach($inventoryItem->id, [
+                $inventoryItem->batches()->create([
+                    'supply_purchase_id' => $purchase->id,
                     'quantity' => $baseQuantity,
-                    'unit_cost' => $baseUnitCost,
-                    'subtotal' => $lineTotal,
+                    'remaining_quantity' => $baseQuantity,
+                    'expires_at' => ! empty($item['has_expiry']) ? ($item['expires_at'] ?? null) : null,
                 ]);
 
                 $inventoryItem->increment('current_quantity', $baseQuantity);
