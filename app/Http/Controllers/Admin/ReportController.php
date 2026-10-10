@@ -10,12 +10,14 @@ use App\Models\Product;
 use App\Models\SalesTransaction;
 use App\Models\SalesTransactionItem;
 use App\Models\SupplyPurchase;
+use App\Support\ShopDates;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
@@ -205,7 +207,9 @@ class ReportController extends Controller
      */
     private function resolvePeriod(Request $request): array
     {
-        $today = CarbonImmutable::today();
+        ShopDates::validate($request);
+        $request->validate(['movement_sort' => ['nullable', Rule::in(['newest', 'oldest'])]]);
+        $today = CarbonImmutable::today('Asia/Manila');
         $range = $request->string('range')->toString();
 
         if ($range === '' && ($request->filled('from') || $request->filled('to'))) {
@@ -217,8 +221,8 @@ class ReportController extends Controller
             'week' => [$today->startOfWeek(), $today],
             'last_month' => [$today->subMonthNoOverflow()->startOfMonth(), $today->subMonthNoOverflow()->endOfMonth()->startOfDay()],
             'custom' => [
-                $request->filled('from') ? $request->date('from')->toImmutable()->startOfDay() : $today->startOfMonth(),
-                $request->filled('to') ? $request->date('to')->toImmutable()->startOfDay() : $today,
+                $request->filled('from') ? CarbonImmutable::parse($request->input('from'), 'Asia/Manila')->startOfDay() : $today->startOfMonth(),
+                $request->filled('to') ? CarbonImmutable::parse($request->input('to'), 'Asia/Manila')->startOfDay() : $today,
             ],
             default => [$today->startOfMonth(), $today],
         };
@@ -241,7 +245,7 @@ class ReportController extends Controller
      */
     private function expensesInPeriod(CarbonImmutable $from, CarbonImmutable $to)
     {
-        return Expense::whereBetween('expense_date', [$from->toDateString(), $to->toDateString()]);
+        return Expense::whereDate('expense_date', '>=', $from->toDateString())->whereDate('expense_date', '<=', $to->toDateString());
     }
 
     /**
@@ -251,7 +255,7 @@ class ReportController extends Controller
      */
     private function movementsInPeriod(CarbonImmutable $from, CarbonImmutable $to)
     {
-        return InventoryTransaction::whereBetween('inventory_transaction_date', [$from->toDateString(), $to->toDateString()]);
+        return InventoryTransaction::whereDate('inventory_transaction_date', '>=', $from->toDateString())->whereDate('inventory_transaction_date', '<=', $to->toDateString());
     }
 
     /**
@@ -259,8 +263,7 @@ class ReportController extends Controller
      */
     private function buildReport(CarbonImmutable $from, CarbonImmutable $to): array
     {
-        $start = $from->startOfDay();
-        $end = $to->endOfDay();
+        [$start, $end] = ShopDates::bounds($from->toDateString(), $to->toDateString());
 
         $completed = SalesTransaction::whereBetween('transaction_date', [$start, $end])->where('status', '!=', 'voided');
         $voidedTotal = (float) SalesTransaction::whereBetween('transaction_date', [$start, $end])->where('status', 'voided')->sum('total_amount');
@@ -273,14 +276,15 @@ class ReportController extends Controller
         $promoCount = (clone $completed)->whereNotNull('promo_id')->count();
         $expenseTotal = (float) $this->expensesInPeriod($from, $to)->sum('amount');
 
+        $saleDay = DB::connection()->getDriverName() === 'sqlite' ? "DATE(transaction_date, '+8 hours')" : 'DATE(DATE_ADD(transaction_date, INTERVAL 8 HOUR))';
         $salesByDay = (clone $completed)
-            ->selectRaw('DATE(transaction_date) as d, SUM(total_amount) as net, SUM(discount_amount) as disc')
+            ->selectRaw("{$saleDay} as d, SUM(total_amount) as net, SUM(discount_amount) as disc")
             ->groupBy('d')->get()->keyBy('d');
         $voidsByDay = SalesTransaction::whereBetween('transaction_date', [$start, $end])->where('status', 'voided')
-            ->selectRaw('DATE(transaction_date) as d, SUM(total_amount) as total')
+            ->selectRaw("{$saleDay} as d, SUM(total_amount) as total")
             ->groupBy('d')->pluck('total', 'd');
         $expensesByDay = $this->expensesInPeriod($from, $to)
-            ->selectRaw('expense_date as d, SUM(amount) as total')
+            ->selectRaw('DATE(expense_date) as d, SUM(amount) as total')
             ->groupBy('d')->pluck('total', 'd');
 
         $daily = [];
@@ -353,8 +357,7 @@ class ReportController extends Controller
      */
     private function buildSalesReport(CarbonImmutable $from, CarbonImmutable $to): array
     {
-        $start = $from->startOfDay();
-        $end = $to->endOfDay();
+        [$start, $end] = ShopDates::bounds($from->toDateString(), $to->toDateString());
 
         $salesByCategory = SalesTransactionItem::query()
             ->join('sales_transactions', 'sales_transactions.id', '=', 'sales_transaction_items.sales_transaction_id')
@@ -437,7 +440,7 @@ class ReportController extends Controller
                 'stockOutMoves' => $this->movementsInPeriod($from, $to)->whereIn('transaction_type', ['Sales', 'Waste', 'Adjustment'])->count(),
             ],
             'movementLog' => $this->movementsInPeriod($from, $to)->with('inventoryItem')
-                ->latest('inventory_transaction_date')->latest('id')->limit(25)->get(),
+                ->orderBy('inventory_transaction_date', request('movement_sort') === 'oldest' ? 'asc' : 'desc')->orderBy('id', request('movement_sort') === 'oldest' ? 'asc' : 'desc')->paginate(10, ['*'], 'movement_page')->withQueryString()->fragment('stock-movements'),
             'periodPurchases' => (clone $purchases)->with('supplier')->latest('purchase_date')->limit(10)->get(),
         ];
     }

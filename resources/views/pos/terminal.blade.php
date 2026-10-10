@@ -710,7 +710,7 @@
       check.classList.add('animate-bounce-in');
 
       const items = transaction.items || [];
-      const dateStr = new Date(transaction.transaction_date).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
+      const dateStr = new Date(transaction.transaction_date).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Manila' });
 
       document.getElementById('receiptBody').innerHTML = `
         <div class="border-t border-b border-dashed border-cream-200 py-3 mb-3 space-y-1">

@@ -24,6 +24,7 @@ class InventoryItemController extends Controller
         $validated = $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
             'tab' => ['nullable', Rule::in(['procurement', 'supplier', 'archived'])],
+            'activity_sort' => ['nullable', Rule::in(['newest', 'oldest'])],
         ]);
         $search = trim($validated['search'] ?? '');
         $activeTab = $validated['tab'] ?? 'procurement';
@@ -43,10 +44,9 @@ class InventoryItemController extends Controller
         $items = $lowStockFirst($withUsage($query))->paginate(6)->withQueryString()->fragment('items');
 
         $recentTransactions = InventoryTransaction::with('inventoryItem')
-            ->latest('inventory_transaction_date')
-            ->latest('id')
-            ->limit(20)
-            ->get();
+            ->orderBy('inventory_transaction_date', $request->input('activity_sort') === 'oldest' ? 'asc' : 'desc')
+            ->orderBy('id', $request->input('activity_sort') === 'oldest' ? 'asc' : 'desc')
+            ->paginate(10, ['*'], 'activity_page')->withQueryString()->fragment('stock-activity');
 
         return view('admin.inventory', [
             'expiryAlerts' => InventoryBatch::alerts()->get(),

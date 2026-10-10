@@ -63,34 +63,34 @@
           {{ $from->format('M j, Y') }}@if ($from->toDateString() !== $to->toDateString()) &ndash; {{ $to->format('M j, Y') }}@endif
         </p>
       </div>
-      <div class="flex items-center gap-2 no-print">
-        <a href="{{ route('admin.reports.export', request()->query()) }}" class="px-4 py-2.5 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-display font-bold text-sm transition-colors">Export CSV</a>
-        <button type="button" onclick="window.print()" class="px-5 py-2.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">Export PDF</button>
-      </div>
+      <details class="relative no-print">
+        <summary class="cursor-pointer list-none rounded-xl bg-cream-100 px-4 py-2 text-stamp-600 font-bold" aria-label="Export options">⋮ <span class="text-sm">Export</span></summary>
+        <div class="absolute right-0 top-full mt-2 z-20 min-w-40 rounded-2xl bg-white shadow-soft p-2">
+          <a href="{{ route('admin.reports.export', request()->query()) }}" class="block px-3 py-2 rounded-xl text-sm font-bold hover:bg-cream-100">Export CSV</a>
+          <button type="button" onclick="this.closest('details').open=false; window.print()" class="w-full text-left px-3 py-2 rounded-xl text-sm font-bold hover:bg-cream-100">Export PDF</button>
+        </div>
+      </details>
     </div>
 
-    <nav class="flex items-center gap-2 mb-4 flex-wrap no-print" aria-label="Report type">
-      @foreach ($types as $key => $label)
-        <a href="{{ $reportUrl($key) }}" @if ($type === $key) aria-current="page" @endif class="px-5 py-2.5 rounded-2xl text-sm font-extrabold transition-all {{ $type === $key ? 'bg-stamp-500 text-cream-50 shadow-soft-btn' : 'bg-white text-stamp-600 shadow-soft-sm hover:bg-cream-100' }}">{{ $label }}</a>
-      @endforeach
-    </nav>
-
-    <form method="GET" action="{{ route('admin.reports.index') }}" class="bg-white rounded-3xl shadow-soft p-4 md:p-5 mb-6 flex flex-wrap items-center gap-3 no-print">
-      <input type="hidden" name="type" value="{{ $type }}">
-      @foreach ($presets as $key => $label)
-        <a href="{{ route('admin.reports.index', ['range' => $key, 'type' => $type]) }}" class="px-4 py-2 rounded-2xl text-sm font-extrabold transition-colors {{ $range === $key ? 'bg-stamp-500 text-cream-50' : 'bg-cream-100 text-stamp-600 hover:bg-cream-200' }}">{{ $label }}</a>
-      @endforeach
-      <span class="flex-1"></span>
-      <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2 flex items-center gap-2">
-        <span class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">From</span>
-        <input type="date" name="from" value="{{ $from->toDateString() }}" class="bg-transparent outline-none text-sm text-stamp-700 font-semibold">
-      </div>
-      <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2 flex items-center gap-2">
-        <span class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">To</span>
-        <input type="date" name="to" value="{{ $to->toDateString() }}" class="bg-transparent outline-none text-sm text-stamp-700 font-semibold">
-      </div>
-      <input type="hidden" name="range" value="custom">
-      <button type="submit" class="px-5 py-2.5 rounded-2xl bg-stamp-500 hover:bg-stamp-600 text-cream-50 font-extrabold text-xs transition-colors">Apply</button>
+    <form method="GET" action="{{ route('admin.reports.index') }}" class="bg-white rounded-2xl shadow-soft-sm p-3 mb-5 flex flex-wrap items-center gap-2 no-print">
+      <label class="flex items-center gap-2 bg-cream-100 rounded-xl px-3 py-2 text-xs font-bold">Report
+        <select name="type" aria-label="Report type" class="bg-transparent text-sm outline-none">
+          @foreach ($types as $key => $label)<option value="{{ $key }}" @selected($type === $key)>{{ $label }}</option>@endforeach
+        </select>
+      </label>
+      <label class="flex items-center gap-2 bg-cream-100 rounded-xl px-3 py-2 text-xs font-bold">Period
+        <select name="range" aria-label="Report period" class="bg-transparent text-sm outline-none" onchange="const custom=this.value==='custom';this.form.querySelectorAll('[data-custom-date]').forEach(el=>{el.hidden=!custom;el.querySelector('input').disabled=!custom})">
+          @foreach ($presets + ['custom' => 'Custom dates'] as $key => $label)<option value="{{ $key }}" @selected($range === $key)>{{ $label }}</option>@endforeach
+        </select>
+      </label>
+      <label data-custom-date @if ($range !== 'custom') hidden @endif class="bg-cream-100 rounded-xl px-3 py-2 text-xs font-bold">From
+        <input aria-label="From date" type="date" name="from" value="{{ $from->toDateString() }}" @disabled($range !== 'custom') class="bg-transparent text-sm w-32 outline-none">
+      </label>
+      <label data-custom-date @if ($range !== 'custom') hidden @endif class="bg-cream-100 rounded-xl px-3 py-2 text-xs font-bold">To
+        <input aria-label="To date" type="date" name="to" value="{{ $to->toDateString() }}" @disabled($range !== 'custom') class="bg-transparent text-sm w-32 outline-none">
+      </label>
+      <button type="submit" class="px-4 py-2 rounded-xl bg-stamp-500 text-white font-bold text-xs">Apply</button>
+      <span class="text-xs text-stamp-500">Philippine time</span>
     </form>
 
     @include('admin.reports.partials.'.$type)

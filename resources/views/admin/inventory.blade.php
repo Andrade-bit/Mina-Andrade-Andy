@@ -120,8 +120,17 @@
     </div>
 
     <!-- Activity log -->
-    <div class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6 overflow-x-auto">
-      <h3 class="font-display font-bold text-stamp-700 text-lg mb-4">Recent Stock Activity</h3>
+    <div id="stock-activity" class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6 overflow-x-auto">
+      <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
+        <h3 class="font-display font-bold text-stamp-700 text-lg">Stock Activity</h3>
+        <form method="GET" action="{{ route('admin.inventory') }}#stock-activity" class="flex gap-2 items-center">
+          @foreach (request()->except(['activity_sort', 'activity_page']) as $key => $value)
+            @if (is_scalar($value))<input type="hidden" name="{{ $key }}" value="{{ $value }}">@endif
+          @endforeach
+          @include('admin.partials.sort-control', ['sortName' => 'activity_sort', 'sortOptions' => ['newest' => 'Newest first', 'oldest' => 'Oldest first']])
+          <button class="rounded-xl bg-stamp-500 text-white px-3 py-2 text-xs font-bold">Apply</button>
+        </form>
+      </div>
       <table class="w-full min-w-[720px] text-left border-collapse">
         <thead>
           <tr class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">
@@ -148,6 +157,7 @@
           @endforelse
         </tbody>
       </table>
+      @include('admin.partials.pagination', ['paginator' => $recentTransactions])
     </div>
   </main>
 
@@ -191,7 +201,7 @@
         <div>
           <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Date</label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input type="date" name="inventory_transaction_date" value="{{ old('inventory_transaction_date', now()->toDateString()) }}" required class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+            <input type="date" name="inventory_transaction_date" value="{{ old('inventory_transaction_date', now('Asia/Manila')->toDateString()) }}" required class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
           </div>
         </div>
         <div>

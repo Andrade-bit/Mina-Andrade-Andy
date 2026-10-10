@@ -147,7 +147,7 @@
         <div>
           <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Expires <span class="normal-case font-semibold text-stamp-300">(optional)</span></label>
           <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-            <input type="date" name="expires_at" value="{{ old('expires_at', now()->toDateString()) }}" min="{{ now()->toDateString() }}" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+            <input type="date" name="expires_at" value="{{ old('expires_at', now('Asia/Manila')->toDateString()) }}" min="{{ now('Asia/Manila')->toDateString() }}" class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
           </div>
         </div>
         <div>

@@ -41,7 +41,7 @@
     @include('admin.partials.expiry-alerts', ['compact' => true])
 
     @php
-      $hour = now()->hour;
+      $hour = now('Asia/Manila')->hour;
       $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
     @endphp
 

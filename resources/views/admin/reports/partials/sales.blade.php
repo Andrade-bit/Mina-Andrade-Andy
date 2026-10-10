@@ -76,7 +76,7 @@
         @forelse ($recentSales as $sale)
           <tr class="border-t border-cream-100 first:border-0">
             <td class="py-2.5 pr-3 text-sm font-bold text-stamp-700 whitespace-nowrap">CB-{{ str_pad($sale->id, 5, '0', STR_PAD_LEFT) }}</td>
-            <td class="py-2.5 pr-3 text-xs font-semibold text-stamp-400 whitespace-nowrap">{{ $sale->transaction_date->format('M j, g:i A') }}</td>
+            <td class="py-2.5 pr-3 text-xs font-semibold text-stamp-400 whitespace-nowrap">{{ $sale->transaction_date->timezone('Asia/Manila')->format('M j, Y, g:i A') }}</td>
             <td class="py-2.5 pr-3 text-xs font-semibold text-stamp-400">{{ $sale->credential?->first_name ?? 'Unknown' }} &middot; {{ $sale->payment_method }}</td>
             <td class="py-2.5 text-right font-display font-bold text-sm {{ $sale->status === 'voided' ? 'text-stamp-300 line-through' : 'text-stamp-700' }}">{{ $peso($sale->total_amount) }}</td>
           </tr>

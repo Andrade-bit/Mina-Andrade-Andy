@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,16 +16,9 @@ class InventoryTransactionController extends Controller
     /**
      * List the stock movement history, most recent first.
      */
-    public function index(): View
+    public function index(): RedirectResponse
     {
-        $transactions = InventoryTransaction::with('inventoryItem')
-            ->latest('inventory_transaction_date')
-            ->latest('id')
-            ->paginate(30);
-
-        return view('admin.inventory-transactions.index', [
-            'transactions' => $transactions,
-        ]);
+        return redirect()->to(route('admin.inventory').'#stock-activity');
     }
 
     /**

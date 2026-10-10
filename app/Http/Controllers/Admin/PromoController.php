@@ -34,7 +34,7 @@ class PromoController extends Controller
             'value' => ['required', 'numeric', 'min:0.01', Rule::when($request->input('type') === 'percent', ['max:100'])],
             'reason' => ['nullable', 'string', 'max:500'],
             'active' => ['nullable', 'boolean'],
-            'expires_at' => ['nullable', 'date', 'after_or_equal:today'],
+            'expires_at' => ['nullable', 'date', 'after_or_equal:'.now('Asia/Manila')->toDateString()],
         ]);
 
         Promo::create([
@@ -62,7 +62,7 @@ class PromoController extends Controller
             'active' => ['nullable', 'boolean'],
             'expires_at' => ['nullable', 'date', Rule::when(
                 $request->date('expires_at')?->toDateString() !== $promo->expires_at?->toDateString(),
-                ['after_or_equal:today'],
+                ['after_or_equal:'.now('Asia/Manila')->toDateString()],
             )],
         ]);
 

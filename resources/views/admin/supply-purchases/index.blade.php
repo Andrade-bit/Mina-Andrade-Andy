@@ -55,16 +55,9 @@
       <label for="purchase-search" class="flex-1 min-w-[180px] text-xs font-extrabold text-stamp-500">Search purchases
         <input id="purchase-search" name="search" type="search" maxlength="120" value="{{ $search }}" placeholder="Ref #, supplier, store or item…" class="mt-1.5 block w-full bg-cream-100 rounded-xl px-3 py-2.5 text-sm font-semibold text-stamp-700 placeholder-stamp-300">
       </label>
-      <label for="purchase-sort" class="text-xs font-extrabold text-stamp-500">Sort by
-        <select id="purchase-sort" name="sort" class="mt-1.5 block w-full bg-cream-100 rounded-xl px-3 py-2.5 text-sm font-semibold text-stamp-700">
-          <option value="newest" @selected($sort === 'newest')>Newest first</option>
-          <option value="oldest" @selected($sort === 'oldest')>Oldest first</option>
-          <option value="highest" @selected($sort === 'highest')>Highest total</option>
-          <option value="lowest" @selected($sort === 'lowest')>Lowest total</option>
-        </select>
-      </label>
+      @include('admin.partials.sort-control')
       @if (request()->filled('payment_method'))<input type="hidden" name="payment_method" value="{{ request('payment_method') }}">@endif
-      <button type="submit" class="bg-stamp-500 hover:bg-stamp-600 text-cream-50 rounded-xl px-4 py-2.5 text-sm font-extrabold">Apply</button>
+      <button type="submit" class="bg-stamp-500 hover:bg-stamp-600 text-cream-50 rounded-xl px-4 py-2.5 text-sm font-extrabold">Search</button>
       <a href="{{ route('admin.supply-purchases.index') }}" class="text-sm font-extrabold text-stamp-500 px-2 py-2.5 hover:underline">Clear</a>
       <p class="w-full text-xs font-semibold text-stamp-500">{{ $purchases->total() }} {{ Str::plural('purchase', $purchases->total()) }}{{ $search !== '' ? ' matching “'.$search.'”' : '' }}</p>
     </form>
@@ -130,7 +123,7 @@
           <div>
             <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Date</label>
             <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-3.5 py-2.5">
-              <input type="date" name="purchase_date" value="{{ old('purchase_date', now()->toDateString()) }}" required class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+              <input type="date" name="purchase_date" value="{{ old('purchase_date', now('Asia/Manila')->toDateString()) }}" required class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
             </div>
           </div>
         </div>

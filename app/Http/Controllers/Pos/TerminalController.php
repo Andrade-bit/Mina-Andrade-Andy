@@ -212,7 +212,7 @@ class TerminalController extends Controller
                         'inventory_item_id' => $inventoryItem->id,
                         'transaction_type' => 'Sales',
                         'quantity' => $consumed,
-                        'inventory_transaction_date' => now()->toDateString(),
+                        'inventory_transaction_date' => now('Asia/Manila')->toDateString(),
                         'reason' => 'Sale #'.$sale->id,
                     ]);
                 }
@@ -227,7 +227,7 @@ class TerminalController extends Controller
                         'inventory_item_id' => $cupStock->id,
                         'transaction_type' => 'Sales',
                         'quantity' => $item['quantity'],
-                        'inventory_transaction_date' => now()->toDateString(),
+                        'inventory_transaction_date' => now('Asia/Manila')->toDateString(),
                         'reason' => 'Sale #'.$sale->id,
                     ]);
                 }

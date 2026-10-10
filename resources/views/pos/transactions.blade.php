@@ -74,7 +74,7 @@
 
     @php
       $keepBack = $fromTerminal ? ['back' => 'terminal'] : [];
-      $todayFilter = [...$keepBack, 'from' => today()->toDateString(), 'to' => today()->toDateString()];
+      $todayFilter = [...$keepBack, 'from' => now('Asia/Manila')->toDateString(), 'to' => now('Asia/Manila')->toDateString()];
     @endphp
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <a href="{{ route('pos.transactions', $todayFilter) }}" class="bg-white rounded-3xl shadow-soft p-5 hover:-translate-y-0.5 transition-transform outline-none focus-visible:ring-2 focus-visible:ring-stamp-300">
@@ -118,10 +118,10 @@
       <div class="flex flex-wrap items-center gap-3">
         <div class="flex items-center gap-2 bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2.5 flex-1 min-w-[220px]">
           <svg class="w-4 h-4 text-stamp-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input type="text" name="search" value="{{ request('search') }}" placeholder="Search order # or staff name..." class="w-full bg-transparent outline-none text-sm text-stamp-700 placeholder-stamp-300 font-semibold">
+          <input type="text" name="search" value="{{ request('search') }}" placeholder="Search product, order # or staff..." class="w-full bg-transparent outline-none text-sm text-stamp-700 placeholder-stamp-300 font-semibold">
         </div>
         <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2.5">
-          <select name="payment_method" onchange="this.form.submit()" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
+          <select name="payment_method" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
             <option value="">All Payments</option>
             <option value="Cash" @selected(request('payment_method') === 'Cash')>Cash</option>
             <option value="GCash" @selected(request('payment_method') === 'GCash')>GCash</option>
@@ -129,7 +129,7 @@
           </select>
         </div>
         <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-2.5">
-          <select name="credential_id" onchange="this.form.submit()" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
+          <select name="credential_id" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
             <option value="">All Staff</option>
             @foreach ($staffOptions as $staff)
               <option value="{{ $staff->id }}" @selected((int) request('credential_id') === $staff->id)>{{ $staff->first_name }} {{ $staff->last_name }}</option>
@@ -146,8 +146,9 @@
           <span class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">To</span>
           <input type="date" name="to" value="{{ request('to') }}" class="bg-transparent outline-none text-sm text-stamp-700 font-semibold">
         </div>
-        <button type="submit" class="px-5 py-2.5 rounded-2xl bg-stamp-500 hover:bg-stamp-600 text-cream-50 font-extrabold text-xs transition-colors">Filter</button>
-        @if (request()->anyFilled(['search', 'payment_method', 'credential_id', 'from', 'to']))
+        @include('admin.partials.sort-control')
+        <button type="submit" class="px-5 py-2.5 rounded-2xl bg-stamp-500 hover:bg-stamp-600 text-cream-50 font-extrabold text-xs transition-colors">Search</button>
+        @if (request()->anyFilled(['search', 'payment_method', 'credential_id', 'from', 'to', 'sort']))
           <a href="{{ route('pos.transactions', $fromTerminal ? ['back' => 'terminal'] : []) }}" class="px-4 py-2.5 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-500 font-extrabold text-xs transition-colors">Clear</a>
         @endif
       </div>
@@ -172,7 +173,7 @@
           @forelse ($transactions as $transaction)
             <tr class="border-b border-cream-200 last:border-0 {{ $transaction->status === 'voided' ? 'opacity-50' : '' }}">
               <td class="py-3 px-4 font-bold text-stamp-700 text-sm">CB-{{ str_pad($transaction->id, 5, '0', STR_PAD_LEFT) }}</td>
-              <td class="py-3 px-4 text-stamp-500 text-sm">{{ $transaction->transaction_date->format('M j, Y, g:i A') }}</td>
+              <td class="py-3 px-4 text-stamp-500 text-sm">{{ $transaction->transaction_date->timezone('Asia/Manila')->format('M j, Y, g:i A') }}</td>
               <td class="py-3 px-4 text-stamp-500 text-sm">
                 {{ $transaction->items->map(fn ($item) => $item->quantity.'x '.$item->product->product_name)->implode(', ') }}
                 @if ($transaction->promo)
@@ -212,7 +213,7 @@
           @empty
             <tr>
               <td colspan="8" class="py-10 text-center text-sm font-semibold text-stamp-300">
-                @if (request()->anyFilled(['search', 'payment_method', 'credential_id', 'from', 'to']))
+                @if (request()->anyFilled(['search', 'payment_method', 'credential_id', 'from', 'to', 'sort']))
                   No sales match your filters.
                 @else
                   No sales recorded yet.

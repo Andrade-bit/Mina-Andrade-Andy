@@ -13,12 +13,14 @@ use App\Models\ProductCupSize;
 use App\Models\ProductIngredientSize;
 use App\Models\SalesTransactionItem;
 use App\Models\UploadedImage;
+use App\Support\ShopDates;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
@@ -29,8 +31,10 @@ class ProductController extends Controller
      */
     public function index(Request $request): View
     {
+        $request->validate(['search' => ['nullable', 'string', 'max:120'], 'sort' => ['nullable', Rule::in(['name_asc', 'name_desc', 'newest', 'oldest'])]]);
+        [$todayStart, $todayEnd] = ShopDates::bounds(ShopDates::today(), ShopDates::today());
         $query = Product::with('productCategory')->withSum([
-            'salesTransactionItems as sold_today' => fn ($q) => $q->whereHas('salesTransaction', fn ($t) => $t->whereDate('transaction_date', today())->where('status', '!=', 'voided')),
+            'salesTransactionItems as sold_today' => fn ($q) => $q->whereHas('salesTransaction', fn ($t) => $t->whereBetween('transaction_date', [$todayStart, $todayEnd])->where('status', '!=', 'voided')),
             'salesTransactionItems as sold_total' => fn ($q) => $q->whereHas('salesTransaction', fn ($t) => $t->where('status', '!=', 'voided')),
         ], 'quantity');
 
@@ -39,7 +43,7 @@ class ProductController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('product_name', 'like', '%'.$request->string('search').'%');
+            $query->where('product_name', 'like', '%'.trim($request->string('search')->toString()).'%');
         }
 
         if ($request->filled('category')) {
@@ -59,7 +63,13 @@ class ProductController extends Controller
             $query->whereIn('id', $matchingIds);
         }
 
-        $products = $query->orderBy('product_name')->paginate(12)->withQueryString();
+        [$sortColumn, $sortDirection] = match ($request->input('sort', 'name_asc')) {
+            'name_desc' => ['product_name', 'desc'],
+            'newest' => ['created_at', 'desc'],
+            'oldest' => ['created_at', 'asc'],
+            default => ['product_name', 'asc'],
+        };
+        $products = $query->orderBy($sortColumn, $sortDirection)->orderBy('id', $sortDirection)->paginate(12)->withQueryString();
 
         return view('admin.products.index', [
             'products' => $products,

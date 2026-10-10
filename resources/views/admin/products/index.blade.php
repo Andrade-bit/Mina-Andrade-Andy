@@ -57,7 +57,7 @@
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search products..." class="w-full bg-transparent outline-none text-sm text-stamp-700 placeholder-stamp-300 font-semibold">
       </div>
       <div class="bg-white rounded-2xl shadow-soft-sm px-4 py-2.5">
-        <select name="category" onchange="this.form.submit()" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
+        <select name="category" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
           <option value="">All Categories</option>
           @foreach ($categories as $category)
             <option value="{{ $category->id }}" @selected((int) request('category') === $category->id)>{{ $category->category_name }}</option>
@@ -65,7 +65,7 @@
         </select>
       </div>
       <div class="bg-white rounded-2xl shadow-soft-sm px-4 py-2.5">
-        <select name="performance" onchange="this.form.submit()" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
+        <select name="performance" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
           <option value="">All Performance</option>
           <option value="top" @selected(request('performance') === 'top')>Top Sellers (30d)</option>
           <option value="slow" @selected(request('performance') === 'slow')>Slow Movers (30d)</option>
@@ -73,17 +73,18 @@
         </select>
       </div>
       <div class="bg-white rounded-2xl shadow-soft-sm px-4 py-2.5">
-        <select name="availability" onchange="this.form.submit()" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
+        <select name="availability" class="bg-transparent outline-none text-sm text-stamp-600 font-semibold">
           <option value="">All Availability</option>
           <option value="unavailable" @selected(request('availability') === 'unavailable')>Not available in POS</option>
         </select>
       </div>
       <label class="flex items-center gap-2 bg-white rounded-2xl shadow-soft-sm px-4 py-2.5 text-sm text-stamp-600 font-semibold cursor-pointer">
-        <input type="checkbox" name="archived" value="1" onchange="this.form.submit()" @checked(request()->boolean('archived')) class="w-4 h-4 accent-stamp-500">
+        <input type="checkbox" name="archived" value="1" @checked(request()->boolean('archived')) class="w-4 h-4 accent-stamp-500">
         Archived
       </label>
+      @include('admin.partials.sort-control', ['sortDefault' => 'name_asc', 'sortOptions' => ['name_asc' => 'Name A–Z', 'name_desc' => 'Name Z–A', 'newest' => 'Newest first', 'oldest' => 'Oldest first']])
       <button type="submit" class="px-5 py-2.5 rounded-2xl bg-stamp-500 hover:bg-stamp-600 text-cream-50 font-extrabold text-xs transition-colors">Search</button>
-      @if (request('search') || request('category') || request('performance') || request('availability') || request()->boolean('archived'))
+      @if (request('search') || request('category') || request('performance') || request('availability') || request()->boolean('archived') || request()->filled('sort'))
         <a href="{{ route('admin.products.index') }}" class="px-4 py-2.5 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-500 font-extrabold text-xs transition-colors">Clear</a>
       @endif
     </form>

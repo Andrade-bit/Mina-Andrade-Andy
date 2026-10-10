@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Credential;
 use App\Models\SalesTransaction;
+use App\Support\ShopDates;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class SalesReportController extends Controller
@@ -33,13 +35,18 @@ class SalesReportController extends Controller
             }
         }
 
+        ShopDates::validate($request);
+        $request->validate(['search' => ['nullable', 'string', 'max:120'], 'sort' => ['nullable', Rule::in(['newest', 'oldest', 'highest', 'lowest'])]]);
+        [$todayStart, $todayEnd] = ShopDates::bounds(ShopDates::today(), ShopDates::today());
         $query = SalesTransaction::with('credential', 'promo', 'items.product', 'items.cupSize');
 
         if ($request->filled('search')) {
-            $search = $request->string('search');
+            $search = trim($request->string('search')->toString());
+            $reference = preg_replace('/^(CB-|#)/i', '', $search);
 
-            $query->where(function ($q) use ($search) {
-                $q->where('id', 'like', "%{$search}%")
+            $query->where(function ($q) use ($search, $reference) {
+                $q->where('id', ltrim($reference, '0') ?: '0')
+                    ->orWhereHas('items.product', fn ($p) => $p->where('product_name', 'like', "%{$search}%"))
                     ->orWhereHas('credential', function ($c) use ($search) {
                         $c->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%");
@@ -48,11 +55,11 @@ class SalesReportController extends Controller
         }
 
         if ($request->filled('from')) {
-            $query->whereDate('transaction_date', '>=', $request->date('from'));
+            $query->where('transaction_date', '>=', ShopDates::bounds($request->input('from'), $request->input('from'))[0]);
         }
 
         if ($request->filled('to')) {
-            $query->whereDate('transaction_date', '<=', $request->date('to'));
+            $query->where('transaction_date', '<=', ShopDates::bounds($request->input('to'), $request->input('to'))[1]);
         }
 
         if ($request->filled('payment_method')) {
@@ -71,12 +78,18 @@ class SalesReportController extends Controller
             $query->whereHas('credential', fn ($q) => $q->where('role', $request->query('role')));
         }
 
-        $transactions = $query->latest('transaction_date')->paginate(15)->withQueryString();
+        [$sortColumn, $sortDirection] = match ($request->input('sort', 'newest')) {
+            'oldest' => ['transaction_date', 'asc'],
+            'highest' => ['total_amount', 'desc'],
+            'lowest' => ['total_amount', 'asc'],
+            default => ['transaction_date', 'desc'],
+        };
+        $transactions = $query->orderBy($sortColumn, $sortDirection)->orderBy('id', $sortDirection)->paginate(15)->withQueryString();
 
         return view('pos.transactions', [
             'transactions' => $transactions,
-            'todaysSales' => SalesTransaction::whereDate('transaction_date', today())->where('status', '!=', 'voided')->sum('total_amount'),
-            'todaysCount' => SalesTransaction::whereDate('transaction_date', today())->where('status', '!=', 'voided')->count(),
+            'todaysSales' => SalesTransaction::whereBetween('transaction_date', [$todayStart, $todayEnd])->where('status', '!=', 'voided')->sum('total_amount'),
+            'todaysCount' => SalesTransaction::whereBetween('transaction_date', [$todayStart, $todayEnd])->where('status', '!=', 'voided')->count(),
             'byOwnerCount' => SalesTransaction::where('status', '!=', 'voided')->whereHas('credential', fn ($q) => $q->where('role', 'admin'))->count(),
             'byStaffCount' => SalesTransaction::where('status', '!=', 'voided')->whereHas('credential', fn ($q) => $q->where('role', 'assistant'))->count(),
             'staffOptions' => Credential::orderBy('first_name')->get(),

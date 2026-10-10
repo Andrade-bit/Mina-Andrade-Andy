@@ -81,7 +81,7 @@
             <div>
               <label class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-1.5 ml-1">Date</label>
               <div class="bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3">
-                <input type="date" name="expense_date" value="{{ old('expense_date', now()->toDateString()) }}" required class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
+                <input type="date" name="expense_date" value="{{ old('expense_date', now('Asia/Manila')->toDateString()) }}" required class="w-full bg-transparent outline-none text-stamp-700 font-semibold text-sm">
               </div>
             </div>
           </div>

@@ -20,8 +20,8 @@ class ExpenseController extends Controller
 
         return view('admin.expenses.index', [
             'expenses' => $expenses,
-            'totalThisMonth' => Expense::whereMonth('expense_date', now()->month)
-                ->whereYear('expense_date', now()->year)
+            'totalThisMonth' => Expense::whereMonth('expense_date', now('Asia/Manila')->month)
+                ->whereYear('expense_date', now('Asia/Manila')->year)
                 ->sum('amount'),
         ]);
     }
