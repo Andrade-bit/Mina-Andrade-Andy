@@ -78,19 +78,16 @@
           @foreach ($types as $key => $label)<option value="{{ $key }}" @selected($type === $key)>{{ $label }}</option>@endforeach
         </select>
       </label>
-      <label class="flex items-center gap-2 bg-cream-100 rounded-xl px-3 py-2 text-xs font-bold">Period
-        <select name="range" aria-label="Report period" class="bg-transparent text-sm outline-none" onchange="const custom=this.value==='custom';this.form.querySelectorAll('[data-custom-date]').forEach(el=>{el.hidden=!custom;el.querySelector('input').disabled=!custom})">
-          @foreach ($presets + ['custom' => 'Custom dates'] as $key => $label)<option value="{{ $key }}" @selected($range === $key)>{{ $label }}</option>@endforeach
-        </select>
-      </label>
-      <label data-custom-date @if ($range !== 'custom') hidden @endif class="bg-cream-100 rounded-xl px-3 py-2 text-xs font-bold">From
-        <input aria-label="From date" type="date" name="from" value="{{ $from->toDateString() }}" @disabled($range !== 'custom') class="bg-transparent text-sm w-32 outline-none">
-      </label>
-      <label data-custom-date @if ($range !== 'custom') hidden @endif class="bg-cream-100 rounded-xl px-3 py-2 text-xs font-bold">To
-        <input aria-label="To date" type="date" name="to" value="{{ $to->toDateString() }}" @disabled($range !== 'custom') class="bg-transparent text-sm w-32 outline-none">
-      </label>
-      <button type="submit" class="px-4 py-2 rounded-xl bg-stamp-500 text-white font-bold text-xs">Apply</button>
-      <span class="text-xs text-stamp-500">Philippine time</span>
+      <input type="hidden" name="range" value="custom">
+      <div class="flex max-w-full items-center gap-2">
+        <label class="sr-only" for="reports-from">From date</label>
+        <input id="reports-from" type="date" name="from" value="{{ $from->toDateString() }}" required class="w-[136px] min-w-0 bg-cream-100 rounded-xl px-2 py-2 text-xs font-semibold text-stamp-700">
+        <span aria-hidden="true" class="text-stamp-300">–</span>
+        <label class="sr-only" for="reports-to">To date</label>
+        <input id="reports-to" type="date" name="to" value="{{ $to->toDateString() }}" required class="w-[136px] min-w-0 bg-cream-100 rounded-xl px-2 py-2 text-xs font-semibold text-stamp-700">
+      </div>
+      <button type="submit" class="bg-stamp-500 hover:bg-stamp-600 text-cream-50 rounded-xl px-3 py-2 text-xs font-extrabold">Apply</button>
+      <a href="{{ route('admin.reports.index', ['type' => $type, 'range' => 'today']) }}" class="text-xs font-extrabold text-stamp-500 px-2 py-2 hover:underline">Today</a>
     </form>
 
     @include('admin.reports.partials.'.$type)
