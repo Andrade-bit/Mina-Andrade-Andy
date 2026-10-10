@@ -733,7 +733,7 @@
           ` : ''}
           <div class="flex justify-between"><span>Processed By</span><span>{{ $credential->first_name }} {{ $credential->last_name }} &middot; {{ ucfirst($credential->role) }}</span></div>
         </div>
-        <p class="text-center text-[11px] text-stamp-300 font-bold mt-4">Thank you, meow~!</p>
+        <p class="text-center text-[11px] text-stamp-300 font-bold mt-4">Thank you, meow~! 🐾</p>
       `;
       document.getElementById('receiptModal').classList.remove('hidden');
     }

@@ -47,7 +47,7 @@
     <div class="mb-5 flex flex-wrap items-center justify-between gap-4">
       <div>
       <h1 class="font-display font-bold text-3xl md:text-4xl text-stamp-700">Dashboard</h1>
-      <p class="font-bold text-stamp-600">{{ $greeting }}, {{ auth()->user()->name }}</p>
+      <p class="font-bold text-stamp-600">{{ $greeting }}, {{ auth()->user()->name }} 🐾</p>
       <p class="text-stamp-500 text-sm font-semibold mt-1">Here's how Catbrews is doing · {{ $periodLabel }}.</p>
       </div>
       <form method="GET" action="{{ route('admin.dashboard') }}" aria-label="Filter dashboard dates" class="flex max-w-full flex-wrap items-center gap-2">
