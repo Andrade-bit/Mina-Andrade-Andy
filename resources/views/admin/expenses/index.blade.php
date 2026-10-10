@@ -50,22 +50,23 @@
       </a>
     </div>
 
-    <div class="flex justify-end mb-3">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+    <div class="bg-white rounded-3xl shadow-soft p-4 md:p-5 flex items-center gap-4 w-full sm:w-auto sm:min-w-[280px]">
+      <div class="w-12 h-12 rounded-2xl bg-coral-50 flex items-center justify-center text-coral-500 shrink-0">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3h14a2 2 0 012 2v16l-4-2-3 2-3-2-3 2-3-2-3 2V5a2 2 0 012-2z"/></svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">This Month</p>
+        <p class="font-display font-bold text-2xl text-stamp-700">₱{{ number_format($totalThisMonth, 2) }}</p>
+      </div>
+    </div>
+
+      <div class="self-end sm:self-auto shrink-0">
       @if (request()->boolean('archived'))
         <a href="{{ route('admin.expenses.index') }}" class="px-4 py-2 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-extrabold text-xs transition-colors">&larr; Back to active</a>
       @else
         <a href="{{ route('admin.expenses.index', ['archived' => 1]) }}" class="px-4 py-2 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-extrabold text-xs transition-colors">View archived</a>
       @endif
-    </div>
-
-
-    <div class="bg-white rounded-3xl shadow-soft p-5 mb-6 flex items-center gap-4 max-w-xs">
-      <div class="w-12 h-12 rounded-2xl bg-coral-50 flex items-center justify-center text-coral-500 shrink-0">
-        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3h14a2 2 0 012 2v16l-4-2-3 2-3-2-3 2-3-2-3 2V5a2 2 0 012-2z"/></svg>
-      </div>
-      <div>
-        <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">This Month</p>
-        <p class="font-display font-bold text-2xl text-stamp-700">₱{{ number_format($totalThisMonth, 2) }}</p>
       </div>
     </div>
 
