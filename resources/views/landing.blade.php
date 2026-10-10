@@ -40,7 +40,7 @@
        padding:calc(10px + env(safe-area-inset-top,0px)) clamp(16px,4vw,40px) 10px;
        background:var(--glass);border-bottom:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
   .brand{display:flex;align-items:center;gap:12px;font:700 22px/1 var(--display)}
-  .logo{width:40px;height:40px;border-radius:50%;background:var(--ink);display:grid;place-items:center}
+  .logo{width:48px;height:48px;border-radius:50%;background:transparent;display:grid;place-items:center}
   .links{display:flex;align-items:center;gap:6px}
   .links a{padding:8px 14px;border-radius:12px;font-weight:800;font-size:15px;opacity:.75;transition:opacity .2s,background .2s}
   .links a:hover{opacity:1;background:rgba(26,59,82,.07)}
@@ -171,7 +171,7 @@
 <header class="nav" id="nav">
   <a class="brand" href="#home">
     <span class="logo">
-      <img src="{{ asset('images/catbrews-logo.png') }}" alt="The Purrfect Cup — Catbrews logo" class="w-full h-full object-contain rounded-full" style="width:100%;height:100%;object-fit:contain">
+      <img src="{{ asset('images/catbrews-logo-black.png') }}" alt="The Purrfect Cup — Catbrews logo" class="w-full h-full object-contain rounded-full" style="width:100%;height:100%;object-fit:contain">
     </span>
     Catbrews
   </a>
@@ -627,7 +627,7 @@
   var yC = -0.15, hD = 1.5, lenD = 1.35;
   var decal = new THREE.Mesh(
     new THREE.CylinderGeometry(rIn(yC + hD / 2) + 0.045, rIn(yC - hD / 2) + 0.045, hD, 48, 1, true, -lenD / 2, lenD),
-    new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load({{ Illuminate\Support\Js::from(asset('images/catbrews-logo.png')) }}), transparent: true, opacity: 0.9, depthWrite: false })
+    new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load({{ Illuminate\Support\Js::from(asset('images/catbrews-logo-black.png')) }}), transparent: true, opacity: 0.9, depthWrite: false })
   );
   decal.position.y = yC; decal.renderOrder = 5; spin.add(decal);
 

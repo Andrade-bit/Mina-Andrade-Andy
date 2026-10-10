@@ -71,8 +71,8 @@
   <!-- Top bar -->
   <header class="bg-white shadow-soft-sm px-5 py-3 flex items-center justify-between flex-wrap gap-3 sticky top-0 z-30">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full bg-cream-100 shadow-soft-inset flex items-center justify-center text-stamp-600 shrink-0">
-        <img src="{{ asset('images/catbrews-logo.png') }}" alt="The Purrfect Cup — Catbrews logo" class="w-full h-full object-contain rounded-full" style="width:100%;height:100%;object-fit:contain">
+      <div class="w-12 h-12 rounded-full bg-cream-100 shadow-soft-inset flex items-center justify-center text-stamp-600 shrink-0">
+        <img src="{{ asset('images/catbrews-logo-black.png') }}" alt="The Purrfect Cup — Catbrews logo" class="w-full h-full object-contain rounded-full" style="width:100%;height:100%;object-fit:contain">
       </div>
       <div>
         <p class="font-display font-bold text-stamp-700 leading-tight">Catbrews POS</p>

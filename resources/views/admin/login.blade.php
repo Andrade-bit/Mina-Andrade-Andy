@@ -38,7 +38,7 @@
   .topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px;
             padding: max(16px, env(safe-area-inset-top, 0px)) clamp(16px, 4vw, 40px) 8px; }
   .brand { display: inline-flex; align-items: center; gap: 12px; font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.25rem; line-height: 1; color: #1A3B52; text-decoration: none; }
-  .brand-mark { width: 40px; height: 40px; border-radius: 50%; background: #1A3B52; display: grid; place-items: center; flex: none; }
+  .brand-mark { width: 48px; height: 48px; border-radius: 50%; background: transparent; display: grid; place-items: center; flex: none; }
   .back { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 14px; font-weight: 800; font-size: .875rem; color: #1A3B52; text-decoration: none; white-space: nowrap; transition: background .2s; }
   .back:hover { background: rgba(26,59,82,.1); }
 
@@ -87,7 +87,7 @@
   @media (max-height: 540px) {
     .stage { place-items: start center; padding-top: 4px; padding-bottom: 12px; }
     .topbar { padding-top: max(8px, env(safe-area-inset-top, 0px)); padding-bottom: 2px; }
-    .brand-mark { width: 34px; height: 34px; }
+    .brand-mark { width: 40px; height: 40px; }
     .card { padding: 16px 22px; }
     .title { font-size: 1.75rem; }
     .lede { margin-top: 6px; }
@@ -115,7 +115,7 @@
   <header class="topbar">
     <a href="{{ route('home') }}" class="brand">
       <span class="brand-mark">
-        <img src="{{ asset('images/catbrews-logo.png') }}" alt="The Purrfect Cup — Catbrews logo" class="w-full h-full object-contain rounded-full" style="width:100%;height:100%;object-fit:contain">
+        <img src="{{ asset('images/catbrews-logo-black.png') }}" alt="The Purrfect Cup — Catbrews logo" class="w-full h-full object-contain rounded-full" style="width:100%;height:100%;object-fit:contain">
       </span>
       Catbrews
     </a>
