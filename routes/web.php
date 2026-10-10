@@ -20,9 +20,12 @@ use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Auth\PosAuthController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Pos\TerminalController;
+use App\Http\Controllers\ProductImageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
+Route::get('/product-images/{filename}', ProductImageController::class)
+    ->where('filename', '[A-Za-z0-9_-]+\.(jpg|jpeg|png|webp|gif|avif)')->name('product-images.show');
 
 Route::get('/admin/login', [AdminAuthController::class, 'create'])->name('admin.login');
 Route::post('/admin/login', [AdminAuthController::class, 'store'])->name('admin.login.store');
@@ -108,6 +111,7 @@ Route::post('/pos/login', [PosAuthController::class, 'store'])->name('pos.login.
 Route::post('/pos/logout', [PosAuthController::class, 'destroy'])->name('pos.logout');
 
 Route::get('/pos/terminal', [TerminalController::class, 'index'])->name('pos.terminal');
+Route::get('/pos/promos/preview', [TerminalController::class, 'previewPromo'])->name('pos.promos.preview');
 Route::post('/pos/terminal', [TerminalController::class, 'store'])->name('pos.terminal.store');
 Route::post('/pos/terminal/cart', [TerminalController::class, 'syncCart'])->name('pos.terminal.cart');
 

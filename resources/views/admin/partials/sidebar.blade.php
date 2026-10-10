@@ -32,18 +32,7 @@
   </button>
   <div class="flex flex-col items-center mb-6">
     <div class="w-16 h-16 rounded-full bg-cream-100 shadow-soft-inset ring-4 ring-white flex items-center justify-center text-stamp-600 mb-2">
-      <svg viewBox="0 0 64 64" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 24 L16 10 L28 20"/>
-        <path d="M44 24 L48 10 L36 20"/>
-        <path d="M24 16 Q32 8 40 16"/>
-        <circle cx="32" cy="8" r="3.2"/>
-        <circle cx="32" cy="36" r="17"/>
-        <circle cx="26" cy="34" r="1.6" fill="currentColor" stroke="none"/>
-        <circle cx="38" cy="34" r="1.6" fill="currentColor" stroke="none"/>
-        <path d="M30 40 Q32 42 34 40"/>
-        <path d="M9 32 L19 34 M9 38 L19 36" opacity="0.6"/>
-        <path d="M55 32 L45 34 M55 38 L45 36" opacity="0.6"/>
-      </svg>
+      <img src="{{ asset('images/catbrews-logo.png') }}" alt="The Purrfect Cup — Catbrews logo" class="w-full h-full object-contain rounded-full" style="width:100%;height:100%;object-fit:contain">
     </div>
     <h1 class="font-display font-bold text-xl text-stamp-700">Catbrews</h1>
     <p class="text-[10px] font-bold tracking-[0.2em] uppercase text-stamp-300">Admin Panel</p>

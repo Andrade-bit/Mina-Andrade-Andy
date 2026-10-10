@@ -101,7 +101,29 @@ class TerminalController extends Controller
             'credential' => $credential,
             'products' => $products,
             'cupSizes' => $cupSizes,
+            'promos' => Promo::where('active', true)->orderBy('code')->get()->filter->isValid()->values(),
         ]);
+    }
+
+    public function previewPromo(Request $request): JsonResponse
+    {
+        if (! Credential::find($request->session()->get('pos_credential_id'))) {
+            return response()->json(['message' => 'Your session expired. Please log in again.'], 401);
+        }
+        $validated = $request->validate([
+            'promo_code' => ['required', 'string', 'max:50'],
+            'subtotal' => ['required', 'numeric', 'min:0'],
+        ]);
+        $promo = Promo::where('code', strtoupper(trim($validated['promo_code'])))->first();
+        if (! $promo || ! $promo->isValid()) {
+            return response()->json(['message' => 'That promo is invalid, inactive, or expired.'], 422);
+        }
+
+        return response()->json([
+            'code' => $promo->code, 'type' => $promo->type, 'value' => (float) $promo->value,
+            'expires_at' => $promo->expires_at ? Carbon::parse($promo->expires_at->toDateString(), 'Asia/Manila')->endOfDay()->toIso8601String() : null,
+            'discount' => round($promo->discountFor((float) $validated['subtotal']), 2),
+        ])->header('Cache-Control', 'no-store');
     }
 
     /**

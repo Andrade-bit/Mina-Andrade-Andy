@@ -35,11 +35,12 @@ class Promo extends Model
 
     public function isValid(): bool
     {
-        if (! $this->active) {
+        if (! $this->active || ! in_array($this->type, ['percent', 'fixed'], true)
+            || (float) $this->value <= 0 || ($this->type === 'percent' && (float) $this->value > 100)) {
             return false;
         }
 
-        return ! $this->expires_at || ! $this->expires_at->copy()->endOfDay()->isPast();
+        return ! $this->expires_at || $this->expires_at->toDateString() >= now('Asia/Manila')->toDateString();
     }
 
     /**

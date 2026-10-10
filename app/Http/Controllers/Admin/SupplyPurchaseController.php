@@ -11,10 +11,12 @@ use App\Models\Supplier;
 use App\Models\SupplyPurchase;
 use Closure;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class SupplyPurchaseController extends Controller
 {
@@ -159,11 +161,14 @@ class SupplyPurchaseController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if (is_string($request->input('invoice_number'))) {
+            $request->merge(['invoice_number' => mb_strtoupper(trim($request->input('invoice_number'))) ?: null]);
+        }
         $validated = $request->validate([
             ...$this->newItemRules($request),
             'supplier_id' => ['nullable', 'exists:suppliers,id'],
             'purchase_date' => ['required', 'date'],
-            'invoice_number' => ['nullable', 'string', 'max:255'],
+            'invoice_number' => ['nullable', 'string', 'max:255', Rule::unique('supply_purchases', 'invoice_number')],
             'purchase_source' => ['nullable', 'string', 'max:255'],
             'payment_method' => ['required', Rule::in(['Gcash', 'Cash', 'Card'])],
             'payment_terms' => ['nullable', 'string', 'max:255'],
@@ -193,87 +198,94 @@ class SupplyPurchaseController extends Controller
             'items.*.new_item.conversion_factor.min' => 'How much one holds must be more than 0.',
         ]);
 
-        $purchase = DB::transaction(function () use ($validated) {
-            $itemsSubtotal = 0;
+        try {
+            $purchase = DB::transaction(function () use ($validated) {
+                $itemsSubtotal = 0;
 
-            foreach ($validated['items'] as $item) {
-                $itemsSubtotal += $item['quantity'] * $item['unit_cost'];
-            }
-
-            $taxAmount = round($itemsSubtotal * ((float) ($validated['tax_rate'] ?? 0) / 100), 2);
-
-            $purchase = SupplyPurchase::create([
-                'supplier_id' => $validated['supplier_id'] ?? null,
-                'purchase_date' => $validated['purchase_date'],
-                'invoice_number' => $validated['invoice_number'] ?? null,
-                'purchase_source' => $validated['purchase_source'] ?? null,
-                'payment_method' => $validated['payment_method'],
-                'total_amount' => $itemsSubtotal + $taxAmount,
-                'tax_amount' => $taxAmount,
-                'payment_terms' => $validated['payment_terms'] ?? null,
-                'notes' => $validated['notes'] ?? null,
-            ]);
-
-            foreach ($validated['items'] as $item) {
-                $inventoryItem = $item['inventory_item_id'] === 'new'
-                    ? $this->createItem($item['new_item'])
-                    : InventoryItem::lockForUpdate()->findOrFail($item['inventory_item_id']);
-                $lineTotal = $item['quantity'] * $item['unit_cost'];
-
-                // Buying by the bottle/can/box: use this purchase's own pack size when given (brands differ),
-                // otherwise the size saved on the item. Fixed units like L and kg never change.
-                $baseQuantity = $item['quantity'];
-                if (($item['quantity_unit'] ?? 'base') === 'secondary') {
-                    $isFixedSize = $inventoryItem->secondary_unit
-                        && InventoryItem::fixedPurchaseFactor($inventoryItem->unit, $inventoryItem->secondary_unit) !== null;
-                    $unitSize = $isFixedSize ? 0 : (float) ($item['unit_size'] ?? 0);
-                    $factor = $unitSize > 0 ? $unitSize : (float) $inventoryItem->conversion_factor;
-
-                    if ($factor > 0) {
-                        $baseQuantity = $item['quantity'] * $factor;
-                    }
+                foreach ($validated['items'] as $item) {
+                    $itemsSubtotal += $item['quantity'] * $item['unit_cost'];
                 }
 
-                $previous = $purchase->items()->where('inventory_items.id', $inventoryItem->id)->first()?->pivot;
-                $combinedQuantity = $baseQuantity + (float) ($previous?->quantity ?? 0);
-                $combinedSubtotal = $lineTotal + (float) ($previous?->subtotal ?? 0);
-                $purchase->items()->syncWithoutDetaching([$inventoryItem->id => [
-                    'quantity' => $combinedQuantity,
-                    'unit_cost' => $combinedSubtotal / $combinedQuantity,
-                    'subtotal' => $combinedSubtotal,
-                ]]);
+                $taxAmount = round($itemsSubtotal * ((float) ($validated['tax_rate'] ?? 0) / 100), 2);
 
-                $inventoryItem->batches()->create([
+                $purchase = SupplyPurchase::create([
+                    'supplier_id' => $validated['supplier_id'] ?? null,
+                    'purchase_date' => $validated['purchase_date'],
+                    'invoice_number' => $validated['invoice_number'] ?? null,
+                    'purchase_source' => $validated['purchase_source'] ?? null,
+                    'payment_method' => $validated['payment_method'],
+                    'total_amount' => $itemsSubtotal + $taxAmount,
+                    'tax_amount' => $taxAmount,
+                    'payment_terms' => $validated['payment_terms'] ?? null,
+                    'notes' => $validated['notes'] ?? null,
+                ]);
+
+                foreach ($validated['items'] as $item) {
+                    $inventoryItem = $item['inventory_item_id'] === 'new'
+                        ? $this->createItem($item['new_item'])
+                        : InventoryItem::lockForUpdate()->findOrFail($item['inventory_item_id']);
+                    $lineTotal = $item['quantity'] * $item['unit_cost'];
+
+                    // Buying by the bottle/can/box: use this purchase's own pack size when given (brands differ),
+                    // otherwise the size saved on the item. Fixed units like L and kg never change.
+                    $baseQuantity = $item['quantity'];
+                    if (($item['quantity_unit'] ?? 'base') === 'secondary') {
+                        $isFixedSize = $inventoryItem->secondary_unit
+                            && InventoryItem::fixedPurchaseFactor($inventoryItem->unit, $inventoryItem->secondary_unit) !== null;
+                        $unitSize = $isFixedSize ? 0 : (float) ($item['unit_size'] ?? 0);
+                        $factor = $unitSize > 0 ? $unitSize : (float) $inventoryItem->conversion_factor;
+
+                        if ($factor > 0) {
+                            $baseQuantity = $item['quantity'] * $factor;
+                        }
+                    }
+
+                    $previous = $purchase->items()->where('inventory_items.id', $inventoryItem->id)->first()?->pivot;
+                    $combinedQuantity = $baseQuantity + (float) ($previous?->quantity ?? 0);
+                    $combinedSubtotal = $lineTotal + (float) ($previous?->subtotal ?? 0);
+                    $purchase->items()->syncWithoutDetaching([$inventoryItem->id => [
+                        'quantity' => $combinedQuantity,
+                        'unit_cost' => $combinedSubtotal / $combinedQuantity,
+                        'subtotal' => $combinedSubtotal,
+                    ]]);
+
+                    $inventoryItem->batches()->create([
+                        'supply_purchase_id' => $purchase->id,
+                        'quantity' => $baseQuantity,
+                        'remaining_quantity' => $baseQuantity,
+                        'expires_at' => ! empty($item['has_expiry']) ? ($item['expires_at'] ?? null) : null,
+                    ]);
+
+                    $inventoryItem->increment('current_quantity', $baseQuantity);
+
+                    InventoryTransaction::create([
+                        'inventory_item_id' => $inventoryItem->id,
+                        'transaction_type' => 'Restock',
+                        'quantity' => $baseQuantity,
+                        'inventory_transaction_date' => $validated['purchase_date'],
+                        'reason' => 'Supply purchase #'.$purchase->id,
+                    ]);
+                }
+
+                $inventoryCategory = ExpenseCategory::firstOrCreate(['category_name' => 'Inventory Purchases']);
+
+                Expense::create([
+                    'expense_category_id' => $inventoryCategory->id,
                     'supply_purchase_id' => $purchase->id,
-                    'quantity' => $baseQuantity,
-                    'remaining_quantity' => $baseQuantity,
-                    'expires_at' => ! empty($item['has_expiry']) ? ($item['expires_at'] ?? null) : null,
+                    'description' => 'Purchase #'.$purchase->id.($validated['invoice_number'] ?? '' ? ' ('.$validated['invoice_number'].')' : ''),
+                    'amount' => $purchase->total_amount,
+                    'expense_date' => $validated['purchase_date'],
+                    'payment_method' => $validated['payment_method'],
                 ]);
 
-                $inventoryItem->increment('current_quantity', $baseQuantity);
-
-                InventoryTransaction::create([
-                    'inventory_item_id' => $inventoryItem->id,
-                    'transaction_type' => 'Restock',
-                    'quantity' => $baseQuantity,
-                    'inventory_transaction_date' => $validated['purchase_date'],
-                    'reason' => 'Supply purchase #'.$purchase->id,
-                ]);
+                return $purchase;
+            });
+        } catch (UniqueConstraintViolationException $exception) {
+            if (isset($validated['invoice_number']) && SupplyPurchase::where('invoice_number', $validated['invoice_number'])->exists()) {
+                throw ValidationException::withMessages(['invoice_number' => 'This invoice/reference number has already been recorded.']);
             }
-
-            $inventoryCategory = ExpenseCategory::firstOrCreate(['category_name' => 'Inventory Purchases']);
-
-            Expense::create([
-                'expense_category_id' => $inventoryCategory->id,
-                'supply_purchase_id' => $purchase->id,
-                'description' => 'Purchase #'.$purchase->id.($validated['invoice_number'] ?? '' ? ' ('.$validated['invoice_number'].')' : ''),
-                'amount' => $purchase->total_amount,
-                'expense_date' => $validated['purchase_date'],
-                'payment_method' => $validated['payment_method'],
-            ]);
-
-            return $purchase;
-        });
+            throw $exception;
+        }
 
         return redirect()->route('admin.supply-purchases.index')->with('status', 'Purchase #'.$purchase->id.' recorded, stock received, and logged in Expenses.');
     }

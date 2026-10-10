@@ -171,7 +171,7 @@
 <header class="nav" id="nav">
   <a class="brand" href="#home">
     <span class="logo">
-      <svg viewBox="0 0 64 64" width="25" height="25" fill="none" stroke="#FFFDF9" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 24 L16 10 L28 20"/><path d="M44 24 L48 10 L36 20"/><path d="M24 16 Q32 8 40 16"/><circle cx="32" cy="8" r="3.2"/><circle cx="32" cy="36" r="17"/><circle cx="26" cy="34" r="1.6" fill="#FFFDF9" stroke="none"/><circle cx="38" cy="34" r="1.6" fill="#FFFDF9" stroke="none"/><path d="M30 40 Q32 42 34 40"/></svg>
+      <img src="{{ asset('images/catbrews-logo.png') }}" alt="The Purrfect Cup — Catbrews logo" class="w-full h-full object-contain rounded-full" style="width:100%;height:100%;object-fit:contain">
     </span>
     Catbrews
   </a>
@@ -627,7 +627,7 @@
   var yC = -0.15, hD = 1.5, lenD = 1.35;
   var decal = new THREE.Mesh(
     new THREE.CylinderGeometry(rIn(yC + hD / 2) + 0.045, rIn(yC - hD / 2) + 0.045, hD, 48, 1, true, -lenD / 2, lenD),
-    new THREE.MeshBasicMaterial({ map: decalTexture(), transparent: true, opacity: 0.9, depthWrite: false })
+    new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load({{ Illuminate\Support\Js::from(asset('images/catbrews-logo.png')) }}), transparent: true, opacity: 0.9, depthWrite: false })
   );
   decal.position.y = yC; decal.renderOrder = 5; spin.add(decal);
 

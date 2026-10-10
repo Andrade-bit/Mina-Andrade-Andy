@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
@@ -48,7 +47,7 @@ class Product extends Model
      */
     public function imageUrl(): ?string
     {
-        return $this->image ? Storage::url($this->image) : null;
+        return $this->image ? route('product-images.show', ['filename' => basename($this->image)]) : null;
     }
 
     /**

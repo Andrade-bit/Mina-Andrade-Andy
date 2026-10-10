@@ -12,6 +12,7 @@ use App\Models\ProductCategory;
 use App\Models\ProductCupSize;
 use App\Models\ProductIngredientSize;
 use App\Models\SalesTransactionItem;
+use App\Models\UploadedImage;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -165,7 +166,7 @@ class ProductController extends Controller
         $product = Product::create([
             'product_category_id' => $validated['product_category_id'],
             'product_name' => $validated['product_name'],
-            'image' => $request->hasFile('image') ? $request->file('image')->store('products', 'public') : null,
+            'image' => $request->hasFile('image') ? UploadedImage::storeUpload($request->file('image')) : null,
         ]);
 
         foreach ($validated['sizes'] ?? [] as $cupSizeId => $size) {
@@ -313,7 +314,7 @@ class ProductController extends Controller
             if ($imagePath) {
                 Storage::disk('public')->delete($imagePath);
             }
-            $imagePath = $request->file('image')->store('products', 'public');
+            $imagePath = UploadedImage::storeUpload($request->file('image'));
         } elseif ($request->boolean('remove_image')) {
             if ($imagePath) {
                 Storage::disk('public')->delete($imagePath);

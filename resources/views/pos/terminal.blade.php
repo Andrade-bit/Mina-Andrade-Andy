@@ -72,12 +72,7 @@
   <header class="bg-white shadow-soft-sm px-5 py-3 flex items-center justify-between flex-wrap gap-3 sticky top-0 z-30">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-full bg-cream-100 shadow-soft-inset flex items-center justify-center text-stamp-600 shrink-0">
-        <svg viewBox="0 0 64 64" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 24 L16 10 L28 20"/><path d="M44 24 L48 10 L36 20"/><path d="M24 16 Q32 8 40 16"/>
-          <circle cx="32" cy="8" r="3.2"/><circle cx="32" cy="36" r="17"/>
-          <circle cx="26" cy="34" r="1.6" fill="currentColor" stroke="none"/><circle cx="38" cy="34" r="1.6" fill="currentColor" stroke="none"/>
-          <path d="M30 40 Q32 42 34 40"/>
-        </svg>
+        <img src="{{ asset('images/catbrews-logo.png') }}" alt="The Purrfect Cup — Catbrews logo" class="w-full h-full object-contain rounded-full" style="width:100%;height:100%;object-fit:contain">
       </div>
       <div>
         <p class="font-display font-bold text-stamp-700 leading-tight">Catbrews POS</p>
@@ -191,9 +186,15 @@
 
         <div class="flex items-center gap-2 mb-4">
           <div class="flex-1 bg-cream-100 rounded-xl shadow-soft-inset px-3 py-2">
-            <input id="promoInput" type="text" placeholder="Promo code (try CATLOVE10)" class="w-full bg-transparent outline-none text-sm text-stamp-700 placeholder-stamp-300 font-semibold">
+            <label for="promoInput" class="sr-only">Promotion</label>
+            <select id="promoInput" onchange="applyPromo()" class="w-full bg-transparent outline-none text-sm text-stamp-700 font-semibold">
+              <option value="">No promotion</option>
+              @foreach ($promos as $promo)
+                <option value="{{ $promo->code }}">{{ $promo->code }} — {{ $promo->type === 'percent' ? rtrim(rtrim($promo->value, '0'), '.').'%' : '₱'.number_format($promo->value, 2) }} off</option>
+              @endforeach
+            </select>
           </div>
-          <button onclick="applyPromo()" class="px-4 py-2 rounded-xl bg-cream-100 hover:bg-stamp-100 text-stamp-600 font-extrabold text-xs transition-colors">Apply</button>
+          <button type="button" onclick="applyPromo()" class="px-4 py-2 rounded-xl bg-cream-100 hover:bg-stamp-100 text-stamp-600 font-extrabold text-xs transition-colors">Apply</button>
         </div>
         <p id="promoBanner" class="hidden text-xs font-bold text-mint-600 bg-mint-50 rounded-lg px-3 py-1.5 mb-4">Promo applied</p>
 
@@ -536,22 +537,48 @@
     function toggleCartDrawer(){ setCartDrawerOpen(!cartDrawerOpen); }
 
     let appliedPromoCode = '';
+    let appliedPromo = null;
+    let promoPending = false;
+    let promoRequest = 0;
 
-    function applyPromo(){
-      appliedPromoCode = document.getElementById('promoInput').value.trim();
+    async function applyPromo(){
+      const code = document.getElementById('promoInput').value;
+      const requestId = ++promoRequest;
+      appliedPromoCode = '';
+      appliedPromo = null;
+      promoPending = !!code;
       const banner = document.getElementById('promoBanner');
-      if (appliedPromoCode) {
-        banner.textContent = 'Will apply "' + appliedPromoCode.toUpperCase() + '" at checkout';
-        banner.classList.remove('hidden');
-      } else {
-        banner.classList.add('hidden');
+      banner.classList.toggle('hidden', !code);
+      banner.textContent = code ? 'Checking promotion…' : '';
+      updateTotals();
+      if (!code) return;
+      try {
+        const query = new URLSearchParams({promo_code: code, subtotal: cart.reduce((sum, item) => sum + item.price * item.qty, 0)});
+        const response = await fetch('{{ route('pos.promos.preview') }}?' + query, {headers: {Accept: 'application/json'}, cache: 'no-store'});
+        const data = await response.json();
+        if (requestId !== promoRequest) return;
+        if (!response.ok) throw new Error(data.message || 'Could not validate this promotion.');
+        appliedPromo = data;
+        appliedPromoCode = data.code;
+        banner.textContent = data.code + ' applied. Discount is included below.';
+      } catch (error) {
+        if (requestId !== promoRequest) return;
+        banner.textContent = error.message || 'Could not validate this promotion. Try again or select No promotion.';
+        toast(banner.textContent, 'error');
+      } finally {
+        if (requestId === promoRequest) {
+          promoPending = false;
+          updateTotals();
+        }
       }
     }
 
     function computeTotals(){
       const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-      const total = subtotal;
-      return { subtotal, discount: 0, total };
+      const valid = appliedPromo && (!appliedPromo.expires_at || Date.now() <= Date.parse(appliedPromo.expires_at));
+      const discount = valid ? Math.round(Math.min(subtotal, appliedPromo.type === 'percent' ? subtotal * appliedPromo.value / 100 : appliedPromo.value) * 100) / 100 : 0;
+      const total = Math.round((subtotal - discount) * 100) / 100;
+      return { subtotal, discount, total };
     }
 
     function updateTotals(){
@@ -585,7 +612,7 @@
       const { total } = computeTotals();
       const cash = parseFloat(document.getElementById('cashInput').value) || 0;
       const cashOk = selectedPayment !== 'Cash' || cash >= total;
-      document.getElementById('chargeBtn').disabled = cart.length === 0 || !cashOk;
+      document.getElementById('chargeBtn').disabled = cart.length === 0 || !cashOk || promoPending || (document.getElementById('promoInput').value !== appliedPromoCode) || (appliedPromo?.expires_at && Date.now() > Date.parse(appliedPromo.expires_at));
     }
 
     function selectPayment(method, el){
@@ -605,6 +632,9 @@
       if (confirm('Clear this order? All items in the current cart will be removed.')) {
         cart = [];
         appliedPromoCode = '';
+        appliedPromo = null;
+        promoPending = false;
+        ++promoRequest;
         document.getElementById('promoInput').value = '';
         document.getElementById('promoBanner').classList.add('hidden');
         document.getElementById('cashInput').value = '';
@@ -613,7 +643,8 @@
     }
 
     function charge(){
-      if (cart.length === 0) return;
+      updateChargeState();
+      if (cart.length === 0 || document.getElementById('chargeBtn').disabled) return;
       const { total } = computeTotals();
 
       let cashReceived = null, change = null;
@@ -660,6 +691,9 @@
           showReceipt(data.transaction, { cashReceived, change });
           cart = [];
           appliedPromoCode = '';
+          appliedPromo = null;
+          promoPending = false;
+          ++promoRequest;
           document.getElementById('promoInput').value = '';
           document.getElementById('promoBanner').classList.add('hidden');
           document.getElementById('cashInput').value = '';
