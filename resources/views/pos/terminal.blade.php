@@ -111,12 +111,12 @@
     <!-- Products -->
     <div class="flex-1">
       <div class="flex items-center gap-2 mb-4 flex-wrap">
-        <button id="tab-hot" onclick="showCategory('hot')" class="px-4 py-2 rounded-2xl text-sm font-extrabold transition-all bg-stamp-500 text-cream-50 shadow-soft-btn">🔥 Hot Coffee</button>
-        <button id="tab-coffee" onclick="showCategory('coffee')" class="px-4 py-2 rounded-2xl text-sm font-extrabold transition-all bg-cream-100 text-stamp-600">🧊 Iced Coffee</button>
-        <button id="tab-noncoffee" onclick="showCategory('noncoffee')" class="px-4 py-2 rounded-2xl text-sm font-extrabold transition-all bg-cream-100 text-stamp-600">🍫 Non-Coffee</button>
-        <button id="tab-juice" onclick="showCategory('juice')" class="px-4 py-2 rounded-2xl text-sm font-extrabold transition-all bg-cream-100 text-stamp-600">🥭 Fruit Juice</button>
+        <button id="tab-hot" onclick="showCategory('hot')" class="px-4 py-2 rounded-2xl text-sm font-extrabold transition-all bg-stamp-500 text-cream-50 shadow-soft-btn">Hot Coffee</button>
+        <button id="tab-coffee" onclick="showCategory('coffee')" class="px-4 py-2 rounded-2xl text-sm font-extrabold transition-all bg-cream-100 text-stamp-600">Iced Coffee</button>
+        <button id="tab-noncoffee" onclick="showCategory('noncoffee')" class="px-4 py-2 rounded-2xl text-sm font-extrabold transition-all bg-cream-100 text-stamp-600">Non-Coffee</button>
+        <button id="tab-juice" onclick="showCategory('juice')" class="px-4 py-2 rounded-2xl text-sm font-extrabold transition-all bg-cream-100 text-stamp-600">Fruit Juice</button>
       </div>
-      <p class="text-[11px] text-stamp-300 font-semibold mb-3">🧊 Iced &amp; other drinks come in Small (₱35) / Medium (₱40) / Large (₱50) — 🔥 Hot Coffee is one size, ₱35.</p>
+      <p class="text-[11px] text-stamp-300 font-semibold mb-3">Iced &amp; other drinks come in Small (₱35) / Medium (₱40) / Large (₱50) — Hot Coffee is one size, ₱35.</p>
 
       @php
         $categoryTabs = ['Hot Coffee' => 'hot', 'Iced Coffee' => 'coffee', 'Non-Coffee' => 'noncoffee', 'Fruit Juice' => 'juice'];
@@ -344,13 +344,11 @@
       document.getElementById('sizeModalName').textContent = name;
       document.getElementById('sizeModalOptions').innerHTML = sizes.map((size, i) => size.available === false ? `
         <button type="button" disabled aria-disabled="true" title="Out of ${size.lacking.join(', ')}" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm text-center opacity-60 cursor-not-allowed">
-          <span class="block mb-1 grayscale" style="font-size: ${20 + i * 8}px">🥤</span>
           <span class="block font-display font-bold text-stamp-400 text-sm">${size.size_name}</span>
           <span class="block font-extrabold text-coral-600 text-[10px] uppercase leading-tight">Not available</span>
         </button>
       ` : `
         <button type="button" onclick="chooseSize(${i}, this)" class="size-btn bg-cream-100 rounded-2xl py-3 shadow-soft-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all text-center">
-          <span class="block mb-1" style="font-size: ${20 + i * 8}px">🥤</span>
           <span class="block font-display font-bold text-stamp-700 text-sm">${size.size_name}</span>
           <span class="block font-bold text-stamp-500 text-xs">₱${Number(size.price).toFixed(0)}</span>
         </button>
@@ -735,7 +733,7 @@
           ` : ''}
           <div class="flex justify-between"><span>Processed By</span><span>{{ $credential->first_name }} {{ $credential->last_name }} &middot; {{ ucfirst($credential->role) }}</span></div>
         </div>
-        <p class="text-center text-[11px] text-stamp-300 font-bold mt-4">Thank you, meow~! 🐾</p>
+        <p class="text-center text-[11px] text-stamp-300 font-bold mt-4">Thank you, meow~!</p>
       `;
       document.getElementById('receiptModal').classList.remove('hidden');
     }
