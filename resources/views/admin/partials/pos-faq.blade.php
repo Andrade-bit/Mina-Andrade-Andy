@@ -4,7 +4,7 @@
   It brings its own floating Help button (bottom right); any other button can still call openFaq().
 --}}
 @php
-  $faqGroups = [
+  $faqGroups = $faqGroups ?? [
     'Getting started' => [
       ['How do I unlock the POS?', 'Type your own 4-digit PIN on the PIN screen. It unlocks by itself after the fourth digit, or tap Unlock POS. Your PIN tells the system who processed each sale, so keep it private.'],
       ['It says my PIN is incorrect, or I forgot it.', 'Tap Clear and try again. If it still fails, ask an admin: they can see and change your PIN in User Management.'],
@@ -19,7 +19,7 @@
     'Payment' => [
       ['How do I take a cash payment?', 'Choose Cash and type the cash received. The change shows underneath. Charge turns on once the cash covers the total.'],
       ['What about GCash or Card?', 'Choose GCash or Card, then tap Charge. There is no amount to type.'],
-      ['How do I use a promo code?', 'Type the code in the Promo code box and tap Apply. The discount appears in the totals. An invalid or expired code shows an error, so ask an admin which promos are running.'],
+      ['How do I use a promo code?', 'Select a promo from the Promo dropdown. The system checks it immediately and updates the discount and total. Only usable promos appear; ask an admin if the promo you need is missing.'],
       ['What happens after I charge?', 'A receipt appears. You can print it, then close it to start the next order. The sale is only recorded once the receipt shows.'],
     ],
     'When something goes wrong' => [
@@ -61,16 +61,18 @@
   .faq-empty { display: none; padding: 28px 8px; text-align: center; font-weight: 700; color: #5F7F96; }
   @media (max-width: 480px) { .faq-head { padding: 18px 18px 10px; } .faq-search { margin: 0 18px 8px; } .faq-body { padding: 4px 18px 20px; } }
 </style>
+@if ($faqShowFab ?? true)
 <button type="button" id="faqFab" class="faq-fab" onclick="openFaq()" aria-label="Help and FAQ" aria-haspopup="dialog">
   <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 2.5-3 4.5M12 17.5h.01"/></svg>
   FAQ
 </button>
+@endif
 <div id="faqModal" class="faq-backdrop" role="dialog" aria-modal="true" aria-labelledby="faqTitle" onclick="if (event.target === this) closeFaq()">
   <div class="faq-panel">
     <div class="faq-head">
       <div>
-        <h2 id="faqTitle" class="faq-title">Help &amp; FAQ</h2>
-        <p class="faq-sub">Quick answers for new staff. Tap a question to open it.</p>
+        <h2 id="faqTitle" class="faq-title">{{ $faqTitle ?? 'Help & FAQ' }}</h2>
+        <p class="faq-sub">{{ $faqSubtitle ?? 'Quick answers for new staff. Tap a question to open it.' }}</p>
       </div>
       <button type="button" class="faq-close" onclick="closeFaq()" aria-label="Close help">
         <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>

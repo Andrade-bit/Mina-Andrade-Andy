@@ -38,7 +38,6 @@
 
   <!-- Main content -->
   <main class="flex-1 p-5 pt-20 md:p-8 overflow-y-auto">
-    @include('admin.partials.expiry-alerts', ['compact' => true])
 
     @php
       $hour = now('Asia/Manila')->hour;
@@ -47,7 +46,8 @@
 
     <div class="mb-5 flex flex-wrap items-center justify-between gap-4">
       <div>
-      <h2 class="font-display font-bold text-2xl md:text-3xl text-stamp-700">{{ $greeting }}, {{ auth()->user()->name }} 🐾</h2>
+      <h1 class="font-display font-bold text-3xl md:text-4xl text-stamp-700">Dashboard</h1>
+      <p class="font-bold text-stamp-600">{{ $greeting }}, {{ auth()->user()->name }} 🐾</p>
       <p class="text-stamp-500 text-sm font-semibold mt-1">Here's how Catbrews is doing · {{ $periodLabel }}.</p>
       </div>
       <form method="GET" action="{{ route('admin.dashboard') }}" aria-label="Filter dashboard dates" class="flex max-w-full flex-wrap items-center gap-2">
@@ -63,6 +63,12 @@
       </form>
     </div>
 
+    @include('admin.partials.expiry-alerts', ['compact' => true])
+
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <h2 class="font-display font-bold text-lg text-stamp-700">At a glance</h2>
+      <a href="{{ route('admin.reports.index', ['range' => 'custom', 'from' => $from, 'to' => $to]) }}" class="text-xs font-extrabold text-stamp-500 hover:underline">View reports &rarr;</a>
+    </div>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(150px,auto)]">
 
       <!-- Hero: Sales in selected period -->
@@ -97,14 +103,14 @@
         </div>
       </a>
 
-      <!-- Staff -->
-      <a href="{{ route('admin.users') }}" class="bg-white rounded-3xl shadow-soft p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
-        <div class="w-11 h-11 rounded-2xl bg-cream-100 flex items-center justify-center text-stamp-500">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>
+      <!-- Low stock alerts -->
+      <a href="{{ route('admin.inventory', ['stock' => 'low']) }}#items" class="{{ $lowStockCount ? 'bg-coral-50 ring-1 ring-coral-500/30' : 'bg-white' }} rounded-3xl shadow-soft p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
+        <div class="w-11 h-11 rounded-2xl bg-coral-50 flex items-center justify-center text-coral-500">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 01-2-2V4a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
         </div>
         <div>
-          <p class="font-display font-bold text-2xl text-stamp-700">{{ $totalStaff }}</p>
-          <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mt-0.5">Staff Accounts</p>
+          <p class="font-display font-bold text-2xl text-stamp-700">{{ $lowStockCount }}</p>
+          <p class="text-[11px] font-extrabold uppercase tracking-wide text-coral-600 mt-0.5">Low Stock Alerts</p>
         </div>
       </a>
 
@@ -119,16 +125,17 @@
         </div>
       </a>
 
-      <!-- Low stock alerts -->
-      <a href="{{ route('admin.inventory', ['stock' => 'low']) }}#items" class="bg-white rounded-3xl shadow-soft p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
-        <div class="w-11 h-11 rounded-2xl bg-coral-50 flex items-center justify-center text-coral-500">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 01-2-2V4a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+      <!-- Staff -->
+      <a href="{{ route('admin.users') }}" class="bg-white rounded-3xl shadow-soft p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
+        <div class="w-11 h-11 rounded-2xl bg-cream-100 flex items-center justify-center text-stamp-500">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>
         </div>
         <div>
-          <p class="font-display font-bold text-2xl text-stamp-700">{{ $lowStockItems->count() }}</p>
-          <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mt-0.5">Low Stock Alerts</p>
+          <p class="font-display font-bold text-2xl text-stamp-700">{{ $totalStaff }}</p>
+          <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300 mt-0.5">Staff Accounts</p>
         </div>
       </a>
+
 
     </div>
 

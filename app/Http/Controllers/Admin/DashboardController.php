@@ -34,7 +34,9 @@ class DashboardController extends Controller
         $completed = (clone $sales)->where('status', '!=', 'voided');
         $periodSales = (clone $completed)->sum('total_amount');
         $periodTransactionCount = (clone $completed)->count();
-        $lowStockItems = InventoryItem::whereColumn('current_quantity', '<=', 'reorder_level')->limit(5)->get();
+        $lowStock = InventoryItem::whereColumn('current_quantity', '<=', 'reorder_level');
+        $lowStockCount = (clone $lowStock)->count();
+        $lowStockItems = $lowStock->orderBy('current_quantity')->orderBy('name')->limit(5)->get();
         $totalProducts = Product::count();
         $totalStaff = Credential::count();
         $recentTransactions = (clone $sales)->with('credential')->latest('transaction_date')->latest('id')->limit(5)->get();
@@ -53,6 +55,7 @@ class DashboardController extends Controller
             'to' => $to,
             'periodLabel' => $from === $to ? CarbonImmutable::parse($from)->format('M j, Y') : CarbonImmutable::parse($from)->format('M j, Y').' – '.CarbonImmutable::parse($to)->format('M j, Y'),
             'lowStockItems' => $lowStockItems,
+            'lowStockCount' => $lowStockCount,
             'totalProducts' => $totalProducts,
             'totalStaff' => $totalStaff,
             'recentTransactions' => $recentTransactions,

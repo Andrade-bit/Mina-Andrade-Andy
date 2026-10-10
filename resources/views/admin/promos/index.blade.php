@@ -159,7 +159,8 @@
         </div>
         <label class="flex items-center justify-between px-1">
           <span class="text-sm font-bold text-stamp-600">Active</span>
-          <input type="checkbox" name="active" value="1" checked class="w-5 h-5 accent-stamp-500">
+          <input type="hidden" name="active" value="0">
+          <input type="checkbox" name="active" value="1" @checked(old('active', 1)) class="w-5 h-5 accent-stamp-500">
         </label>
         <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">
           Create Promo
@@ -221,6 +222,7 @@
         </div>
         <label class="flex items-center justify-between px-1">
           <span class="text-sm font-bold text-stamp-600">Active</span>
+          <input type="hidden" name="active" value="0">
           <input type="checkbox" name="active" id="edit_active" value="1" class="w-5 h-5 accent-stamp-500">
         </label>
         <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn active:shadow-none active:translate-y-[5px] transition-all duration-150">

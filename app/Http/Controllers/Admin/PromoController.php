@@ -42,7 +42,7 @@ class PromoController extends Controller
             'type' => $validated['type'],
             'value' => $validated['value'],
             'reason' => $validated['reason'] ?? null,
-            'active' => $request->boolean('active', true),
+            'active' => $request->boolean('active'),
             'expires_at' => $validated['expires_at'] ?? null,
         ]);
 
