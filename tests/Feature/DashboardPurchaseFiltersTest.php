@@ -128,31 +128,28 @@ class DashboardPurchaseFiltersTest extends TestCase
         $this->get(route('admin.supply-purchases.index', ['search' => ['milk']]))->assertSessionHasErrors('search');
     }
 
-    public function test_hourly_trend_uses_local_midnight_and_excludes_voided_sales(): void
+    public function test_peak_hours_use_local_midnight_exclude_voided_sales_and_combine_days(): void
     {
         $this->sale('2026-10-10 15:59:59', 900);
         $this->sale('2026-10-10 16:00:00', 40);
         $this->sale('2026-10-11 15:59:59', 60);
-        $this->sale('2026-10-11 16:00:00', 800);
+        $this->sale('2026-10-11 16:00:00', 80);
         $this->sale('2026-10-11 04:00:00', 300, 'voided');
         $this->actingAs(User::factory()->create())->get(route('admin.dashboard', ['from' => '2026-10-11', 'to' => '2026-10-11']))
-            ->assertOk()->assertViewHas('salesTrend', function ($trend) {
-                return $trend['interval'] === 'Hourly' && count($trend['points']) === 24
-                    && $trend['points'][0]['revenue'] === 40.0 && $trend['points'][23]['revenue'] === 60.0
-                    && array_sum(array_column($trend['points'], 'revenue')) === 100.0
-                    && array_sum(array_column($trend['points'], 'transactions')) === 2;
-            });
+            ->assertOk()->assertViewHas('peakHours', fn ($hours) => count($hours) === 24
+                && $hours[0]['transactions'] === 1 && $hours[23]['transactions'] === 1
+                && array_sum(array_column($hours, 'transactions')) === 2);
+        $this->get(route('admin.dashboard', ['from' => '2026-10-11', 'to' => '2026-10-12']))
+            ->assertOk()->assertViewHas('peakHours', fn ($hours) => $hours[0]['transactions'] === 2
+                && array_sum(array_column($hours, 'transactions')) === 3);
     }
 
-    public function test_trends_fill_empty_days_and_group_long_ranges_monthly(): void
+    public function test_empty_dashboard_has_no_trending_products_and_zero_peak_hours(): void
     {
-        $this->sale('2026-10-10 16:00:00', 40);
-        $this->actingAs(User::factory()->create())->get(route('admin.dashboard', ['from' => '2026-10-10', 'to' => '2026-10-12']))
-            ->assertOk()->assertViewHas('salesTrend', fn ($trend) => $trend['interval'] === 'Daily'
-                && array_column($trend['points'], 'revenue') === [0.0, 40.0, 0.0]);
-        $this->get(route('admin.dashboard', ['from' => '2026-01-01', 'to' => '2026-12-31']))
-            ->assertOk()->assertViewHas('salesTrend', fn ($trend) => $trend['interval'] === 'Monthly'
-                && count($trend['points']) === 12 && $trend['points'][9]['revenue'] === 40.0);
+        $this->actingAs(User::factory()->create())->get(route('admin.dashboard'))
+            ->assertOk()->assertViewHas('trendingProducts', fn ($products) => $products->isEmpty())
+            ->assertViewHas('peakHours', fn ($hours) => count($hours) === 24 && array_sum(array_column($hours, 'transactions')) === 0)
+            ->assertSee('No product sales in this period.');
     }
 
     private function sale(string $date, float $amount, string $status = 'completed'): SalesTransaction
