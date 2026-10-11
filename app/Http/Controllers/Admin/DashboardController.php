@@ -13,6 +13,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -51,6 +52,7 @@ class DashboardController extends Controller
             'expiryAlerts' => InventoryBatch::alerts()->get(),
             'periodSales' => $periodSales,
             'periodTransactionCount' => $periodTransactionCount,
+            'salesTrend' => $this->salesTrend($periodStart, $periodEnd),
             'from' => $from,
             'to' => $to,
             'periodLabel' => $from === $to ? CarbonImmutable::parse($from)->format('M j, Y') : CarbonImmutable::parse($from)->format('M j, Y').' – '.CarbonImmutable::parse($to)->format('M j, Y'),
@@ -63,6 +65,33 @@ class DashboardController extends Controller
             'slowMovers' => $slowMovers,
             'unavailableProducts' => $unavailableProducts,
         ]);
+    }
+
+    private function salesTrend(CarbonImmutable $start, CarbonImmutable $end): array
+    {
+        $localStart = $start->setTimezone('Asia/Manila');
+        $localEnd = $end->setTimezone('Asia/Manila');
+        $days = (int) $localStart->diffInDays($localEnd);
+        $hourly = $days === 1;
+        $monthly = $days > 90;
+        $format = $hourly ? '%Y-%m-%d %H' : ($monthly ? '%Y-%m' : '%Y-%m-%d');
+        $bucket = DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('{$format}', transaction_date, '+8 hours')"
+            : "DATE_FORMAT(DATE_ADD(transaction_date, INTERVAL 8 HOUR), '{$format}')";
+        $rows = SalesTransaction::where('transaction_date', '>=', $start)->where('transaction_date', '<', $end)
+            ->where('status', '!=', 'voided')->selectRaw("{$bucket} AS bucket, SUM(total_amount) AS revenue, COUNT(*) AS sales_count")
+            ->groupByRaw($bucket)->get()->keyBy('bucket');
+        $points = [];
+        $cursor = $monthly ? $localStart->startOfMonth() : $localStart;
+        while ($cursor < $localEnd) {
+            $key = $cursor->format($hourly ? 'Y-m-d H' : ($monthly ? 'Y-m' : 'Y-m-d'));
+            $row = $rows->get($key);
+            $points[] = ['label' => $cursor->format($hourly ? 'g A' : ($monthly ? 'M Y' : 'M j')),
+                'revenue' => (float) ($row?->revenue ?? 0), 'transactions' => (int) ($row?->sales_count ?? 0)];
+            $cursor = $hourly ? $cursor->addHour() : ($monthly ? $cursor->addMonth() : $cursor->addDay());
+        }
+
+        return ['interval' => $hourly ? 'Hourly' : ($monthly ? 'Monthly' : 'Daily'), 'points' => $points];
     }
 
     /**

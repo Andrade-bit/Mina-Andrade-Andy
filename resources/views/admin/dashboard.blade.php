@@ -139,6 +139,8 @@
 
     </div>
 
+    @include('admin.partials.dashboard-trends')
+
     <!-- Lists: two columns that each stack their cards, so nothing is stretched to match its neighbour -->
     <div class="grid lg:grid-cols-2 gap-4 mt-4 items-start">
       <div class="space-y-4">

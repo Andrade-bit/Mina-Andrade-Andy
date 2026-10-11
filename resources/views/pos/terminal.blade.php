@@ -64,6 +64,24 @@
   /* keep the floating FAQ button clear of the order bar (phones) and the open order panel (desktop) */
   @media (max-width: 1023px) { #faqFab { bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); } }
   @media (min-width: 1024px) { #faqFab.faq-shifted { right: 26rem; } }
+  .receipt-print-brand { display: none; }
+  @media print {
+    @page { margin: 4mm; }
+    html, body { height: auto !important; min-height: 0 !important; background: white !important; margin: 0 !important; padding: 0 !important; }
+    body > *:not(#receiptModal) { display: none !important; }
+    #receiptModal:not(.hidden) { display: block !important; position: static !important; background: white !important; padding: 0 !important; backdrop-filter: none !important; }
+    #receiptModal.hidden { display: none !important; }
+    #receiptModal > div { width: 72mm !important; max-width: 100% !important; max-height: none !important; margin: 0 auto !important; padding: 2mm !important; overflow: visible !important; border-radius: 0 !important; box-shadow: none !important; background: white !important; }
+    #receiptModal * { color: black !important; box-shadow: none !important; text-shadow: none !important; animation: none !important; }
+    #receiptModal .receipt-screen-heading, #receiptModal .receipt-actions { display: none !important; }
+    #receiptModal .receipt-print-brand { display: block !important; text-align: center; margin-bottom: 4mm; font-size: 12px; }
+    #receiptBody { font-family: Arial, sans-serif !important; font-size: 12px !important; }
+    #receiptBody .flex { gap: 3mm; align-items: baseline; }
+    #receiptBody .flex > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+    #receiptBody .flex > span:last-child { text-align: right; flex-shrink: 0; max-width: 48%; }
+    #receiptBody .flex { break-inside: avoid; }
+    #receiptBody .border-t, #receiptBody .border-b { border-color: #999 !important; }
+  }
 </style>
 </head>
 <body class="min-h-screen bg-cream-50 font-body text-stamp-700">
@@ -260,14 +278,15 @@
   <!-- Receipt Modal -->
   <div id="receiptModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-sm p-7 relative max-h-[90vh] overflow-y-auto">
-      <div class="flex flex-col items-center mb-4">
+      <div class="receipt-print-brand"><strong>CATBREWS</strong><br>The Purrfect Cup<br>Sales Receipt</div>
+      <div class="receipt-screen-heading flex flex-col items-center mb-4">
         <div id="receiptCheck" class="w-12 h-12 rounded-full bg-mint-50 flex items-center justify-center text-mint-600 mb-2">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
         </div>
         <h3 class="font-display font-bold text-lg text-stamp-700">Payment Successful</h3>
       </div>
       <div id="receiptBody" class="text-sm"></div>
-      <div class="flex gap-3 mt-5">
+      <div class="receipt-actions flex gap-3 mt-5">
         <button onclick="window.print()" class="flex-1 py-3 rounded-2xl bg-cream-100 text-stamp-600 font-display font-bold text-sm hover:bg-cream-200 transition-colors">Print</button>
         <button onclick="closeReceipt()" class="flex-1 py-3 rounded-2xl bg-gradient-to-b from-stamp-500 to-stamp-600 text-cream-50 font-display font-bold text-sm shadow-soft-btn">New Sale</button>
       </div>

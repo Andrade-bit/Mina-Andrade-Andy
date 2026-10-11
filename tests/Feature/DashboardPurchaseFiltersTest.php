@@ -128,6 +128,33 @@ class DashboardPurchaseFiltersTest extends TestCase
         $this->get(route('admin.supply-purchases.index', ['search' => ['milk']]))->assertSessionHasErrors('search');
     }
 
+    public function test_hourly_trend_uses_local_midnight_and_excludes_voided_sales(): void
+    {
+        $this->sale('2026-10-10 15:59:59', 900);
+        $this->sale('2026-10-10 16:00:00', 40);
+        $this->sale('2026-10-11 15:59:59', 60);
+        $this->sale('2026-10-11 16:00:00', 800);
+        $this->sale('2026-10-11 04:00:00', 300, 'voided');
+        $this->actingAs(User::factory()->create())->get(route('admin.dashboard', ['from' => '2026-10-11', 'to' => '2026-10-11']))
+            ->assertOk()->assertViewHas('salesTrend', function ($trend) {
+                return $trend['interval'] === 'Hourly' && count($trend['points']) === 24
+                    && $trend['points'][0]['revenue'] === 40.0 && $trend['points'][23]['revenue'] === 60.0
+                    && array_sum(array_column($trend['points'], 'revenue')) === 100.0
+                    && array_sum(array_column($trend['points'], 'transactions')) === 2;
+            });
+    }
+
+    public function test_trends_fill_empty_days_and_group_long_ranges_monthly(): void
+    {
+        $this->sale('2026-10-10 16:00:00', 40);
+        $this->actingAs(User::factory()->create())->get(route('admin.dashboard', ['from' => '2026-10-10', 'to' => '2026-10-12']))
+            ->assertOk()->assertViewHas('salesTrend', fn ($trend) => $trend['interval'] === 'Daily'
+                && array_column($trend['points'], 'revenue') === [0.0, 40.0, 0.0]);
+        $this->get(route('admin.dashboard', ['from' => '2026-01-01', 'to' => '2026-12-31']))
+            ->assertOk()->assertViewHas('salesTrend', fn ($trend) => $trend['interval'] === 'Monthly'
+                && count($trend['points']) === 12 && $trend['points'][9]['revenue'] === 40.0);
+    }
+
     private function sale(string $date, float $amount, string $status = 'completed'): SalesTransaction
     {
         return SalesTransaction::create(['transaction_date' => $date, 'total_amount' => $amount, 'payment_method' => 'Cash', 'status' => $status]);
