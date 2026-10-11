@@ -275,6 +275,25 @@
     </div>
   </button>
 
+  <!-- Review before recording a payment -->
+  <div id="paymentConfirmModal" class="hidden fixed inset-0 bg-stamp-700/40 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" role="dialog" aria-modal="true" aria-labelledby="paymentConfirmTitle" onclick="if(event.target === this) cancelPayment()">
+    <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-sm p-6 max-h-[90dvh] overflow-y-auto">
+      <h2 id="paymentConfirmTitle" class="font-display font-bold text-xl text-stamp-700">Confirm payment</h2>
+      <p class="text-sm text-stamp-500 mt-1">Review the order before recording this sale.</p>
+      <div id="paymentConfirmItems" class="space-y-2 border-y border-dashed border-cream-200 py-3 my-4 text-sm"></div>
+      <div class="flex justify-between font-bold text-stamp-700"><span>Total</span><span id="paymentConfirmTotal"></span></div>
+      <div class="flex justify-between text-sm mt-2"><span>Payment</span><span id="paymentConfirmMethod"></span></div>
+      <div id="paymentConfirmCash" class="text-sm space-y-2 mt-2">
+        <div class="flex justify-between"><span>Cash received</span><span id="paymentConfirmReceived"></span></div>
+        <div class="flex justify-between"><span>Change</span><span id="paymentConfirmChange"></span></div>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button id="paymentCancelBtn" type="button" onclick="cancelPayment()" class="flex-1 py-3 rounded-2xl bg-cream-100 text-stamp-600 font-display font-bold">Cancel</button>
+        <button type="button" onclick="confirmPayment()" class="flex-1 py-3 rounded-2xl bg-stamp-500 text-cream-50 font-display font-bold">Confirm Payment</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Receipt Modal -->
   <div id="receiptModal" class="hidden fixed inset-0 bg-stamp-700/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-cream-50 rounded-[2rem] shadow-soft w-full max-w-sm p-7 relative max-h-[90vh] overflow-y-auto">
@@ -309,6 +328,8 @@
   <script>
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     let cart = [];
+    let paymentProcessing = false;
+    let paymentReview = null;
     const cartSyncUrl = '{{ route('pos.terminal.cart') }}';
     let cartSyncTimer = null;
 
@@ -629,7 +650,7 @@
       const { total } = computeTotals();
       const cash = parseFloat(document.getElementById('cashInput').value) || 0;
       const cashOk = selectedPayment !== 'Cash' || cash >= total;
-      document.getElementById('chargeBtn').disabled = cart.length === 0 || !cashOk || promoPending || (document.getElementById('promoInput').value !== appliedPromoCode) || (appliedPromo?.expires_at && Date.now() > Date.parse(appliedPromo.expires_at));
+      document.getElementById('chargeBtn').disabled = paymentProcessing || cart.length === 0 || !cashOk || promoPending || (document.getElementById('promoInput').value !== appliedPromoCode) || (appliedPromo?.expires_at && Date.now() > Date.parse(appliedPromo.expires_at));
     }
 
     function selectPayment(method, el){
@@ -659,7 +680,70 @@
       }
     }
 
+    function paymentState(){
+      return JSON.stringify({ cart, selectedPayment, appliedPromoCode, total: computeTotals().total, cash: document.getElementById('cashInput').value });
+    }
     function charge(){
+      updateChargeState();
+      if (paymentProcessing || cart.length === 0 || document.getElementById('chargeBtn').disabled) return;
+      paymentReview = paymentState();
+      const items = document.getElementById('paymentConfirmItems');
+      items.replaceChildren();
+      cart.forEach(item => {
+        const line = document.createElement('div');
+        line.className = 'flex justify-between gap-3';
+        const label = document.createElement('span');
+        label.textContent = item.qty + 'x ' + item.name;
+        const amount = document.createElement('span');
+        amount.className = 'shrink-0 font-bold';
+        amount.textContent = format(item.qty * item.price);
+        line.append(label, amount);
+        items.append(line);
+      });
+      const { total } = computeTotals();
+      document.getElementById('paymentConfirmTotal').textContent = format(total);
+      document.getElementById('paymentConfirmMethod').textContent = selectedPayment;
+      document.getElementById('paymentConfirmCash').hidden = selectedPayment !== 'Cash';
+      const received = parseFloat(document.getElementById('cashInput').value) || 0;
+      document.getElementById('paymentConfirmReceived').textContent = format(received);
+      document.getElementById('paymentConfirmChange').textContent = format(received - total);
+      document.getElementById('paymentConfirmModal').classList.remove('hidden');
+      document.getElementById('paymentCancelBtn').focus();
+    }
+    function cancelPayment(){
+      paymentReview = null;
+      document.getElementById('paymentConfirmModal').classList.add('hidden');
+      document.getElementById('chargeBtn').focus();
+    }
+    function confirmPayment(){
+      if (paymentProcessing || paymentReview === null) return;
+      updateChargeState();
+      if (document.getElementById('chargeBtn').disabled) {
+        cancelPayment();
+        toast('Please check the payment amount and promo before charging.', 'error');
+        return;
+      }
+      if (paymentReview !== paymentState()) {
+        charge();
+        toast('The order changed. Please review it again.', 'info');
+        return;
+      }
+      paymentReview = null;
+      document.getElementById('paymentConfirmModal').classList.add('hidden');
+      processSale();
+    }
+    document.addEventListener('keydown', event => {
+      const modal = document.getElementById('paymentConfirmModal');
+      if (modal.classList.contains('hidden')) return;
+      if (event.key === 'Escape') cancelPayment();
+      if (event.key === 'Tab') {
+        const buttons = modal.querySelectorAll('button');
+        if (event.shiftKey && document.activeElement === buttons[0]) { event.preventDefault(); buttons[1].focus(); }
+        else if (!event.shiftKey && document.activeElement === buttons[1]) { event.preventDefault(); buttons[0].focus(); }
+      }
+    });
+
+    function processSale(){
       updateChargeState();
       if (cart.length === 0 || document.getElementById('chargeBtn').disabled) return;
       const { total } = computeTotals();
@@ -672,6 +756,7 @@
       }
 
       const chargeBtn = document.getElementById('chargeBtn');
+      paymentProcessing = true;
       chargeBtn.disabled = true;
 
       fetch('{{ route('pos.terminal.store') }}', {
@@ -717,7 +802,7 @@
           renderCart();
         })
         .catch(() => toast('Network error — the sale was not recorded. Please try again.', 'error'))
-        .finally(() => { chargeBtn.disabled = false; updateChargeState(); });
+        .finally(() => { paymentProcessing = false; updateChargeState(); });
     }
 
     function showReceipt(transaction, extra){

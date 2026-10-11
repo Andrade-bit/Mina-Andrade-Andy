@@ -10,13 +10,19 @@
 <style>
   /* One content width on every sidebar page, centered, so wide screens don't spread cards far apart */
   body > main { min-width: 0; }
+  #sidebar { height: 100vh; height: 100dvh; }
+  #sidebar nav { scrollbar-width: thin; scrollbar-color: #D3E6F3 transparent; overscroll-behavior: contain; }
+  @media (min-width: 768px) {
+    #sidebar { height: calc(100vh - 2rem); height: calc(100dvh - 2rem); }
+    body > main { margin-left: 18rem; }
+  }
   body > main > * { max-width: 78rem; margin-left: auto; margin-right: auto; }
   body > main[data-narrow] > * { max-width: 48rem; }
 </style>
 
 <!-- Mobile top bar -->
 <div class="md:hidden fixed top-0 inset-x-0 z-30 bg-white shadow-soft-sm px-4 py-3 flex items-center gap-3">
-  <button onclick="openSidebar()" class="w-10 h-10 rounded-xl bg-cream-100 flex items-center justify-center text-stamp-600 shrink-0">
+  <button id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false" onclick="openSidebar()" class="w-10 h-10 rounded-xl bg-cream-100 flex items-center justify-center text-stamp-600 shrink-0">
     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
   </button>
   <p class="font-display font-bold text-stamp-700">Catbrews</p>
@@ -26,11 +32,11 @@
 <div id="sidebarBackdrop" onclick="closeSidebar()" class="hidden md:hidden fixed inset-0 bg-stamp-700/40 z-40"></div>
 
 <!-- Sidebar -->
-<aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 flex flex-col w-72 md:w-64 bg-white md:bg-white/70 shadow-soft m-0 md:m-4 rounded-none md:rounded-[2rem] p-6 shrink-0 -translate-x-full md:translate-x-0 transition-transform duration-300 overflow-y-auto">
-  <button onclick="closeSidebar()" class="md:hidden absolute top-4 right-4 text-stamp-300 hover:text-stamp-600">
+<aside id="sidebar" class="fixed inset-y-0 left-0 z-50 flex flex-col w-72 md:w-64 bg-white md:bg-white/70 shadow-soft m-0 md:m-4 rounded-none md:rounded-[2rem] p-6 shrink-0 -translate-x-full md:translate-x-0 transition-transform duration-300 overflow-hidden">
+  <button aria-label="Close navigation" onclick="closeSidebar()" class="md:hidden absolute top-4 right-4 text-stamp-300 hover:text-stamp-600">
     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
   </button>
-  <div class="flex flex-col items-center mb-6">
+  <div class="flex flex-col items-center mb-6 shrink-0">
     <div class="w-16 h-16 rounded-full bg-cream-100 shadow-soft-inset ring-4 ring-white flex items-center justify-center text-stamp-600 mb-2">
       <img src="{{ asset('images/catbrews-logo-black.png') }}" alt="The Purrfect Cup — Catbrews logo" class="w-full h-full object-contain rounded-full" style="width:100%;height:100%;object-fit:contain">
     </div>
@@ -38,7 +44,7 @@
     <p class="text-[10px] font-bold tracking-[0.2em] uppercase text-stamp-300">Admin Panel</p>
   </div>
 
-  <nav class="flex-1 space-y-1">
+  <nav aria-label="Admin navigation" class="flex-1 min-h-0 overflow-y-auto space-y-1 px-1 -mx-1 pb-2">
     <a href="{{ route('admin.dashboard') }}" class="{{ $navClass('dashboard') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
       Dashboard
@@ -118,7 +124,7 @@
     </button>
   </nav>
 
-  <div class="pt-4 mt-4 border-t border-cream-200 flex items-center gap-3">
+  <div class="pt-4 mt-4 border-t border-cream-200 flex items-center gap-3 shrink-0">
     <div class="w-10 h-10 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-sm shrink-0">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
     <div class="text-sm flex-1 min-w-0">
       <p class="font-bold text-stamp-700 leading-tight truncate">{{ auth()->user()->name }}</p>
@@ -137,10 +143,15 @@
   function openSidebar(){
     document.getElementById('sidebar').classList.remove('-translate-x-full');
     document.getElementById('sidebarBackdrop').classList.remove('hidden');
+    document.getElementById('sidebarToggle').setAttribute('aria-expanded', 'true');
   }
+  document.addEventListener('keydown', function(event){
+    if (event.key === 'Escape' && window.matchMedia('(max-width: 767px)').matches) closeSidebar();
+  });
   function closeSidebar(){
     document.getElementById('sidebar').classList.add('-translate-x-full');
     document.getElementById('sidebarBackdrop').classList.add('hidden');
+    document.getElementById('sidebarToggle').setAttribute('aria-expanded', 'false');
   }
 </script>
 
