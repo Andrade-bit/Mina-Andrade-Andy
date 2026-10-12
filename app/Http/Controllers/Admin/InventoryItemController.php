@@ -29,6 +29,12 @@ class InventoryItemController extends Controller
         $search = trim($validated['search'] ?? '');
         $activeTab = $validated['tab'] ?? 'procurement';
         $onlyLow = $request->query('stock') === 'low';
+        $lowStockByType = InventoryItem::whereColumn('current_quantity', '<=', 'reorder_level')
+            ->selectRaw('type, COUNT(*) as total')->groupBy('type')->pluck('total', 'type');
+        $categoryLowStockCounts = [
+            'procurement' => (int) ($lowStockByType['ingredient'] ?? 0),
+            'supplier' => (int) ($lowStockByType['supply'] ?? 0),
+        ];
 
         $lowStockFirst = fn ($query) => $query
             ->when($onlyLow, fn ($q) => $q->whereColumn('current_quantity', '<=', 'reorder_level'))
@@ -53,6 +59,7 @@ class InventoryItemController extends Controller
             'items' => $items,
             'search' => $search,
             'activeTab' => $activeTab,
+            'categoryLowStockCounts' => $categoryLowStockCounts,
             'archivedCount' => InventoryItem::onlyTrashed()->count(),
             'lowStockCount' => InventoryItem::whereColumn('current_quantity', '<=', 'reorder_level')->count(),
             'recentTransactions' => $recentTransactions,

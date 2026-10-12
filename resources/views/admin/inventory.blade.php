@@ -91,9 +91,17 @@
       </div>
     @endif
     <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
-      <nav aria-label="Inventory categories" class="flex items-center gap-2 flex-wrap">
+      <nav aria-label="Inventory categories" class="flex items-center gap-3 flex-wrap">
         @foreach (['procurement' => 'Ingredients', 'supplier' => 'Cups & Straws', 'archived' => 'Archived ('.$archivedCount.')'] as $tab => $label)
-          <a href="{{ route('admin.inventory', array_merge(request()->only(['search', 'stock']), ['tab' => $tab])) }}#items" @if ($activeTab === $tab) aria-current="page" @endif class="px-4 py-2.5 rounded-2xl text-sm font-extrabold transition-all {{ $activeTab === $tab ? 'bg-stamp-500 text-cream-50 shadow-soft-btn' : 'bg-cream-100 text-stamp-600 hover:bg-stamp-100' }}">{{ $label }}</a>
+          <a href="{{ route('admin.inventory', array_merge(request()->only(['search', 'stock']), ['tab' => $tab])) }}#items" @if ($activeTab === $tab) aria-current="page" @endif class="relative inline-flex items-center px-4 py-2.5 rounded-2xl text-sm font-extrabold transition-all {{ $activeTab === $tab ? 'bg-stamp-500 text-cream-50 shadow-soft-btn' : 'bg-cream-100 text-stamp-600 hover:bg-stamp-100' }}">
+            {{ $label }}
+            @if (($categoryLowStockCounts[$tab] ?? 0) > 0)
+              <span class="absolute -top-2 -right-2 h-6 rounded-full bg-coral-500 text-cream-50 flex items-center justify-center gap-1 px-1.5 ring-2 ring-cream-50 shadow-soft-sm text-[10px] whitespace-nowrap" aria-label="{{ $categoryLowStockCounts[$tab] }} low-stock items" title="{{ $categoryLowStockCounts[$tab] }} low-stock items">
+                <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376C1.83 17.523 2.943 19.5 4.697 19.5h14.606c1.753 0 2.867-1.977 1.5-3.374L13.9 4.5c-.75-1.333-2.6-1.333-3.35 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                <span>({{ $categoryLowStockCounts[$tab] }})</span>
+              </span>
+            @endif
+          </a>
         @endforeach
       </nav>
       <form method="GET" action="{{ route('admin.inventory') }}#items" class="flex items-center gap-2 max-w-full" role="search">
