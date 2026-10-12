@@ -44,7 +44,7 @@
                 </p>
               </div>
               @if ($batch->daysUntilExpiry() < 0)
-                <form method="POST" action="{{ route('admin.inventory-transactions.stock-out') }}" onsubmit="return confirm('Record this entire remaining batch as waste? Only confirm after removing it from physical stock.');">
+                <form method="POST" action="{{ route('admin.inventory-transactions.stock-out') }}" data-waste-name="{{ $batch->inventoryItem->name }}" data-waste-batch="{{ $batch->id }}" data-waste-quantity="{{ number_format($batch->remaining_quantity, 2) }} {{ $batch->inventoryItem->unit }}" onsubmit="return reviewExpiredWaste(event, this)">
                   @csrf
                   <input type="hidden" name="inventory_item_id" value="{{ $batch->inventory_item_id }}">
                   <input type="hidden" name="batch_id" value="{{ $batch->id }}">
@@ -66,4 +66,10 @@
       </details>
     @endif
   </section>
+@endif
+
+@if (! ($compact ?? false) && $expiryAlerts->contains(fn ($batch) => $batch->daysUntilExpiry() < 0))
+  @once
+    @include('admin.partials.expired-waste-dialog')
+  @endonce
 @endif
