@@ -219,7 +219,7 @@
         <div class="space-y-1.5 mb-4 text-sm font-semibold text-stamp-500">
           <div class="flex justify-between"><span>Subtotal</span><span id="subtotalText">₱0.00</span></div>
           <div id="discountRow" class="hidden flex justify-between text-mint-600"><span>Discount</span><span id="discountText">-₱0.00</span></div>
-          <div class="flex justify-between font-display font-bold text-stamp-700 text-lg pt-1 border-t border-cream-200"><span>Total</span><span id="totalText">₱0.00</span></div>
+          <div class="flex justify-between font-display font-bold text-stamp-700 text-xl pt-2 border-t border-cream-200"><span>Customer pays</span><span id="totalText" aria-live="polite">₱0.00</span></div>
         </div>
 
         <p class="text-xs font-extrabold uppercase tracking-wide text-stamp-300 mb-2">Payment Method</p>
@@ -281,7 +281,7 @@
       <h2 id="paymentConfirmTitle" class="font-display font-bold text-xl text-stamp-700">Confirm payment</h2>
       <p class="text-sm text-stamp-500 mt-1">Review the order before recording this sale.</p>
       <div id="paymentConfirmItems" class="space-y-2 border-y border-dashed border-cream-200 py-3 my-4 text-sm"></div>
-      <div class="flex justify-between font-bold text-stamp-700"><span>Total</span><span id="paymentConfirmTotal"></span></div>
+      <div class="flex justify-between font-bold text-stamp-700"><span>Customer pays</span><span id="paymentConfirmTotal"></span></div>
       <div class="flex justify-between text-sm mt-2"><span>Payment</span><span id="paymentConfirmMethod"></span></div>
       <div id="paymentConfirmCash" class="text-sm space-y-2 mt-2">
         <div class="flex justify-between"><span>Cash received</span><span id="paymentConfirmReceived"></span></div>
@@ -625,6 +625,9 @@
       document.getElementById('discountRow').classList.toggle('hidden', discount <= 0);
       document.getElementById('discountText').textContent = '-' + format(discount);
       document.getElementById('totalText').textContent = format(total);
+      if (appliedPromo && appliedPromoCode && !promoPending && (!appliedPromo.expires_at || Date.now() <= Date.parse(appliedPromo.expires_at))) {
+        document.getElementById('promoBanner').textContent = appliedPromoCode + ' applied · Customer pays ' + format(total);
+      }
       document.getElementById('chargeAmount').textContent = format(total);
       updateChange();
     }
