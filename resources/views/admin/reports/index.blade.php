@@ -35,7 +35,12 @@
   @media print {
     aside, .md\:hidden, .no-print { display: none !important; }
     body { display: block !important; background: #fff !important; }
-    main { padding: 0 !important; overflow: visible !important; }
+    body > main { padding: 0 !important; margin: 0 !important; width: 100% !important; overflow: visible !important; }
+    .report-chart { break-inside: avoid; }
+    .report-chart-svg { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; }
+    .report-kpi { background: white !important; break-inside: avoid; }
+    .report-kpi, .report-kpi * { color: #1A3B52 !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .shadow-soft, .shadow-soft-sm { box-shadow: none !important; border: 1px solid #F1E6CC; }
   }
 </style>
