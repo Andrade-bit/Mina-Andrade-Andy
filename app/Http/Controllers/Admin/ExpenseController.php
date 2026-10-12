@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
+use App\Support\ShopDates;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,13 +17,25 @@ class ExpenseController extends Controller
      */
     public function index(Request $request): View
     {
-        $expenses = Expense::query()->when($request->boolean('archived'), fn ($q) => $q->onlyTrashed())->with('expenseCategory', 'supplyPurchase')->latest('expense_date')->paginate(30);
+        ShopDates::validate($request);
+        $from = $request->input('from');
+        $to = $request->input('to');
+        $filtered = $request->filled('from') || $request->filled('to');
+        $query = Expense::query()->when($request->boolean('archived'), fn ($q) => $q->onlyTrashed())
+            ->when($from, fn ($q) => $q->whereDate('expense_date', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('expense_date', '<=', $to));
+        $total = clone $query;
+        if (! $filtered) {
+            $total->whereMonth('expense_date', now('Asia/Manila')->month)
+                ->whereYear('expense_date', now('Asia/Manila')->year);
+        }
 
         return view('admin.expenses.index', [
-            'expenses' => $expenses,
-            'totalThisMonth' => Expense::whereMonth('expense_date', now('Asia/Manila')->month)
-                ->whereYear('expense_date', now('Asia/Manila')->year)
-                ->sum('amount'),
+            'expenses' => $query->with('expenseCategory', 'supplyPurchase')->latest('expense_date')->latest('id')->paginate(30)->withQueryString(),
+            'totalThisMonth' => $total->sum('amount'),
+            'summaryLabel' => $filtered ? 'Selected dates' : 'This month',
+            'from' => $from,
+            'to' => $to,
         ]);
     }
 

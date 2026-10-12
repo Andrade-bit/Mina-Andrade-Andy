@@ -56,19 +56,32 @@
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3h14a2 2 0 012 2v16l-4-2-3 2-3-2-3 2-3-2-3 2V5a2 2 0 012-2z"/></svg>
       </div>
       <div class="min-w-0">
-        <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">This Month</p>
+        <p class="text-[11px] font-extrabold uppercase tracking-wide text-stamp-300">{{ $summaryLabel }}</p>
         <p class="font-display font-bold text-2xl text-stamp-700">₱{{ number_format($totalThisMonth, 2) }}</p>
       </div>
     </div>
 
       <div class="self-end sm:self-auto shrink-0">
       @if (request()->boolean('archived'))
-        <a href="{{ route('admin.expenses.index') }}" class="px-4 py-2 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-extrabold text-xs transition-colors">&larr; Back to active</a>
+        <a href="{{ route('admin.expenses.index', request()->only(['from', 'to'])) }}" class="px-4 py-2 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-extrabold text-xs transition-colors">&larr; Back to active</a>
       @else
-        <a href="{{ route('admin.expenses.index', ['archived' => 1]) }}" class="px-4 py-2 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-extrabold text-xs transition-colors">View archived</a>
+        <a href="{{ route('admin.expenses.index', array_merge(request()->only(['from', 'to']), ['archived' => 1])) }}" class="px-4 py-2 rounded-2xl bg-cream-100 hover:bg-cream-200 text-stamp-600 font-extrabold text-xs transition-colors">View archived</a>
       @endif
       </div>
     </div>
+
+    <form method="GET" action="{{ route('admin.expenses.index') }}" aria-label="Filter expenses by date" class="flex flex-wrap items-center gap-2 mb-5">
+      @if (request()->boolean('archived'))<input type="hidden" name="archived" value="1">@endif
+      <div class="flex items-center gap-2 max-w-full">
+        <label class="sr-only" for="expenses-from">From date</label>
+        <input id="expenses-from" type="date" name="from" value="{{ $from }}" class="w-[136px] min-w-0 bg-cream-100 rounded-xl px-2 py-2 text-xs font-semibold text-stamp-700">
+        <span aria-hidden="true" class="text-stamp-300">–</span>
+        <label class="sr-only" for="expenses-to">To date</label>
+        <input id="expenses-to" type="date" name="to" value="{{ $to }}" @if ($from) min="{{ $from }}" @endif class="w-[136px] min-w-0 bg-cream-100 rounded-xl px-2 py-2 text-xs font-semibold text-stamp-700">
+      </div>
+      <button type="submit" class="bg-stamp-500 hover:bg-stamp-600 text-cream-50 rounded-xl px-3 py-2 text-xs font-extrabold">Apply</button>
+      <a href="{{ route('admin.expenses.index', request()->boolean('archived') ? ['archived' => 1] : []) }}" class="text-xs font-extrabold text-stamp-500 px-2 py-2 hover:underline">Reset</a>
+    </form>
 
     <div class="bg-white rounded-[2rem] shadow-soft p-5 md:p-6 overflow-x-auto">
       <table class="w-full min-w-[640px] text-left border-collapse">
@@ -111,7 +124,7 @@
               </td>
             </tr>
           @empty
-            <tr><td colspan="6" class="py-10 text-center text-sm font-semibold text-stamp-300">No expenses recorded yet.</td></tr>
+            <tr><td colspan="6" class="py-10 text-center text-sm font-semibold text-stamp-300">{{ request()->filled('from') || request()->filled('to') ? 'No expenses match these dates.' : 'No expenses recorded yet.' }}</td></tr>
           @endforelse
         </tbody>
       </table>

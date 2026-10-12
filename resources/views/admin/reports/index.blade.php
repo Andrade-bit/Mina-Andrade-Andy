@@ -74,7 +74,7 @@
 
     <form method="GET" action="{{ route('admin.reports.index') }}" class="bg-white rounded-2xl shadow-soft-sm p-3 mb-5 flex flex-wrap items-center gap-2 no-print">
       <label class="flex items-center gap-2 bg-cream-100 rounded-xl px-3 py-2 text-xs font-bold">Report
-        <select name="type" aria-label="Report type" class="bg-transparent text-sm outline-none">
+        <select name="type" aria-label="Report type" class="bg-transparent text-sm outline-none" onchange="this.form.requestSubmit()">
           @foreach ($types as $key => $label)<option value="{{ $key }}" @selected($type === $key)>{{ $label }}</option>@endforeach
         </select>
       </label>

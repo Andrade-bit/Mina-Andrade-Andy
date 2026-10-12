@@ -6,7 +6,7 @@
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
   @include('admin.reports.partials.kpi', ['href' => route('admin.expenses.index'), 'tone' => 'primary', 'label' => 'Total expenses', 'value' => $peso($total), 'sub' => 'everything paid out in this period'])
   @include('admin.reports.partials.kpi', ['href' => '#expense-list', 'label' => 'Entries', 'value' => $expenseCount, 'sub' => Str::plural('expense', $expenseCount).' recorded'])
-  @include('admin.reports.partials.kpi', ['href' => route('admin.expense-categories.index'), 'label' => 'Biggest category', 'value' => $biggest?->category_name ?? '—', 'sub' => $biggest ? $peso($biggest->total) : 'no expenses yet'])
+  @include('admin.reports.partials.kpi', ['href' => route('admin.expense-categories.index'), 'label' => 'Biggest category', 'value' => $biggest ? $peso($biggest->total) : $peso(0), 'sub' => $biggest?->category_name ?? 'no expenses yet'])
   @include('admin.reports.partials.kpi', ['href' => route('admin.supply-purchases.index'), 'label' => 'Stock purchases', 'value' => $peso($purchaseSpend), 'sub' => 'from Supply Purchases'])
 </div>
 
