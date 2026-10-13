@@ -17,3 +17,5 @@ public/index.php
 public/.htaccess
 public/hot
 public/storage
+
+bootstrap/cache

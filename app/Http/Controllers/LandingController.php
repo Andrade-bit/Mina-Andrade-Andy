@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CupSize;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Support\ShopContext;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -37,7 +38,10 @@ class LandingController extends Controller
             ->flatMap(fn (array $item) => collect($item['sizes'])->pluck('amount'))
             ->min();
 
-        return view('landing', [
+        $shop = app(ShopContext::class)->shop();
+
+        return view($shop?->id === 1 ? 'landing' : 'shops.menu', [
+            'shop' => $shop,
             'groups' => $groups,
             'signature' => $mocha ? $this->menuItem($mocha, $cupSizes) : null,
             'lowestPrice' => $lowestPrice !== null ? $this->formatPrice($lowestPrice) : null,

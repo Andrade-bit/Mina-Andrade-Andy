@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CupSize;
 use App\Models\InventoryItem;
+use App\Support\ShopContext;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,7 +37,7 @@ class CupSizeController extends Controller
     {
         $validated = $request->validate([
             'size_name' => ['required', 'string', 'max:255'],
-            'inventory_item_id' => ['nullable', 'exists:inventory_items,id'],
+            'inventory_item_id' => ['nullable', ShopContext::exists('inventory_items')],
             'price' => ['required', 'numeric', 'min:0'],
             'volume_ml' => [Rule::requiredIf($request->boolean('is_recipe_size')), 'nullable', 'numeric', 'min:1', 'max:5000'],
             'is_recipe_size' => ['nullable', 'boolean'],

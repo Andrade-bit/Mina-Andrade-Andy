@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToShop;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
 class UploadedImage extends Model
 {
+    use BelongsToShop;
+
     protected $fillable = ['path', 'mime_type', 'contents'];
 
     protected $hidden = ['contents'];

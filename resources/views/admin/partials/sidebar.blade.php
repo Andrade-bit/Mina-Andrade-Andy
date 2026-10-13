@@ -25,7 +25,7 @@
   <button id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false" onclick="openSidebar()" class="w-10 h-10 rounded-xl bg-cream-100 flex items-center justify-center text-stamp-600 shrink-0">
     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
   </button>
-  <p class="font-display font-bold text-stamp-700">Catbrews</p>
+  <p class="font-display font-bold text-stamp-700">{{ $currentShop?->name ?? 'Catbrews' }}</p>
 </div>
 
 <!-- Sidebar backdrop (mobile) -->
@@ -37,10 +37,12 @@
     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
   </button>
   <div class="flex flex-col items-center mb-6 shrink-0">
+    @if($currentShop?->id === 1)
     <div class="w-16 h-16 rounded-full bg-cream-100 shadow-soft-inset ring-4 ring-white flex items-center justify-center text-stamp-600 mb-2">
       <img src="{{ asset('images/catbrews-logo-black.png') }}" alt="The Purrfect Cup — Catbrews logo" class="w-full h-full object-contain rounded-full" style="width:100%;height:100%;object-fit:contain">
     </div>
-    <h1 class="font-display font-bold text-xl text-stamp-700">Catbrews</h1>
+    @endif
+    <h1 class="font-display font-bold text-xl text-stamp-700">{{ $currentShop?->name ?? 'Catbrews' }}</h1>
     <p class="text-[10px] font-bold tracking-[0.2em] uppercase text-stamp-300">Admin Panel</p>
   </div>
 
@@ -82,7 +84,7 @@
     </a>
 
     <p class="text-[10px] font-extrabold uppercase tracking-widest text-stamp-300 px-4 pt-3 pb-1">Sales</p>
-    <a href="{{ route('pos.login') }}" class="{{ $navClass('pos') }}">
+    <a href="{{ route('pos.login', ['shop' => $currentShop?->slug]) }}" class="{{ $navClass('pos') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-9 4h16a1 1 0 001-1V6a1 1 0 00-1-1H4a1 1 0 00-1 1v12a1 1 0 001 1z"/></svg>
       POS Terminal
     </a>
@@ -110,10 +112,12 @@
     </a>
 
     <p class="text-[10px] font-extrabold uppercase tracking-widest text-stamp-300 px-4 pt-3 pb-1">Account</p>
+    @if(auth()->user()->role === 'owner')
     <a href="{{ route('admin.users') }}" class="{{ $navClass('users') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>
       User Management
     </a>
+    @endif
     <a href="{{ route('admin.settings') }}" class="{{ $navClass('settings') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       Settings
@@ -128,7 +132,7 @@
     <div class="w-10 h-10 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-sm shrink-0">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
     <div class="text-sm flex-1 min-w-0">
       <p class="font-bold text-stamp-700 leading-tight truncate">{{ auth()->user()->name }}</p>
-      <p class="text-stamp-300 text-xs font-bold">Owner</p>
+      <p class="text-stamp-300 text-xs font-bold">{{ ucfirst(auth()->user()->role) }}</p>
     </div>
     <form method="POST" action="{{ route('admin.logout') }}">
       @csrf

@@ -9,6 +9,7 @@ use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
 use App\Models\Supplier;
 use App\Models\SupplyPurchase;
+use App\Support\ShopContext;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -166,9 +167,9 @@ class SupplyPurchaseController extends Controller
         }
         $validated = $request->validate([
             ...$this->newItemRules($request),
-            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'supplier_id' => ['nullable', ShopContext::exists('suppliers')],
             'purchase_date' => ['required', 'date'],
-            'invoice_number' => ['nullable', 'string', 'max:255', Rule::unique('supply_purchases', 'invoice_number')],
+            'invoice_number' => ['nullable', 'string', 'max:255', ShopContext::unique('supply_purchases', 'invoice_number')],
             'purchase_source' => ['nullable', 'string', 'max:255'],
             'payment_method' => ['required', Rule::in(['Gcash', 'Cash', 'Card'])],
             'payment_terms' => ['nullable', 'string', 'max:255'],

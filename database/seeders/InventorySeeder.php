@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\CupSize;
 use App\Models\InventoryItem;
+use App\Support\ShopContext;
 use Illuminate\Database\Seeder;
 
 class InventorySeeder extends Seeder
@@ -14,6 +15,7 @@ class InventorySeeder extends Seeder
      */
     public function run(): void
     {
+        app(ShopContext::class)->set(1);
         // Stock is counted in ml, g or pcs; "bought" is the unit it is purchased in and "size" how many base units it holds.
         $ingredients = [
             ['name' => 'Coffee Beans', 'unit' => 'g', 'bought' => 'kg', 'size' => 1000, 'current_quantity' => 25000, 'reorder_level' => 10000],

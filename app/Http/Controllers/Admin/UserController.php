@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Credential;
+use App\Support\ShopContext;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -56,7 +57,7 @@ class UserController extends Controller
                 }
             }],
             'role' => ['required', Rule::in(['admin', 'assistant'])],
-            'passcode' => ['required', 'digits:4', Rule::unique('credentials', 'passcode')->ignore($credential?->id)],
+            'passcode' => ['required', 'digits:4', ShopContext::unique('credentials', 'passcode')->ignore($credential?->id)],
         ], [
             'passcode.unique' => 'That PIN is already used by another staff member (archived accounts keep theirs). Choose a different 4-digit PIN.',
             'passcode.digits' => 'The PIN must be exactly 4 digits.',

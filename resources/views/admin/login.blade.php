@@ -136,7 +136,7 @@
         <form method="POST" action="{{ route('admin.login.store') }}" class="space-y-5 mt-6">
           @csrf
           <div>
-            <label for="username" class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-2 ml-1">Username</label>
+            <label for="username" class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-2 ml-1">Username or email</label>
             <div class="field flex items-center gap-3 bg-cream-100 rounded-2xl shadow-soft-inset px-4 py-3.5 focus-within:ring-2 focus-within:ring-stamp-500/50">
               <svg class="w-5 h-5 text-stamp-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>

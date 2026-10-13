@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToShop;
+use App\Support\ShopContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SupplyPurchase extends Model
 {
+    use BelongsToShop;
     use HasFactory;
 
     protected $fillable = [
@@ -39,6 +42,7 @@ class SupplyPurchase extends Model
     public function items(): BelongsToMany
     {
         return $this->belongsToMany(InventoryItem::class, 'supply_purchase_items', 'supply_purchase_id', 'inventory_item_id')
+            ->withPivotValue('shop_id', app(ShopContext::class)->id())
             ->withTrashed()
             ->withPivot('quantity', 'unit_cost', 'subtotal')
             ->withTimestamps();

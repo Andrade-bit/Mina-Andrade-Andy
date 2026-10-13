@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToShop;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +11,8 @@ use Illuminate\Support\Carbon;
 
 class InventoryBatch extends Model
 {
+    use BelongsToShop;
+
     protected $fillable = ['inventory_item_id', 'supply_purchase_id', 'expires_at', 'quantity', 'remaining_quantity'];
 
     protected $casts = [

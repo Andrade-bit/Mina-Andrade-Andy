@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
+use App\Support\ShopContext;
 use App\Support\ShopDates;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -57,7 +58,7 @@ class ExpenseController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'expense_category_id' => ['required', 'exists:expense_categories,id'],
+            'expense_category_id' => ['required', ShopContext::exists('expense_categories')],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0'],
             'expense_date' => ['required', 'date'],

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\CupSize;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Support\ShopContext;
 use Illuminate\Database\Seeder;
 
 class MenuSeeder extends Seeder
@@ -18,6 +19,7 @@ class MenuSeeder extends Seeder
      */
     public function run(): void
     {
+        app(ShopContext::class)->set(1);
         CupSize::updateOrCreate(['size_name' => 'One Size'], ['price' => 35]);
         CupSize::updateOrCreate(['size_name' => 'Small'], ['price' => 35]);
         CupSize::updateOrCreate(['size_name' => 'Medium'], ['price' => 40]);

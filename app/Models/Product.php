@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToShop;
+use App\Support\ShopContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +14,7 @@ use Illuminate\Support\Collection;
 
 class Product extends Model
 {
+    use BelongsToShop;
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
@@ -47,7 +50,7 @@ class Product extends Model
      */
     public function imageUrl(): ?string
     {
-        return $this->image ? route('product-images.show', ['filename' => basename($this->image)]) : null;
+        return $this->image ? route('product-images.show', ['filename' => basename($this->image), 'shop' => app(ShopContext::class)->shop()?->slug]) : null;
     }
 
     /**
@@ -79,6 +82,7 @@ class Product extends Model
     public function ingredients(): BelongsToMany
     {
         return $this->belongsToMany(Ingredient::class, 'product_ingredients')
+            ->withPivotValue('shop_id', app(ShopContext::class)->id())
             ->withPivot('quantity_required')
             ->withTimestamps();
     }

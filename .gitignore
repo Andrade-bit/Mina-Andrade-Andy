@@ -28,3 +28,5 @@ Thumbs.db
 
 # database exports hold real staff PINs and sales; never commit them
 *.sql
+
+/.vercel

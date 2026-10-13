@@ -10,6 +10,7 @@ use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\Promo;
 use App\Models\SalesTransaction;
+use App\Support\ShopContext;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -144,8 +145,8 @@ class TerminalController extends Controller
             'payment_method' => ['required', 'string', 'max:50'],
             'promo_code' => ['nullable', 'string', 'max:50'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
-            'items.*.cup_size_id' => ['required', 'exists:cup_sizes,id'],
+            'items.*.product_id' => ['required', ShopContext::exists('products')],
+            'items.*.cup_size_id' => ['required', ShopContext::exists('cup_sizes')],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.price_at_order' => ['required', 'numeric', 'min:0'],
         ]);
@@ -256,6 +257,7 @@ class TerminalController extends Controller
             return response()->json(['ok' => false], 401);
         }
 
+        $request->validate(['product_ids' => ['nullable', 'array'], 'product_ids.*' => ['integer', ShopContext::exists('products')]]);
         $productIds = collect($request->input('product_ids', []))
             ->map(fn ($id) => (int) $id)
             ->filter()
@@ -263,8 +265,9 @@ class TerminalController extends Controller
             ->values()
             ->all();
 
-        $key = 'pos_cart:'.$request->session()->getId();
-        $index = Cache::get('pos_cart_index', []);
+        $key = 'pos_cart:'.app(ShopContext::class)->id().':'.$request->session()->getId();
+        $indexKey = 'pos_cart_index:'.app(ShopContext::class)->id();
+        $index = Cache::get($indexKey, []);
 
         if ($productIds === []) {
             Cache::forget($key);
@@ -283,7 +286,7 @@ class TerminalController extends Controller
             }
         }
 
-        Cache::put('pos_cart_index', $index, now()->addDay());
+        Cache::put($indexKey, $index, now()->addDay());
 
         return response()->json(['ok' => true]);
     }
@@ -299,7 +302,8 @@ class TerminalController extends Controller
         $liveKeys = [];
         $holders = collect();
 
-        foreach (Cache::get('pos_cart_index', []) as $key) {
+        $indexKey = 'pos_cart_index:'.app(ShopContext::class)->id();
+        foreach (Cache::get($indexKey, []) as $key) {
             $cart = Cache::get($key);
 
             if (! $cart) {
@@ -313,7 +317,7 @@ class TerminalController extends Controller
             }
         }
 
-        Cache::put('pos_cart_index', $liveKeys, now()->addDay());
+        Cache::put($indexKey, $liveKeys, now()->addDay());
 
         return $holders;
     }

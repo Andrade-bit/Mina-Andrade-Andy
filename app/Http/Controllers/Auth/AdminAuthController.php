@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\PlatformActivity;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,8 +30,9 @@ class AdminAuthController extends Controller
         ]);
 
         $credentials = [
-            'name' => $validated['username'],
+            filter_var($validated['username'], FILTER_VALIDATE_EMAIL) ? 'email' : 'name' => $validated['username'],
             'password' => $validated['password'],
+            'is_active' => true,
         ];
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
@@ -40,6 +42,18 @@ class AdminAuthController extends Controller
         }
 
         $request->session()->regenerate();
+        $request->session()->forget(['pos_credential_id', 'pos_credential_role']);
+
+        if (Auth::user()->isSuperAdmin()) {
+            PlatformActivity::create(['user_id' => Auth::id(), 'action' => 'superadmin.login', 'description' => 'Platform administrator signed in.']);
+
+            return redirect()->route('superadmin.dashboard');
+        }
+        if (! Auth::user()->shop?->canOperate()) {
+            Auth::logout();
+
+            return back()->withErrors(['username' => 'This shop is unavailable. Please contact platform support.'])->onlyInput('username');
+        }
 
         return redirect()->route('admin.dashboard');
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Promo;
+use App\Support\ShopContext;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ class PromoController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', 'unique:promos,code'],
+            'code' => ['required', 'string', 'max:50', ShopContext::unique('promos', 'code')],
             'type' => ['required', Rule::in(['percent', 'fixed'])],
             'value' => ['required', 'numeric', 'min:0.01', Rule::when($request->input('type') === 'percent', ['max:100'])],
             'reason' => ['nullable', 'string', 'max:500'],
@@ -55,7 +56,7 @@ class PromoController extends Controller
     public function update(Request $request, Promo $promo): RedirectResponse
     {
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', Rule::unique('promos', 'code')->ignore($promo->id)],
+            'code' => ['required', 'string', 'max:50', ShopContext::unique('promos', 'code')->ignore($promo->id)],
             'type' => ['required', Rule::in(['percent', 'fixed'])],
             'value' => ['required', 'numeric', 'min:0.01', Rule::when($request->input('type') === 'percent', ['max:100'])],
             'reason' => ['nullable', 'string', 'max:500'],

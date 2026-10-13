@@ -13,6 +13,7 @@ use App\Models\ProductCupSize;
 use App\Models\ProductIngredientSize;
 use App\Models\SalesTransactionItem;
 use App\Models\UploadedImage;
+use App\Support\ShopContext;
 use App\Support\ShopDates;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -89,6 +90,16 @@ class ProductController extends Controller
      */
     private function requireIngredients(array $ingredients): void
     {
+        foreach ($ingredients as $inventoryItemId => $sizes) {
+            if (! InventoryItem::whereKey($inventoryItemId)->where('type', 'ingredient')->exists()) {
+                throw ValidationException::withMessages(['ingredients' => 'Choose ingredients belonging to this shop.']);
+            }
+            foreach (array_keys($sizes) as $cupSizeId) {
+                if (! CupSize::whereKey($cupSizeId)->exists()) {
+                    throw ValidationException::withMessages(['ingredients' => 'Choose cup sizes belonging to this shop.']);
+                }
+            }
+        }
         $hasOne = collect($ingredients)->flatten()->contains(fn ($amount) => is_numeric($amount) && (float) $amount > 0);
 
         if (! $hasOne) {
@@ -159,8 +170,9 @@ class ProductController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $this->validateCupSizeKeys($request);
         $validated = $request->validate([
-            'product_category_id' => ['required', 'exists:product_categories,id'],
+            'product_category_id' => ['required', ShopContext::exists('product_categories')],
             'product_name' => ['required', 'string', 'max:255'],
             'image' => ['nullable', 'image', 'max:4096'],
             'sizes' => ['nullable', 'array'],
@@ -209,6 +221,9 @@ class ProductController extends Controller
         $sizeRows = [];
 
         foreach ($ingredients as $inventoryItemId => $bySize) {
+            if (! InventoryItem::whereKey($inventoryItemId)->where('type', 'ingredient')->exists()) {
+                throw ValidationException::withMessages(['ingredients' => 'Choose ingredients belonging to this shop.']);
+            }
             $typed = collect($bySize)->filter(fn ($amount, $cupSizeId) => in_array((int) $cupSizeId, $cupSizeIds, true) && is_numeric($amount) && (float) $amount > 0);
 
             if ($typed->isEmpty()) {
@@ -220,6 +235,7 @@ class ProductController extends Controller
 
             foreach ($typed as $cupSizeId => $amount) {
                 $sizeRows[] = [
+                    'shop_id' => app(ShopContext::class)->id(),
                     'product_id' => $product->id,
                     'ingredient_id' => $ingredient->id,
                     'cup_size_id' => (int) $cupSizeId,
@@ -303,8 +319,9 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product): RedirectResponse
     {
+        $this->validateCupSizeKeys($request);
         $validated = $request->validate([
-            'product_category_id' => ['required', 'exists:product_categories,id'],
+            'product_category_id' => ['required', ShopContext::exists('product_categories')],
             'product_name' => ['required', 'string', 'max:255'],
             'image' => ['nullable', 'image', 'max:4096'],
             'remove_image' => ['nullable', 'boolean'],
@@ -378,5 +395,17 @@ class ProductController extends Controller
         Product::onlyTrashed()->findOrFail($product)->restore();
 
         return redirect()->route('admin.products.index', ['archived' => 1])->with('status', 'Product restored.');
+    }
+
+    private function validateCupSizeKeys(Request $request): void
+    {
+        if (! is_array($request->input('sizes', []))) {
+            throw ValidationException::withMessages(['sizes' => 'Choose valid cup sizes.']);
+        }
+        foreach (array_keys($request->input('sizes', [])) as $id) {
+            if (! CupSize::whereKey($id)->exists()) {
+                throw ValidationException::withMessages(['sizes' => 'Choose cup sizes belonging to this shop.']);
+            }
+        }
     }
 }

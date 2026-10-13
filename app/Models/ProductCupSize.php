@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToShop;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProductCupSize extends Model
 {
+    use BelongsToShop;
+
     protected $fillable = [
         'product_id',
         'cup_size_id',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
+use App\Support\ShopContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,13 +33,13 @@ class InventoryTransactionController extends Controller
     public function stockOut(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'inventory_item_id' => ['required', 'exists:inventory_items,id'],
+            'inventory_item_id' => ['required', ShopContext::exists('inventory_items')],
             'quantity' => ['required', 'numeric', 'min:0.01'],
             'quantity_unit' => ['nullable', Rule::in(['base', 'secondary'])],
             'transaction_type' => ['required', Rule::in(['Waste', 'Adjustment'])],
             'inventory_transaction_date' => ['required', 'date'],
             'reason' => ['nullable', 'string', 'max:255'],
-            'batch_id' => ['nullable', 'integer', 'exists:inventory_batches,id'],
+            'batch_id' => ['nullable', 'integer', ShopContext::exists('inventory_batches')],
         ]);
 
         DB::transaction(function () use ($validated) {

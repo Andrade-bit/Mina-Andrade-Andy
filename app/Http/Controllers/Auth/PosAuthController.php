@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Credential;
+use App\Support\ShopContext;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class PosAuthController extends Controller
      */
     public function create(): View
     {
-        return view('pos.login');
+        return view('pos.login', ['shopSlug' => app(ShopContext::class)->shop()?->slug]);
     }
 
     /**
@@ -33,6 +34,7 @@ class PosAuthController extends Controller
             return back()->withErrors(['passcode' => 'Incorrect PIN. Please try again.']);
         }
 
+        $request->session()->regenerate();
         $request->session()->put('pos_credential_id', $credential->id);
         $request->session()->put('pos_credential_role', $credential->role);
 
@@ -44,8 +46,9 @@ class PosAuthController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $shopSlug = app(ShopContext::class)->shop()?->slug;
         $request->session()->forget(['pos_credential_id', 'pos_credential_role']);
 
-        return redirect()->route('pos.login');
+        return redirect()->route('pos.login', ['shop' => $shopSlug]);
     }
 }

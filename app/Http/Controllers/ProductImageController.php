@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\UploadedImage;
+use App\Support\ShopContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,6 +26,8 @@ class ProductImageController extends Controller
             return $response;
         }
 
+        abort_if(UploadedImage::withoutGlobalScope('shop')->where('path', $path)->exists(), 404);
+        abort_unless(app(ShopContext::class)->id() === 1, 404);
         if (is_file(public_path('images/uploads/'.$filename))) {
             return response()->file(public_path('images/uploads/'.$filename));
         }

@@ -21,6 +21,8 @@ use App\Http\Controllers\Auth\PosAuthController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Pos\TerminalController;
 use App\Http\Controllers\ProductImageController;
+use App\Http\Controllers\SuperAdmin\PlanController;
+use App\Http\Controllers\SuperAdmin\ShopController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
@@ -28,10 +30,10 @@ Route::get('/product-images/{filename}', ProductImageController::class)
     ->where('filename', '[A-Za-z0-9_-]+\.(jpg|jpeg|png|webp|gif|avif)')->name('product-images.show');
 
 Route::get('/admin/login', [AdminAuthController::class, 'create'])->name('admin.login');
-Route::post('/admin/login', [AdminAuthController::class, 'store'])->name('admin.login.store');
+Route::post('/admin/login', [AdminAuthController::class, 'store'])->middleware('throttle:10,1')->name('admin.login.store');
 Route::post('/admin/logout', [AdminAuthController::class, 'destroy'])->name('admin.logout');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'shop-admin', 'shop-limits'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
@@ -107,7 +109,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/pos/login', [PosAuthController::class, 'create'])->name('pos.login');
-Route::post('/pos/login', [PosAuthController::class, 'store'])->name('pos.login.store');
+Route::post('/pos/login', [PosAuthController::class, 'store'])->middleware('throttle:10,1')->name('pos.login.store');
 Route::post('/pos/logout', [PosAuthController::class, 'destroy'])->name('pos.logout');
 
 Route::get('/pos/terminal', [TerminalController::class, 'index'])->name('pos.terminal');
@@ -117,3 +119,22 @@ Route::post('/pos/terminal/cart', [TerminalController::class, 'syncCart'])->name
 
 Route::get('/pos/transactions', [SalesReportController::class, 'index'])->name('pos.transactions');
 Route::post('/pos/transactions/{salesTransaction}/void', [SalesReportController::class, 'void'])->name('pos.transactions.void');
+
+Route::prefix('superadmin')->name('superadmin.')->middleware(['auth', 'superadmin'])->group(function (): void {
+    Route::get('/', [App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/shops', [ShopController::class, 'index'])->name('shops.index');
+    Route::get('/shops/create', [ShopController::class, 'create'])->name('shops.create');
+    Route::post('/shops', [ShopController::class, 'store'])->name('shops.store');
+    Route::get('/shops/{shop}/edit', [ShopController::class, 'edit'])->name('shops.edit');
+    Route::put('/shops/{shop}', [ShopController::class, 'update'])->name('shops.update');
+    Route::get('/subscriptions', [ShopController::class, 'subscriptions'])->name('subscriptions');
+    Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+    Route::post('/plans', [PlanController::class, 'store'])->name('plans.store');
+    Route::put('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
+    Route::get('/users', [App\Http\Controllers\SuperAdmin\UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [App\Http\Controllers\SuperAdmin\UserController::class, 'store'])->name('users.store');
+    Route::put('/users/{user}', [App\Http\Controllers\SuperAdmin\UserController::class, 'update'])->name('users.update');
+    Route::get('/activity', [App\Http\Controllers\SuperAdmin\DashboardController::class, 'activity'])->name('activity');
+    Route::get('/settings', [App\Http\Controllers\SuperAdmin\DashboardController::class, 'settings'])->name('settings');
+    Route::put('/settings', [App\Http\Controllers\SuperAdmin\DashboardController::class, 'updateSettings'])->name('settings.update');
+});

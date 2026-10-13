@@ -133,6 +133,7 @@
 
         <form method="POST" action="{{ route('pos.login.store') }}" id="pinForm" class="mt-6">
           @csrf
+          <input type="hidden" name="shop" value="{{ $shopSlug }}">
           <input type="hidden" name="passcode" id="passcodeInput" value="">
 
           <div class="dots" aria-hidden="true">

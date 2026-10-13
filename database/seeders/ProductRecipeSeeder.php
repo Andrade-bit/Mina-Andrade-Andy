@@ -7,6 +7,7 @@ use App\Models\Ingredient;
 use App\Models\InventoryItem;
 use App\Models\Product;
 use App\Models\ProductIngredientSize;
+use App\Support\ShopContext;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -104,6 +105,7 @@ class ProductRecipeSeeder extends Seeder
      */
     public function run(): void
     {
+        app(ShopContext::class)->set(1);
         if (! DB::table('migrations')->where('migration', self::UNITS_MIGRATION)->exists()) {
             $this->command?->error('Recipes were not added. Run php artisan migrate first: it converts your kg and liter stock to g and ml.');
 
