@@ -27,6 +27,19 @@ class SaasServicesTest extends TestCase
 {
     use LazilyRefreshDatabase;
 
+    public function test_activity_details_use_plain_labels_and_private_inventory_names(): void
+    {
+        $item = $this->stock();
+        ShopActivity::create(['action' => 'created', 'subject_type' => 'InventoryTransaction', 'subject_id' => '123', 'changes' => ['before' => [], 'after' => ['inventory_item_id' => $item->id, 'quantity' => 1, 'transaction_type' => 'Sales']]]);
+        $shop = Shop::create(['name' => 'Other', 'slug' => 'display-other', 'plan_id' => 1, 'status' => 'active', 'subscription_status' => 'active']);
+        app(ShopContext::class)->set($shop->id);
+        $foreignItem = InventoryItem::create(['name' => 'PRIVATE FOREIGN STOCK', 'type' => 'ingredient', 'unit' => 'g']);
+        app(ShopContext::class)->set(1);
+        ShopActivity::create(['action' => 'created', 'subject_type' => 'InventoryTransaction', 'subject_id' => '124', 'changes' => ['before' => [], 'after' => ['inventory_item_id' => $foreignItem->id, 'quantity' => 1]]]);
+        $item->update(['current_quantity' => 50]);
+        $this->actingAs($this->owner())->get(route('admin.shop-activity'))->assertOk()->assertSee('Stock movement')->assertSee('Movement type')->assertSee('Coffee')->assertSee('Previous')->assertSee('New')->assertDontSee('PRIVATE FOREIGN STOCK')->assertDontSee('<pre', false)->assertDontSee('&quot;after&quot;', false);
+    }
+
     private function owner(): User
     {
         return User::factory()->create();
