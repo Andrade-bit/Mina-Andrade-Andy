@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExpenseCategoryController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\InventoryItemController;
+use App\Http\Controllers\Admin\InventoryPhotoController;
 use App\Http\Controllers\Admin\InventoryTransactionController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
@@ -13,14 +14,18 @@ use App\Http\Controllers\Admin\PromoController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SalesReportController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\ShopActivityController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SupplyPurchaseController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Auth\PosAuthController;
+use App\Http\Controllers\Auth\RecoveryController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\NotificationCronController;
 use App\Http\Controllers\Pos\TerminalController;
 use App\Http\Controllers\ProductImageController;
+use App\Http\Controllers\SuperAdmin\EmailController;
 use App\Http\Controllers\SuperAdmin\PlanController;
 use App\Http\Controllers\SuperAdmin\ShopController;
 use Illuminate\Support\Facades\Route;
@@ -33,7 +38,17 @@ Route::get('/admin/login', [AdminAuthController::class, 'create'])->name('admin.
 Route::post('/admin/login', [AdminAuthController::class, 'store'])->middleware('throttle:10,1')->name('admin.login.store');
 Route::post('/admin/logout', [AdminAuthController::class, 'destroy'])->name('admin.logout');
 
+Route::get('/account/forgot', [RecoveryController::class, 'form'])->name('account.forgot');
+Route::post('/account/forgot', [RecoveryController::class, 'forgot'])->middleware('throttle:3,1')->name('account.forgot.store');
+Route::get('/account/reset/{token}', [RecoveryController::class, 'form'])->name('account.reset');
+Route::post('/account/reset', [RecoveryController::class, 'reset'])->middleware('throttle:5,1')->name('account.reset.store');
+Route::get('/account/invitation/{token}', [RecoveryController::class, 'invitation'])->name('account.invitation');
+Route::post('/account/invitation/{token}', [RecoveryController::class, 'accept'])->middleware('throttle:5,1')->name('account.invitation.accept');
+Route::get('/internal/notifications', NotificationCronController::class)->name('internal.notifications');
+
 Route::middleware(['auth', 'shop-admin', 'shop-limits'])->group(function () {
+    Route::get('/admin/shop-activity', ShopActivityController::class)->name('admin.shop-activity');
+    Route::get('/admin/inventory-items/{id}/photo', InventoryPhotoController::class)->name('admin.inventory-items.photo');
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
@@ -121,6 +136,8 @@ Route::get('/pos/transactions', [SalesReportController::class, 'index'])->name('
 Route::post('/pos/transactions/{salesTransaction}/void', [SalesReportController::class, 'void'])->name('pos.transactions.void');
 
 Route::prefix('superadmin')->name('superadmin.')->middleware(['auth', 'superadmin'])->group(function (): void {
+    Route::get('/emails', [EmailController::class, 'index'])->name('emails');
+    Route::post('/users/{user}/invite', [EmailController::class, 'invite'])->middleware('throttle:3,1')->name('users.invite');
     Route::get('/', [App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/shops', [ShopController::class, 'index'])->name('shops.index');
     Route::get('/shops/create', [ShopController::class, 'create'])->name('shops.create');

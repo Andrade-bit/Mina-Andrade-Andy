@@ -133,7 +133,8 @@
         <h1 class="title">Welcome back.</h1>
         <p class="lede">Log in to manage the stall.</p>
 
-        <form method="POST" action="{{ route('admin.login.store') }}" class="space-y-5 mt-6">
+        @if(session('status'))<p role="status">{{ session('status') }}</p>@endif
+<form method="POST" action="{{ route('admin.login.store') }}" class="space-y-5 mt-6">
           @csrf
           <div>
             <label for="username" class="block text-xs font-extrabold uppercase tracking-wide text-stamp-500 mb-2 ml-1">Username or email</label>
@@ -167,7 +168,7 @@
           <button type="submit" class="block w-full text-center bg-stamp-700 text-cream-50 font-display font-bold tracking-wide text-lg py-3.5 rounded-2xl shadow-soft-btn active:shadow-none active:translate-y-[5px] hover:-translate-y-0.5 transition-all duration-150">
             Log In
           </button>
-        </form>
+        </form><p style="margin-top:18px"><a href="{{ route('account.forgot') }}">Forgot password?</a></p>
 
         <p class="alt text-center text-sm font-bold text-stamp-500 mt-6">
           Starting a shift instead? <a href="{{ route('pos.login') }}" class="text-stamp-700 underline underline-offset-2 hover:text-stamp-500 whitespace-nowrap">Open POS Access</a>

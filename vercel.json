@@ -26,5 +26,11 @@
   ],
   "regions": [
     "sin1"
+  ],
+  "crons": [
+    {
+      "path": "/internal/notifications",
+      "schedule": "0 0 * * *"
+    }
   ]
 }

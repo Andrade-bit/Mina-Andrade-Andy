@@ -15,9 +15,10 @@ class UploadedImage extends Model
 
     protected $hidden = ['contents'];
 
-    public static function storeUpload(UploadedFile $file): string
+    public static function storeUpload(UploadedFile $file, string $folder = 'products'): string
     {
-        $path = 'products/'.Str::uuid().'.'.$file->guessExtension();
+        abort_unless(in_array($folder, ['products', 'inventory'], true), 422);
+        $path = $folder.'/'.Str::uuid().'.'.$file->guessExtension();
         static::create([
             'path' => $path,
             'mime_type' => $file->getMimeType(),

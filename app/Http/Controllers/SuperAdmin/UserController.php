@@ -6,12 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\PlatformActivity;
 use App\Models\Shop;
 use App\Models\User;
+use App\Support\AccountInvitations;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
@@ -23,18 +24,19 @@ class UserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate(['name' => ['required', 'string', 'max:255', 'unique:users,name'], 'email' => ['required', 'email', 'max:255', 'unique:users,email'], 'password' => ['required', 'confirmed', Password::min(12)->mixedCase()->numbers()], 'shop_id' => ['required', 'exists:shops,id'], 'role' => ['required', Rule::in(['owner', 'manager'])]]);
+        $data = $request->validate(['name' => ['required', 'string', 'max:255', 'unique:users,name'], 'email' => ['required', 'email', 'max:255', 'unique:users,email'], 'shop_id' => ['required', 'exists:shops,id'], 'role' => ['required', Rule::in(['owner', 'manager'])]]);
         DB::transaction(function () use ($request, $data): void {
-            $user = User::create([...$data, 'is_active' => true]);
+            $user = User::create([...$data, 'password' => Str::random(64), 'is_active' => true]);
+            app(AccountInvitations::class)->send($user);
             PlatformActivity::create(['user_id' => $request->user()->id, 'shop_id' => $user->shop_id, 'action' => 'user.created', 'description' => 'Shop login created: '.$user->name]);
         });
 
-        return back()->with('status', 'Shop login created.');
+        return back()->with('status', 'Account invitation queued.');
     }
 
     public function update(Request $request, User $user): RedirectResponse
     {
-        $data = $request->validate(['is_active' => ['required', 'boolean'], 'role' => ['required', Rule::in($user->isSuperAdmin() ? ['superadmin'] : ['owner', 'manager'])], 'password' => ['nullable', 'confirmed', Password::min(12)->mixedCase()->numbers()]]);
+        $data = $request->validate(['is_active' => ['required', 'boolean'], 'role' => ['required', Rule::in($user->isSuperAdmin() ? ['superadmin'] : ['owner', 'manager'])], 'password' => ['prohibited']]);
         if ($user->id === $request->user()->id && ! $request->boolean('is_active')) {
             throw ValidationException::withMessages(['is_active' => 'You cannot disable your own superadmin account.']);
         }

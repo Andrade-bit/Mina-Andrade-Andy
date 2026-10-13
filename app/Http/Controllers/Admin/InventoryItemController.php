@@ -6,11 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
+use App\Models\UploadedImage;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class InventoryItemController extends Controller
@@ -104,29 +104,21 @@ class InventoryItemController extends Controller
         $unitConversion = $unitChanged ? (float) $validated['unit_conversion'] : null;
         unset($validated['unit_conversion']);
 
-        $imagePath = $inventoryItem->image;
-
-        if ($request->hasFile('image')) {
-            if ($imagePath) {
-                Storage::disk('public')->delete($imagePath);
+        unset($validated['image'], $validated['remove_image']);
+        DB::transaction(function () use ($inventoryItem, $validated, $unitConversion, $request): void {
+            $previousImage = $inventoryItem->image;
+            if ($request->hasFile('image')) {
+                $validated['image'] = UploadedImage::storeUpload($request->file('image'), 'inventory');
+            } elseif ($request->boolean('remove_image')) {
+                $validated['image'] = null;
             }
-            $imagePath = $request->file('image')->store('inventory', 'public');
-        } elseif ($request->boolean('remove_image')) {
-            if ($imagePath) {
-                Storage::disk('public')->delete($imagePath);
-            }
-            $imagePath = null;
-        }
-
-        $validated['image'] = $imagePath;
-        unset($validated['remove_image']);
-
-        DB::transaction(function () use ($inventoryItem, $validated, $unitConversion) {
             if ($unitConversion !== null) {
                 $inventoryItem->convertStockUnit($unitConversion);
             }
-
             $inventoryItem->update($validated);
+            if (array_key_exists('image', $validated) && $previousImage && $previousImage !== $validated['image']) {
+                UploadedImage::where('path', $previousImage)->delete();
+            }
         });
 
         return redirect()->route('admin.inventory-items.index')->with('status', 'Inventory item updated.');

@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class InventoryItem extends Model
@@ -81,7 +80,7 @@ class InventoryItem extends Model
      */
     public function imageUrl(): ?string
     {
-        return $this->image ? Storage::url($this->image) : null;
+        return $this->image ? route('admin.inventory-items.photo', $this->id) : null;
     }
 
     protected $casts = [

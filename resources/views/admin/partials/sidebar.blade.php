@@ -67,49 +67,67 @@
     </a>
 
     <p class="text-[10px] font-extrabold uppercase tracking-widest text-stamp-300 px-4 pt-3 pb-1">Inventory</p>
-    <a href="{{ route('admin.inventory') }}" class="{{ $navClass('inventory') }}">
+    @if($currentShop?->plan?->allows('inventory'))
+<a href="{{ route('admin.inventory') }}" class="{{ $navClass('inventory') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 01-2-2V4a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
       <span class="flex-1">Inventory</span>
       @if ($sidebarLowStockCount > 0)
         <span class="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-coral-500 text-cream-50 text-[10px] font-extrabold flex items-center justify-center" title="{{ $sidebarLowStockCount }} item(s) need reordering">{{ $sidebarLowStockCount }}</span>
       @endif
     </a>
-    <a href="{{ route('admin.suppliers.index') }}" class="{{ $navClass('suppliers') }}">
+@endif
+    @if($currentShop?->plan?->allows('inventory'))
+<a href="{{ route('admin.suppliers.index') }}" class="{{ $navClass('suppliers') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
       Suppliers
     </a>
-    <a href="{{ route('admin.supply-purchases.index') }}" class="{{ $navClass('supply-purchases') }}">
+@endif
+    @if($currentShop?->plan?->allows('inventory'))
+<a href="{{ route('admin.supply-purchases.index') }}" class="{{ $navClass('supply-purchases') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l3-8H6.4M7 13L5.4 5M7 13l-2 5h13M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"/></svg>
       Supply Purchases
     </a>
+@endif
 
     <p class="text-[10px] font-extrabold uppercase tracking-widest text-stamp-300 px-4 pt-3 pb-1">Sales</p>
-    <a href="{{ route('pos.login', ['shop' => $currentShop?->slug]) }}" class="{{ $navClass('pos') }}">
+    @if($currentShop?->plan?->allows('pos'))
+<a href="{{ route('pos.login', ['shop' => $currentShop?->slug]) }}" class="{{ $navClass('pos') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-9 4h16a1 1 0 001-1V6a1 1 0 00-1-1H4a1 1 0 00-1 1v12a1 1 0 001 1z"/></svg>
       POS Terminal
     </a>
-    <a href="{{ route('pos.transactions') }}" class="{{ $navClass('orders') }}">
+@endif
+    @if($currentShop?->plan?->allows('reports'))
+<a href="{{ route('pos.transactions') }}" class="{{ $navClass('orders') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5-1a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm11 6.5a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
       Orders
     </a>
-    <a href="{{ route('admin.promos.index') }}" class="{{ $navClass('promos') }}">
+@endif
+    @if($currentShop?->plan?->allows('promos'))
+<a href="{{ route('admin.promos.index') }}" class="{{ $navClass('promos') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5.586a1 1 0 01.707.293l6.414 6.414a1 1 0 010 1.414l-5.586 5.586a1 1 0 01-1.414 0L6.293 10.293A1 1 0 016 9.586V4a1 1 0 011-1z"/></svg>
       Promos
     </a>
+@endif
 
     <p class="text-[10px] font-extrabold uppercase tracking-widest text-stamp-300 px-4 pt-3 pb-1">Finance</p>
-    <a href="{{ route('admin.expenses.index') }}" class="{{ $navClass('expenses') }}">
+    @if($currentShop?->plan?->allows('expenses'))
+<a href="{{ route('admin.expenses.index') }}" class="{{ $navClass('expenses') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3h14a2 2 0 012 2v16l-4-2-3 2-3-2-3 2-3-2-3 2V5a2 2 0 012-2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 8h6M9 12h6M9 16h3"/></svg>
       Expenses
     </a>
-    <a href="{{ route('admin.reports.index') }}" class="{{ $navClass('reports') }}">
+@endif
+    @if($currentShop?->plan?->allows('reports'))
+<a href="{{ route('admin.reports.index') }}" class="{{ $navClass('reports') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       Reports
     </a>
-    <a href="{{ route('admin.expense-categories.index') }}" class="{{ $navClass('expense-categories') }}">
+@endif
+    @if($currentShop?->plan?->allows('expenses'))
+<a href="{{ route('admin.expense-categories.index') }}" class="{{ $navClass('expense-categories') }}">
       <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h5l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
       Expense Categories
     </a>
+@endif
 
     <p class="text-[10px] font-extrabold uppercase tracking-widest text-stamp-300 px-4 pt-3 pb-1">Account</p>
     @if(auth()->user()->role === 'owner')
@@ -126,7 +144,8 @@
       <span class="w-5 h-5 rounded-full border-2 border-current flex items-center justify-center" aria-hidden="true">?</span>
       Help &amp; FAQ
     </button>
-  </nav>
+  @if(auth()->user()?->role === 'owner')<a href="{{ route('admin.shop-activity') }}" class="{{ $navClass('shop-activity') }}">Shop activity</a>@endif
+</nav>
 
   <div class="pt-4 mt-4 border-t border-cream-200 flex items-center gap-3 shrink-0">
     <div class="w-10 h-10 rounded-full bg-stamp-100 flex items-center justify-center text-stamp-700 font-display font-bold text-sm shrink-0">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>

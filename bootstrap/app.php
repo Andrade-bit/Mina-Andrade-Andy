@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AjaxFormRedirects;
+use App\Http\Middleware\EnforcePlanFeatures;
 use App\Http\Middleware\EnforceShopLimits;
 use App\Http\Middleware\RequireShopAdmin;
 use App\Http\Middleware\RequireSuperAdmin;
@@ -23,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->redirectGuestsTo(fn () => route('admin.login'));
         $middleware->web(append: [AjaxFormRedirects::class]);
-        $middleware->web(append: [ResolveShop::class]);
+        $middleware->web(append: [ResolveShop::class, EnforcePlanFeatures::class]);
         $middleware->prependToPriorityList(SubstituteBindings::class, ResolveShop::class);
         $middleware->alias([
             'superadmin' => RequireSuperAdmin::class,

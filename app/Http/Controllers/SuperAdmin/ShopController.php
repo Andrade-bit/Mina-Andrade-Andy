@@ -8,12 +8,13 @@ use App\Models\PlatformActivity;
 use App\Models\PlatformSetting;
 use App\Models\Shop;
 use App\Models\User;
+use App\Support\AccountInvitations;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class ShopController extends Controller
 {
@@ -38,17 +39,17 @@ class ShopController extends Controller
             'name' => ['required', 'string', 'max:100'], 'slug' => ['required', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', 'max:80', 'unique:shops,slug'],
             'plan_id' => ['required', Rule::exists('plans', 'id')->where('is_active', true)],
             'owner_name' => ['required', 'string', 'max:255', 'unique:users,name'], 'owner_email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'owner_password' => ['required', 'confirmed', Password::min(12)->mixedCase()->numbers()],
         ]);
         $shop = DB::transaction(function () use ($data, $request): Shop {
             $shop = Shop::create(['name' => $data['name'], 'slug' => $data['slug'], 'plan_id' => $data['plan_id'], 'status' => 'active', 'subscription_status' => 'trial', 'trial_ends_at' => now()->addDays(PlatformSetting::findOrFail(1)->trial_days)]);
-            User::create(['name' => $data['owner_name'], 'email' => $data['owner_email'], 'password' => $data['owner_password'], 'shop_id' => $shop->id, 'role' => 'owner', 'is_active' => true]);
+            $owner = User::create(['name' => $data['owner_name'], 'email' => $data['owner_email'], 'password' => Str::random(64), 'shop_id' => $shop->id, 'role' => 'owner', 'is_active' => true]);
+            app(AccountInvitations::class)->send($owner);
             PlatformActivity::create(['user_id' => $request->user()->id, 'shop_id' => $shop->id, 'action' => 'shop.created', 'description' => 'Shop created: '.$shop->name]);
 
             return $shop;
         });
 
-        return redirect()->route('superadmin.shops.edit', $shop)->with('status', 'Shop and owner login created. Share the credentials with the owner securely.');
+        return redirect()->route('superadmin.shops.edit', $shop)->with('status', 'Shop created. An invitation has been queued for the owner to choose their own password.');
     }
 
     public function edit(Shop $shop): View

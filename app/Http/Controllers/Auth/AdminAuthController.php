@@ -33,6 +33,7 @@ class AdminAuthController extends Controller
             filter_var($validated['username'], FILTER_VALIDATE_EMAIL) ? 'email' : 'name' => $validated['username'],
             'password' => $validated['password'],
             'is_active' => true,
+            'invitation_token' => null,
         ];
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {

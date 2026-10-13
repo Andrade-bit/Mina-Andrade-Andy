@@ -1,0 +1,9 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Catbrews account</title><style>body{margin:0;background:#fffdf9;color:#1a3b52;font:16px system-ui}main{max-width:430px;margin:8vh auto;padding:30px;background:white;border:1px solid #d3e6f3;border-radius:24px;box-shadow:0 12px 30px #1a3b521a}label,input{display:block}input{box-sizing:border-box;width:100%;padding:12px;margin:8px 0 20px;border:1px solid #aac5d8;border-radius:10px;font:inherit}button{padding:12px 20px;background:#2f6690;color:white;border:0;border-radius:12px;font:inherit;cursor:pointer}a{color:#2f6690}.error{color:#9c4a41}</style></head><body><main>
+<h1>{{ $mode === 'forgot' ? 'Forgot password?' : ($mode === 'invitation' ? 'Welcome to your shop' : 'Choose a new password') }}</h1>
+@if(session('status'))<p role="status">{{ session('status') }}</p>@endif
+@foreach($errors->all() as $error)<p class="error" role="alert">{{ $error }}</p>@endforeach
+<form method="POST" action="{{ $mode === 'forgot' ? route('account.forgot.store') : ($mode === 'reset' ? route('account.reset.store') : route('account.invitation.accept', $token)) }}">@csrf
+@if($mode !== 'invitation')<label>Email<input type="email" name="email" value="{{ old('email', $email) }}" required autocomplete="email"></label>@endif
+@if($mode === 'reset')<input type="hidden" name="token" value="{{ $token }}">@endif
+@if($mode !== 'forgot')<p>Use at least 12 characters, including uppercase, lowercase, and a number.</p><label>New password<input type="password" name="password" required minlength="12" autocomplete="new-password"></label><label>Confirm password<input type="password" name="password_confirmation" required minlength="12" autocomplete="new-password"></label>@endif
+<button>{{ $mode === 'forgot' ? 'Send recovery link' : 'Save password' }}</button></form><p><a href="{{ route('admin.login') }}">Back to sign in</a></p></main></body></html>

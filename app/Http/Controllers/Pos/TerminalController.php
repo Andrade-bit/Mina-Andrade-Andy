@@ -102,7 +102,7 @@ class TerminalController extends Controller
             'credential' => $credential,
             'products' => $products,
             'cupSizes' => $cupSizes,
-            'promos' => Promo::where('active', true)->orderBy('code')->get()->filter->isValid()->values(),
+            'promos' => app(ShopContext::class)->shop()?->plan?->allows('promos') ? Promo::where('active', true)->orderBy('code')->get()->filter->isValid()->values() : collect(),
         ]);
     }
 

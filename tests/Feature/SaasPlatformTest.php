@@ -120,7 +120,10 @@ class SaasPlatformTest extends TestCase
         $shop = Shop::where('slug', 'new-shop')->firstOrFail();
         $this->assertDatabaseHas('users', ['email' => 'owner@example.test', 'shop_id' => $shop->id, 'role' => 'owner']);
         $this->assertDatabaseHas('platform_activities', ['shop_id' => $shop->id, 'action' => 'shop.created']);
-        $this->actingAs(User::where('email', 'owner@example.test')->firstOrFail())->get(route('admin.inventory'))->assertViewHas('totalItems', 0)->assertDontSee('Existing stock');
+        $owner = User::where('email', 'owner@example.test')->firstOrFail();
+        $this->assertNotNull($owner->invitation_token);
+        $owner->forceFill(['invitation_token' => null, 'email_verified_at' => now()])->save();
+        $this->actingAs($owner)->get(route('admin.inventory'))->assertViewHas('totalItems', 0)->assertDontSee('Existing stock');
     }
 
     public function test_pin_can_be_reused_in_another_shop_but_login_stays_scoped(): void
@@ -200,8 +203,11 @@ class SaasPlatformTest extends TestCase
         $owner = User::factory()->create();
         $stock = $this->stock(1, 'Original stock');
         $migration = require database_path('migrations/2026_10_13_130922_create_saas_platform_tables.php');
+        $services = require database_path('migrations/2026_10_13_145217_add_saas_recovery_notifications_and_audit_tables.php');
+        $services->down();
         $migration->down();
         $migration->up();
+        $services->up();
 
         $this->assertDatabaseHas('inventory_items', ['id' => $stock->id, 'name' => 'Original stock', 'current_quantity' => 0, 'shop_id' => 1]);
         $this->assertDatabaseHas('users', ['id' => $owner->id, 'email' => $owner->email, 'shop_id' => 1, 'role' => 'owner']);

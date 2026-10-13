@@ -17,7 +17,7 @@ class ResolveShop
     {
         $this->context->set(null);
         try {
-            if ($request->routeIs('admin.login*', 'admin.logout')) {
+            if ($request->routeIs('admin.login*', 'admin.logout', 'account.*', 'internal.notifications')) {
                 return $next($request);
             }
             $user = $request->user();

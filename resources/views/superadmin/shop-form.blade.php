@@ -15,8 +15,7 @@
     @else
     <div class="field"><label for="owner">Owner username</label><input id="owner" name="owner_name" value="{{ old('owner_name') }}" autocomplete="off" required maxlength="255"></div>
     <div class="field"><label for="email">Owner email</label><input id="email" type="email" name="owner_email" value="{{ old('owner_email') }}" required maxlength="255"></div>
-    <div class="field"><label for="password">Owner password</label><input id="password" type="password" name="owner_password" autocomplete="new-password" required minlength="12"><p class="muted tiny">At least 12 characters, including uppercase, lowercase, and a number.</p></div>
-    <div class="field"><label for="confirm">Confirm password</label><input id="confirm" type="password" name="owner_password_confirmation" autocomplete="new-password" required minlength="12"></div>
+    <p class="muted">The owner will receive an expiring email invitation and choose their own password.</p>
     @endif
   </div>
   <p class="muted">{{ $shop->exists ? 'Suspended shops, expired subscriptions, and expired trials cannot access shop operations. No records are deleted.' : 'New shops start with a '.$trialDays.'-day trial and an empty inventory, menu, and sales history.' }}</p>

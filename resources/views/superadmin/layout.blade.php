@@ -12,7 +12,7 @@
   </style>
 </head>
 <body>
-  @php($navigation = ['dashboard' => 'Overview', 'shops.index' => 'Shops', 'subscriptions' => 'Subscriptions', 'plans.index' => 'Plans', 'users.index' => 'Users & Roles', 'activity' => 'System Activity', 'settings' => 'Settings'])
+  @php($navigation = ['dashboard' => 'Overview', 'shops.index' => 'Shops', 'subscriptions' => 'Subscriptions', 'plans.index' => 'Plans', 'users.index' => 'Users & Roles', 'activity' => 'System Activity', 'emails' => 'Email Delivery', 'settings' => 'Settings'])
   <aside aria-label="Superadmin navigation">
     <div class="brand">{{ $platformName }}</div><div class="eyebrow">SUPERADMIN</div>
     <nav class="nav">
